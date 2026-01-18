@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Star, Heart, MessageCircle, Phone, ArrowLeft, Share2, 
   ThumbsUp, ThumbsDown, Clock, Calendar, Shield, Award,
@@ -10,7 +10,6 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { advisors, type Advisor } from '@/data/advisors';
-import { ChatModal } from '@/components/modals/ChatModal';
 import { AuthModal } from '@/components/modals/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -43,9 +42,9 @@ const reviews = [
 
 const AdvisorProfile = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [isFavorite, setIsFavorite] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   
   const { isAuthenticated } = useAuth();
@@ -55,7 +54,7 @@ const AdvisorProfile = () => {
 
   const handleChatClick = () => {
     if (isAuthenticated) {
-      setIsChatOpen(true);
+      navigate(`/chat/${advisor.id}`);
     } else {
       setIsAuthOpen(true);
     }
@@ -435,12 +434,6 @@ const AdvisorProfile = () => {
       </main>
 
       <Footer />
-      
-      <ChatModal 
-        isOpen={isChatOpen} 
-        onClose={() => setIsChatOpen(false)} 
-        advisor={advisor}
-      />
       
       <AuthModal 
         isOpen={isAuthOpen} 

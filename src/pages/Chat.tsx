@@ -1,15 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Clock, Star, Sparkles, Phone, MoreVertical } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Send, Clock, Star, ArrowLeft, Phone, MoreVertical } from 'lucide-react';
+import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { Advisor } from '@/data/advisors';
-
-interface ChatModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  advisor: Advisor;
-}
+import { advisors, type Advisor } from '@/data/advisors';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Message {
   id: string;
@@ -18,7 +14,13 @@ interface Message {
   timestamp: Date;
 }
 
-export const ChatModal = ({ isOpen, onClose, advisor }: ChatModalProps) => {
+const Chat = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  
+  const advisor = advisors.find(a => a.id === id) || advisors[0];
+  
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -32,14 +34,20 @@ export const ChatModal = ({ isOpen, onClose, advisor }: ChatModalProps) => {
   const [sessionTime, setSessionTime] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate(`/advisor/${id}`);
+    }
+  }, [isAuthenticated, navigate, id]);
+
   // Session timer
   useEffect(() => {
-    if (!isOpen) return;
     const interval = setInterval(() => {
       setSessionTime((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [isOpen]);
+  }, []);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -98,12 +106,24 @@ export const ChatModal = ({ isOpen, onClose, advisor }: ChatModalProps) => {
     ? 0 
     : ((sessionTime - (advisor.freeMinutes || 0) * 60) / 60 * (advisor.discountedPrice || advisor.pricePerMinute)).toFixed(2);
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl h-[85vh] max-h-[700px] p-0 bg-card border-border flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-secondary/30">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      
+      <main className="flex-1 pt-16 md:pt-20 flex flex-col">
+        {/* Chat Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate(`/advisor/${advisor.id}`)}
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
             <div className="relative">
               <img 
                 src={advisor.avatar} 
@@ -141,12 +161,13 @@ export const ChatModal = ({ isOpen, onClose, advisor }: ChatModalProps) => {
               )}
             </div>
 
-            <button 
-              onClick={onClose}
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            <Button 
+              variant="destructive"
+              size="sm"
+              onClick={() => navigate(`/advisor/${advisor.id}`)}
             >
-              <X className="w-5 h-5" />
-            </button>
+              End Chat
+            </Button>
           </div>
         </div>
 
@@ -166,8 +187,15 @@ export const ChatModal = ({ isOpen, onClose, advisor }: ChatModalProps) => {
               key={message.id}
               className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
+              {message.sender === 'advisor' && (
+                <img 
+                  src={advisor.avatar} 
+                  alt={advisor.name}
+                  className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
+                />
+              )}
               <div
-                className={`max-w-[80%] p-3 rounded-2xl ${
+                className={`max-w-[70%] p-4 rounded-2xl ${
                   message.sender === 'user'
                     ? 'bg-primary text-primary-foreground rounded-br-md'
                     : 'bg-secondary text-foreground rounded-bl-md'
@@ -186,7 +214,12 @@ export const ChatModal = ({ isOpen, onClose, advisor }: ChatModalProps) => {
           {/* Typing Indicator */}
           {isTyping && (
             <div className="flex justify-start">
-              <div className="bg-secondary text-foreground p-3 rounded-2xl rounded-bl-md">
+              <img 
+                src={advisor.avatar} 
+                alt={advisor.name}
+                className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
+              />
+              <div className="bg-secondary text-foreground p-4 rounded-2xl rounded-bl-md">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -200,31 +233,35 @@ export const ChatModal = ({ isOpen, onClose, advisor }: ChatModalProps) => {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 border-t border-border bg-secondary/30">
-          <div className="flex items-center gap-3">
-            <Input
-              type="text"
-              placeholder="Type your message..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="flex-1 h-12 bg-card border-border"
-            />
-            <Button
-              variant="hero"
-              size="icon"
-              className="h-12 w-12"
-              onClick={handleSend}
-              disabled={!inputValue.trim()}
-            >
-              <Send className="w-5 h-5" />
-            </Button>
+        <div className="p-4 border-t border-border bg-card/50 backdrop-blur-sm">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center gap-3">
+              <Input
+                type="text"
+                placeholder="Type your message..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="flex-1 h-12 bg-background border-border"
+              />
+              <Button
+                variant="hero"
+                size="icon"
+                className="h-12 w-12"
+                onClick={handleSend}
+                disabled={!inputValue.trim()}
+              >
+                <Send className="w-5 h-5" />
+              </Button>
+            </div>
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              Messages are encrypted. By chatting, you agree to our Terms of Service.
+            </p>
           </div>
-          <p className="text-xs text-center text-muted-foreground mt-2">
-            Messages are encrypted. By chatting, you agree to our Terms of Service.
-          </p>
         </div>
-      </DialogContent>
-    </Dialog>
+      </main>
+    </div>
   );
 };
+
+export default Chat;
