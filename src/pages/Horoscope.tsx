@@ -5,105 +5,8 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { zodiacSigns } from '@/data/zodiacSigns';
 
-const zodiacSigns = [
-  { 
-    name: 'Aries', 
-    symbol: '♈', 
-    dates: 'Mar 21 - Apr 19',
-    element: 'Fire',
-    ruling: 'Mars',
-    image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Taurus', 
-    symbol: '♉', 
-    dates: 'Apr 20 - May 20',
-    element: 'Earth',
-    ruling: 'Venus',
-    image: 'https://images.unsplash.com/photo-1517423440428-a5a00ad493e8?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Gemini', 
-    symbol: '♊', 
-    dates: 'May 21 - Jun 20',
-    element: 'Air',
-    ruling: 'Mercury',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Cancer', 
-    symbol: '♋', 
-    dates: 'Jun 21 - Jul 22',
-    element: 'Water',
-    ruling: 'Moon',
-    image: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Leo', 
-    symbol: '♌', 
-    dates: 'Jul 23 - Aug 22',
-    element: 'Fire',
-    ruling: 'Sun',
-    image: 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Virgo', 
-    symbol: '♍', 
-    dates: 'Aug 23 - Sep 22',
-    element: 'Earth',
-    ruling: 'Mercury',
-    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Libra', 
-    symbol: '♎', 
-    dates: 'Sep 23 - Oct 22',
-    element: 'Air',
-    ruling: 'Venus',
-    image: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Scorpio', 
-    symbol: '♏', 
-    dates: 'Oct 23 - Nov 21',
-    element: 'Water',
-    ruling: 'Pluto',
-    image: 'https://images.unsplash.com/photo-1475274047050-1d0c55b91796?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Sagittarius', 
-    symbol: '♐', 
-    dates: 'Nov 22 - Dec 21',
-    element: 'Fire',
-    ruling: 'Jupiter',
-    image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Capricorn', 
-    symbol: '♑', 
-    dates: 'Dec 22 - Jan 19',
-    element: 'Earth',
-    ruling: 'Saturn',
-    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Aquarius', 
-    symbol: '♒', 
-    dates: 'Jan 20 - Feb 18',
-    element: 'Air',
-    ruling: 'Uranus',
-    image: 'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=200&h=200&fit=crop'
-  },
-  { 
-    name: 'Pisces', 
-    symbol: '♓', 
-    dates: 'Feb 19 - Mar 20',
-    element: 'Water',
-    ruling: 'Neptune',
-    image: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=200&h=200&fit=crop'
-  },
-];
 
 const horoscopeContent = {
   Aries: {
@@ -314,7 +217,13 @@ const Horoscope = () => {
                 }`}
               >
                 <div className="text-center">
-                  <span className="text-3xl md:text-4xl block mb-2">{sign.symbol}</span>
+                  <div className="w-12 h-12 md:w-14 md:h-14 mx-auto mb-2 rounded-lg overflow-hidden">
+                    <img 
+                      src={sign.image} 
+                      alt={sign.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <span className="font-heading text-sm font-medium block">{sign.name}</span>
                   <span className="text-xs text-muted-foreground mt-1 block group-hover:text-foreground/70 transition-colors">
                     {sign.dates.split(' - ')[0]}
@@ -334,7 +243,13 @@ const Horoscope = () => {
               {/* Sign Header */}
               <div className="text-center mb-10">
                 <div className="inline-flex items-center gap-3 mb-4">
-                  <span className="text-5xl">{zodiacSigns.find(s => s.name === selectedSign)?.symbol}</span>
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden flex-shrink-0">
+                    <img 
+                      src={zodiacSigns.find(s => s.name === selectedSign)?.image} 
+                      alt={selectedSign} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                   <div className="text-left">
                     <h2 className="font-heading text-3xl md:text-4xl font-bold text-gradient-gold">{selectedSign}</h2>
                     <p className="text-muted-foreground">{zodiacSigns.find(s => s.name === selectedSign)?.dates}</p>
