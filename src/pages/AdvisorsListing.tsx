@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { 
-  ChevronRight, SlidersHorizontal, Grid3X3, List, Loader2
+  ChevronRight, SlidersHorizontal, Grid3X3, List, Loader2, ChevronDown
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -23,12 +23,41 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { advisors } from '@/data/advisors';
 import { categories, getCategoryBySlug } from '@/data/categories';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 type SortOption = 'recommended' | 'rating' | 'reviews' | 'price-low' | 'price-high';
 type StatusFilter = 'all' | 'online' | 'available';
+
+// Related category groups for smarter suggestions
+const relatedCategoryGroups: Record<string, string[]> = {
+  'intuitive-readings': ['tarot', 'dreams', 'clairvoyance', 'oracle'],
+  'astrology': ['numerology', 'horoscopes', 'life-purpose', 'compatibility'],
+  'numerology': ['astrology', 'life-purpose', 'career', 'timing'],
+  'tarot': ['intuitive-readings', 'oracle', 'love', 'spiritual'],
+  'dreams': ['intuitive-readings', 'clairvoyance', 'spiritual', 'oracle'],
+  'palmistry': ['astrology', 'numerology', 'life-purpose', 'compatibility'],
+  'love': ['soulmates', 'compatibility', 'tarot', 'intuitive-readings'],
+  'soulmates': ['love', 'compatibility', 'tarot', 'astrology'],
+  'career': ['life-purpose', 'numerology', 'timing', 'astrology'],
+  'clairvoyance': ['intuitive-readings', 'dreams', 'oracle', 'spiritual'],
+  'mediumship': ['clairvoyance', 'spiritual', 'oracle', 'intuitive-readings'],
+  'energy-healing': ['spiritual', 'aura', 'chakra', 'oracle'],
+  'aura': ['energy-healing', 'chakra', 'spiritual', 'clairvoyance'],
+  'compatibility': ['love', 'soulmates', 'astrology', 'numerology'],
+  'timing': ['astrology', 'numerology', 'career', 'life-purpose'],
+  'life-purpose': ['career', 'numerology', 'astrology', 'spiritual'],
+  'spiritual': ['energy-healing', 'oracle', 'mediumship', 'dreams'],
+  'oracle': ['tarot', 'intuitive-readings', 'spiritual', 'clairvoyance'],
+  'horoscopes': ['astrology', 'numerology', 'compatibility', 'timing'],
+};
 
 const AdvisorsListing = () => {
   const [searchParams] = useSearchParams();
@@ -267,66 +296,85 @@ const AdvisorsListing = () => {
           </div>
         </section>
 
-        {/* Category Quick Links - Horizontal Scroll */}
+        {/* Category Quick Links */}
         <div className="bg-card border-y border-border">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-muted-foreground whitespace-nowrap hidden sm:block">
-                Browse:
+                {category ? 'Related:' : 'Browse:'}
               </span>
-              <div className="flex-1 overflow-x-auto scrollbar-hide">
-                <div className="flex gap-2 pb-1">
-                  <Link
-                    to="/advisors"
-                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                      !category 
-                        ? 'bg-primary text-primary-foreground shadow-md' 
-                        : 'bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary'
-                    }`}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Always show All Services */}
+                <Link
+                  to="/advisors"
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    !category 
+                      ? 'bg-primary text-primary-foreground shadow-md' 
+                      : 'bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary'
+                  }`}
+                >
+                  All Services
+                </Link>
+
+                {/* Show current category if selected */}
+                {category && (
+                  <div
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-primary text-primary-foreground shadow-md"
                   >
-                    All Services
-                  </Link>
-                  {categories.slice(0, 8).map((cat) => (
+                    <category.icon className="w-4 h-4" />
+                    {category.label}
+                  </div>
+                )}
+
+                {/* Show related categories or first few categories */}
+                {(() => {
+                  const relatedSlugs = category 
+                    ? (relatedCategoryGroups[category.slug] || []).slice(0, 4)
+                    : [];
+                  
+                  const displayCategories = category
+                    ? categories.filter(cat => relatedSlugs.includes(cat.slug)).slice(0, 4)
+                    : categories.slice(0, 5);
+
+                  return displayCategories.map((cat) => (
                     <Link
                       key={cat.slug}
                       to={`/advisors?category=${cat.slug}`}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                        category?.slug === cat.slug 
-                          ? 'bg-primary text-primary-foreground shadow-md' 
-                          : 'bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary'
-                      }`}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
                     >
                       <cat.icon className="w-4 h-4" />
                       {cat.label}
                     </Link>
-                  ))}
-                  {categories.length > 8 && (
-                    <div className="relative group">
-                      <button
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
-                      >
-                        +{categories.length - 8} More
-                      </button>
-                      {/* Dropdown for more categories */}
-                      <div className="absolute top-full left-0 mt-2 p-2 bg-card border border-border rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[200px]">
-                        {categories.slice(8).map((cat) => (
+                  ));
+                })()}
+
+                {/* View More Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all">
+                      View More
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="start" 
+                    className="w-56 max-h-80 overflow-y-auto bg-card border-border z-50"
+                  >
+                    {categories
+                      .filter(cat => cat.slug !== category?.slug)
+                      .map((cat) => (
+                        <DropdownMenuItem key={cat.slug} asChild>
                           <Link
-                            key={cat.slug}
                             to={`/advisors?category=${cat.slug}`}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                              category?.slug === cat.slug 
-                                ? 'bg-primary/10 text-primary' 
-                                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-                            }`}
+                            className="flex items-center gap-2 cursor-pointer"
                           >
                             <cat.icon className="w-4 h-4" />
                             {cat.label}
                           </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                        </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
