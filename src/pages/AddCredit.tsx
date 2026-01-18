@@ -75,6 +75,22 @@ const AddCredit = () => {
     });
   };
 
+  const handleUseSavedCard = (cardId: string) => {
+    const selectedPackage = creditPackages.find(p => p.amount === selectedAmount);
+    const totalCredits = (selectedAmount || 0) + (selectedPackage?.bonus || 0);
+    
+    // Add credits
+    addCredits(totalCredits);
+    
+    setIsPaymentModalOpen(false);
+    setSelectedAmount(null);
+    
+    toast({
+      title: "Payment Successful!",
+      description: `$${totalCredits} credits have been added to your account.`,
+    });
+  };
+
   const selectedPackage = creditPackages.find(p => p.amount === selectedAmount);
 
   return (
@@ -188,6 +204,7 @@ const AddCredit = () => {
         bonus={selectedPackage?.bonus || 0}
         onAddCard={handleAddCard}
         onPaymentMethod={handlePaymentMethod}
+        onUseSavedCard={handleUseSavedCard}
       />
 
       {/* Card Details Modal */}

@@ -1,6 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, Check } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -9,10 +11,19 @@ interface PaymentMethodModalProps {
   bonus: number;
   onAddCard: () => void;
   onPaymentMethod?: (method: 'google' | 'paypal') => void;
+  onUseSavedCard?: (cardId: string) => void;
 }
 
-const PaymentMethodModal = ({ isOpen, onClose, amount, bonus, onAddCard, onPaymentMethod }: PaymentMethodModalProps) => {
+const PaymentMethodModal = ({ isOpen, onClose, amount, bonus, onAddCard, onPaymentMethod, onUseSavedCard }: PaymentMethodModalProps) => {
+  const { savedCards } = useAuth();
   const totalCredits = amount + bonus;
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+
+  const handlePayWithSavedCard = () => {
+    if (selectedCardId) {
+      onUseSavedCard?.(selectedCardId);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -39,6 +50,54 @@ const PaymentMethodModal = ({ isOpen, onClose, amount, bonus, onAddCard, onPayme
             <p className="text-sm text-muted-foreground text-center mb-4">
               Select a payment method
             </p>
+
+            {/* Saved Cards */}
+            {savedCards.length > 0 && (
+              <>
+                <div className="space-y-2">
+                  {savedCards.map((card) => (
+                    <button
+                      key={card.id}
+                      onClick={() => setSelectedCardId(card.id)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                        selectedCardId === card.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <div className="w-10 h-7 bg-gradient-to-r from-blue-600 to-blue-800 rounded flex items-center justify-center flex-shrink-0">
+                        <CreditCard className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="font-medium text-foreground text-sm">•••• {card.lastFourDigits}</p>
+                        <p className="text-xs text-muted-foreground">{card.cardholderName}</p>
+                      </div>
+                      {selectedCardId === card.id && (
+                        <Check className="w-5 h-5 text-primary" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {selectedCardId && (
+                  <Button
+                    className="w-full h-12 text-base font-medium"
+                    onClick={handlePayWithSavedCard}
+                  >
+                    Pay ${amount} with Saved Card
+                  </Button>
+                )}
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or pay with</span>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Google Pay */}
             <Button
@@ -69,7 +128,7 @@ const PaymentMethodModal = ({ isOpen, onClose, amount, bonus, onAddCard, onPayme
             </Button>
 
             {/* Divider */}
-            <div className="relative my-6">
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border"></div>
               </div>
@@ -80,7 +139,7 @@ const PaymentMethodModal = ({ isOpen, onClose, amount, bonus, onAddCard, onPayme
 
             {/* Add Card */}
             <Button
-              variant="default"
+              variant="outline"
               className="w-full h-12 justify-center gap-3 text-base font-medium"
               onClick={onAddCard}
             >
