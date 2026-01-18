@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X, Mail, Lock, User, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -18,34 +20,52 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState('');
+
+  const { login, signup } = useAuth();
+  const { toast } = useToast();
 
   // Sync mode with prop when modal opens
   useEffect(() => {
     setMode(initialMode);
+    setError('');
   }, [initialMode, isOpen]);
 
   const isSignUp = mode === 'signup';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle auth logic
-    console.log({ email, password, name, agreed });
-    onClose();
+    setError('');
+
+    if (isSignUp) {
+      const result = signup(email, password, name);
+      if (result.success) {
+        toast({ title: 'Account created!', description: 'Welcome to our platform.' });
+        onClose();
+      } else {
+        setError(result.error || 'Signup failed');
+      }
+    } else {
+      const result = login(email, password);
+      if (result.success) {
+        toast({ title: 'Welcome back!', description: 'You have signed in successfully.' });
+        onClose();
+      } else {
+        setError(result.error || 'Login failed');
+      }
+    }
   };
 
   const handleGoogleLogin = () => {
-    console.log('Google login');
-    // Will integrate with Supabase later
+    toast({ title: 'Coming soon', description: 'Google login will be available soon.' });
   };
 
   const handleFacebookLogin = () => {
-    console.log('Facebook login');
-    // Will integrate with Supabase later
+    toast({ title: 'Coming soon', description: 'Facebook login will be available soon.' });
   };
 
   const handleForgotPassword = () => {
-    console.log('Forgot password');
-    // Will implement forgot password flow
+    toast({ title: 'Coming soon', description: 'Password reset will be available soon.' });
   };
 
   return (
@@ -69,6 +89,12 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+              {error}
+            </div>
+          )}
+
           {isSignUp && (
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -86,8 +112,8 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              type="email"
-              placeholder="Email address"
+              type="text"
+              placeholder="Email or username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-10 h-12 bg-secondary border-border"
