@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { 
-  ChevronRight, SlidersHorizontal, X, Grid3X3, List,
-  Star, ChevronDown
+  ChevronRight, SlidersHorizontal, Grid3X3, List, Loader2
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -25,60 +24,15 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { advisors } from '@/data/advisors';
-
-const categoryInfo: Record<string, { title: string; description: string }> = {
-  'all': {
-    title: 'All Psychic Advisors',
-    description: 'Browse our complete directory of verified psychic advisors. Find your perfect match based on specialty, rating, and availability.',
-  },
-  'soulmate': {
-    title: 'Who is my soulmate?',
-    description: 'The search for your soulmate is one of life\'s most profound quests. Let our psychics guide your quest to find your soulmate. Tap into universal wisdom and recognize the one meant for you.',
-  },
-  'love': {
-    title: 'Love & Relationships',
-    description: 'Get guidance on matters of the heart. Our love psychics can help you navigate relationships, find clarity, and discover your path to lasting happiness.',
-  },
-  'tarot': {
-    title: 'Tarot Readings',
-    description: 'Unlock the wisdom of the cards. Our expert tarot readers will reveal insights about your past, present, and future to guide your decisions.',
-  },
-  'astrology': {
-    title: 'Astrology Readings',
-    description: 'Discover what the stars have in store for you. Our astrologers provide personalized insights based on your birth chart and planetary alignments.',
-  },
-  'career': {
-    title: 'Career Forecasts',
-    description: 'Navigate your professional path with confidence. Get insights on job changes, business decisions, and your path to success.',
-  },
-  'numerology': {
-    title: 'Numerology Readings',
-    description: 'Discover the hidden meaning in numbers. Our numerologists reveal insights about your life path, destiny, and the cosmic patterns that shape your journey.',
-  },
-  'dreams': {
-    title: 'Dream Analysis',
-    description: 'Unlock the secrets of your subconscious mind. Our dream interpreters help you understand the symbols and messages in your dreams.',
-  },
-  'palm': {
-    title: 'Palm Readings',
-    description: 'Your hands hold the map to your destiny. Our palm readers interpret the lines and patterns to reveal insights about your past, present, and future.',
-  },
-  'mediums': {
-    title: 'Psychic Mediums',
-    description: 'Connect with loved ones who have passed. Our gifted mediums bridge the gap between worlds to deliver messages of love and healing.',
-  },
-  'fortune': {
-    title: 'Fortune Telling',
-    description: 'Glimpse into what lies ahead. Our fortune tellers use ancient arts to reveal the possibilities that await you on your life\'s journey.',
-  },
-};
+import { categories, getCategoryBySlug } from '@/data/categories';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 type SortOption = 'recommended' | 'rating' | 'reviews' | 'price-low' | 'price-high';
 type StatusFilter = 'all' | 'online' | 'available';
 
 const AdvisorsListing = () => {
   const [searchParams] = useSearchParams();
-  const category = searchParams.get('category') || 'all';
+  const categorySlug = searchParams.get('category') || '';
   
   // Filter states
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -89,11 +43,25 @@ const AdvisorsListing = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const info = categoryInfo[category] || categoryInfo['all'];
+  // Get category info
+  const category = getCategoryBySlug(categorySlug);
+  const pageTitle = category ? category.label : 'All Psychic Advisors';
+  const pageDescription = category 
+    ? category.description 
+    : 'Browse our complete directory of verified psychic advisors. Find your perfect match based on specialty, rating, and availability.';
 
   // Filter and sort advisors
   const filteredAdvisors = useMemo(() => {
     let result = [...advisors];
+
+    // Category filter - match by specialty
+    if (category) {
+      result = result.filter(advisor => 
+        advisor.specialties.some(specialty => 
+          category.specialtyMatch.includes(specialty)
+        )
+      );
+    }
 
     // Status filter
     if (statusFilter === 'online') {
@@ -142,9 +110,22 @@ const AdvisorsListing = () => {
     }
 
     return result;
-  }, [statusFilter, showOffline, minReviews, priceRange, sortBy]);
+  }, [category, statusFilter, showOffline, minReviews, priceRange, sortBy]);
+
+  // Infinite scroll
+  const { displayedItems, hasMore, isLoading, loadMoreRef, totalItems } = useInfiniteScroll({
+    items: filteredAdvisors,
+    itemsPerPage: 12,
+  });
 
   const onlineCount = advisors.filter(a => a.status === 'online').length;
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setShowOffline(true);
+    setMinReviews(0);
+    setPriceRange([1.99, 39.99]);
+  };
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -238,7 +219,15 @@ const AdvisorsListing = () => {
                 Home
               </Link>
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              <span className="text-foreground">{info.title}</span>
+              <Link to="/advisors" className="text-muted-foreground hover:text-primary transition-colors">
+                Advisors
+              </Link>
+              {category && (
+                <>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-foreground">{category.label}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -262,15 +251,41 @@ const AdvisorsListing = () => {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl">
+              {category && (
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r ${category.color} text-white text-sm font-medium mb-4`}>
+                  <category.icon className="w-4 h-4" />
+                  {category.label}
+                </div>
+              )}
               <h1 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-                {info.title}
+                {pageTitle}
               </h1>
               <p className="text-muted-foreground text-lg leading-relaxed">
-                {info.description}
+                {pageDescription}
               </p>
             </div>
           </div>
         </section>
+
+        {/* Category Quick Links */}
+        {!category && (
+          <div className="bg-card border-y border-border">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex flex-wrap gap-2">
+                {categories.slice(0, 10).map((cat) => (
+                  <Link
+                    key={cat.slug}
+                    to={`/advisors?category=${cat.slug}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-sm text-muted-foreground hover:text-primary hover:bg-secondary/80 transition-colors"
+                  >
+                    <cat.icon className="w-3.5 h-3.5" />
+                    {cat.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Promo Banner */}
         <div className="bg-accent/10 border-y border-accent/20">
@@ -387,28 +402,46 @@ const AdvisorsListing = () => {
             {/* Results Count */}
             <div className="mb-6">
               <p className="text-muted-foreground">
-                Showing <span className="text-foreground font-medium">{filteredAdvisors.length}</span> advisors
+                Showing <span className="text-foreground font-medium">{displayedItems.length}</span> of{' '}
+                <span className="text-foreground font-medium">{totalItems}</span> advisors
                 {statusFilter === 'online' && <span className="text-green-500 ml-1">• Online now</span>}
               </p>
             </div>
 
             {/* Advisors Grid */}
-            {filteredAdvisors.length > 0 ? (
-              <div className={`grid gap-4 md:gap-6 ${
-                viewMode === 'grid' 
-                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                  : 'grid-cols-1'
-              }`}>
-                {filteredAdvisors.map((advisor, index) => (
-                  <div
-                    key={advisor.id}
-                    className="animate-fade-in"
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <AdvisorCard advisor={advisor} />
-                  </div>
-                ))}
-              </div>
+            {displayedItems.length > 0 ? (
+              <>
+                <div className={`grid gap-4 md:gap-6 ${
+                  viewMode === 'grid' 
+                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                    : 'grid-cols-1'
+                }`}>
+                  {displayedItems.map((advisor, index) => (
+                    <div
+                      key={advisor.id}
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${Math.min(index, 11) * 0.05}s` }}
+                    >
+                      <AdvisorCard advisor={advisor} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Infinite Scroll Trigger */}
+                <div ref={loadMoreRef} className="h-20 flex items-center justify-center mt-8">
+                  {isLoading && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Loading more advisors...</span>
+                    </div>
+                  )}
+                  {!hasMore && displayedItems.length > 0 && (
+                    <p className="text-muted-foreground text-sm">
+                      You've seen all {totalItems} advisors
+                    </p>
+                  )}
+                </div>
+              </>
             ) : (
               <div className="text-center py-16">
                 <div className="text-6xl mb-4">🔮</div>
@@ -418,25 +451,8 @@ const AdvisorsListing = () => {
                 <p className="text-muted-foreground mb-6">
                   Try adjusting your filters to see more results
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setStatusFilter('all');
-                    setShowOffline(true);
-                    setMinReviews(0);
-                    setPriceRange([1.99, 39.99]);
-                  }}
-                >
+                <Button variant="outline" onClick={clearFilters}>
                   Clear Filters
-                </Button>
-              </div>
-            )}
-
-            {/* Load More */}
-            {filteredAdvisors.length > 0 && (
-              <div className="text-center mt-12">
-                <Button variant="outline" size="lg">
-                  Load More Advisors
                 </Button>
               </div>
             )}
