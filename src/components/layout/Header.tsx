@@ -74,8 +74,8 @@ export const Header = () => {
               <Link to="/advisors?category=tarot" className="text-foreground/80 hover:text-accent transition-colors">
                 Tarot
               </Link>
-              <Link to="/advisors?category=astrology" className="text-foreground/80 hover:text-accent transition-colors">
-                Astrology
+              <Link to="/horoscope" className="text-foreground/80 hover:text-accent transition-colors">
+                Horoscopes
               </Link>
               <Link to="/advisors?category=love" className="text-foreground/80 hover:text-accent transition-colors">
                 Love & Relationships
