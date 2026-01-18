@@ -267,34 +267,67 @@ const AdvisorsListing = () => {
           </div>
         </section>
 
-        {/* Category Quick Links - Always visible */}
+        {/* Category Quick Links - Horizontal Scroll */}
         <div className="bg-card border-y border-border">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex flex-wrap gap-2">
-              <Link
-                to="/advisors"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                  !category 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80'
-                }`}
-              >
-                All
-              </Link>
-              {categories.map((cat) => (
-                <Link
-                  key={cat.slug}
-                  to={`/advisors?category=${cat.slug}`}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                    category?.slug === cat.slug 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80'
-                  }`}
-                >
-                  <cat.icon className="w-3.5 h-3.5" />
-                  {cat.label}
-                </Link>
-              ))}
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap hidden sm:block">
+                Browse:
+              </span>
+              <div className="flex-1 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-2 pb-1">
+                  <Link
+                    to="/advisors"
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                      !category 
+                        ? 'bg-primary text-primary-foreground shadow-md' 
+                        : 'bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    All Services
+                  </Link>
+                  {categories.slice(0, 8).map((cat) => (
+                    <Link
+                      key={cat.slug}
+                      to={`/advisors?category=${cat.slug}`}
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                        category?.slug === cat.slug 
+                          ? 'bg-primary text-primary-foreground shadow-md' 
+                          : 'bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary'
+                      }`}
+                    >
+                      <cat.icon className="w-4 h-4" />
+                      {cat.label}
+                    </Link>
+                  ))}
+                  {categories.length > 8 && (
+                    <div className="relative group">
+                      <button
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+                      >
+                        +{categories.length - 8} More
+                      </button>
+                      {/* Dropdown for more categories */}
+                      <div className="absolute top-full left-0 mt-2 p-2 bg-card border border-border rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[200px]">
+                        {categories.slice(8).map((cat) => (
+                          <Link
+                            key={cat.slug}
+                            to={`/advisors?category=${cat.slug}`}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                              category?.slug === cat.slug 
+                                ? 'bg-primary/10 text-primary' 
+                                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                            }`}
+                          >
+                            <cat.icon className="w-4 h-4" />
+                            {cat.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
