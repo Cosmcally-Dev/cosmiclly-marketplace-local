@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Search, User, Sparkles } from 'lucide-react';
+import { Menu, Search, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileMenu } from './MobileMenu';
 import { SearchModal } from '@/components/modals/SearchModal';
 import { AuthModal } from '@/components/modals/AuthModal';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -14,18 +22,17 @@ export const Header = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  const { user, isAuthenticated, logout } = useAuth();
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
       if (currentScrollY < 50) {
-        // Always show header at top of page
         setIsVisible(true);
       } else if (currentScrollY < lastScrollY) {
-        // Scrolling up - show header
         setIsVisible(true);
       } else if (currentScrollY > lastScrollY) {
-        // Scrolling down - hide header
         setIsVisible(false);
       }
       
@@ -39,6 +46,10 @@ export const Header = () => {
   const handleAuth = (mode: 'signin' | 'signup') => {
     setAuthMode(mode);
     setIsAuthOpen(true);
+  };
+
+  const handleSignOut = () => {
+    logout();
   };
 
   return (
@@ -91,22 +102,55 @@ export const Header = () => {
                 <Search className="w-5 h-5" />
               </button>
               
-              <button
-                onClick={() => handleAuth('signin')}
-                className="hidden md:flex items-center gap-2 text-foreground/80 hover:text-accent transition-colors"
-              >
-                <User className="w-5 h-5" />
-                <span>Sign In</span>
-              </button>
+              {isAuthenticated ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                        <User className="w-4 h-4 text-accent" />
+                      </div>
+                      <span className="hidden md:block text-sm font-medium text-foreground">
+                        {user?.name || user?.email}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 bg-card border-border z-50">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Add Credit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <button
+                    onClick={() => handleAuth('signin')}
+                    className="hidden md:flex items-center gap-2 text-foreground/80 hover:text-accent transition-colors"
+                  >
+                    <User className="w-5 h-5" />
+                    <span>Sign In</span>
+                  </button>
 
-              <Button 
-                variant="hero" 
-                size="sm"
-                onClick={() => handleAuth('signup')}
-                className="hidden sm:inline-flex"
-              >
-                Join Free
-              </Button>
+                  <Button 
+                    variant="hero" 
+                    size="sm"
+                    onClick={() => handleAuth('signup')}
+                    className="hidden sm:inline-flex"
+                  >
+                    Join Free
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
