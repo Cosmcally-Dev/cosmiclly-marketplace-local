@@ -9,6 +9,7 @@ import AdvisorProfile from "./pages/AdvisorProfile";
 import AdvisorsListing from "./pages/AdvisorsListing";
 import Horoscope from "./pages/Horoscope";
 import Chat from "./pages/Chat";
+import AddCredit from "./pages/AddCredit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/advisor/:id" element={<AdvisorProfile />} />
             <Route path="/chat/:id" element={<Chat />} />
             <Route path="/horoscope" element={<Horoscope />} />
+            <Route path="/add-credit" element={<AddCredit />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
