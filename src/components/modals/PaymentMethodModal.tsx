@@ -8,9 +8,10 @@ interface PaymentMethodModalProps {
   amount: number;
   bonus: number;
   onAddCard: () => void;
+  onPaymentMethod?: (method: 'google' | 'paypal') => void;
 }
 
-const PaymentMethodModal = ({ isOpen, onClose, amount, bonus, onAddCard }: PaymentMethodModalProps) => {
+const PaymentMethodModal = ({ isOpen, onClose, amount, bonus, onAddCard, onPaymentMethod }: PaymentMethodModalProps) => {
   const totalCredits = amount + bonus;
 
   return (
@@ -43,7 +44,7 @@ const PaymentMethodModal = ({ isOpen, onClose, amount, bonus, onAddCard }: Payme
             <Button
               variant="outline"
               className="w-full h-12 justify-center gap-3 text-base font-medium"
-              onClick={() => console.log('Google Pay selected')}
+              onClick={() => onPaymentMethod?.('google')}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -58,7 +59,7 @@ const PaymentMethodModal = ({ isOpen, onClose, amount, bonus, onAddCard }: Payme
             <Button
               variant="outline"
               className="w-full h-12 justify-center gap-3 text-base font-medium"
-              onClick={() => console.log('PayPal selected')}
+              onClick={() => onPaymentMethod?.('paypal')}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#003087" d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106z"/>
