@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { advisors, type Advisor } from '@/data/advisors';
 import { ChatModal } from '@/components/modals/ChatModal';
+import { AuthModal } from '@/components/modals/AuthModal';
+import { useAuth } from '@/hooks/useAuth';
 
 const StatusBadge = ({ status }: { status: Advisor['status'] }) => {
   const statusConfig = {
@@ -44,9 +46,20 @@ const AdvisorProfile = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  
+  const { isAuthenticated } = useAuth();
   
   // Find advisor by id or use first one as default
   const advisor = advisors.find(a => a.id === id) || advisors[0];
+
+  const handleChatClick = () => {
+    if (isAuthenticated) {
+      setIsChatOpen(true);
+    } else {
+      setIsAuthOpen(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -152,7 +165,7 @@ const AdvisorProfile = () => {
                 <div className="grid sm:grid-cols-2 gap-4">
                   {/* Chat Card */}
                   <button
-                    onClick={() => setIsChatOpen(true)}
+                    onClick={handleChatClick}
                     disabled={advisor.status !== 'online'}
                     className="group relative p-6 rounded-xl bg-card/80 backdrop-blur-sm border border-border hover:border-primary transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -388,7 +401,7 @@ const AdvisorProfile = () => {
                     variant="hero" 
                     size="lg" 
                     className="w-full mb-3"
-                    onClick={() => setIsChatOpen(true)}
+                    onClick={handleChatClick}
                     disabled={advisor.status !== 'online'}
                   >
                     <MessageCircle className="w-5 h-5 mr-2" />
@@ -427,6 +440,12 @@ const AdvisorProfile = () => {
         isOpen={isChatOpen} 
         onClose={() => setIsChatOpen(false)} 
         advisor={advisor}
+      />
+      
+      <AuthModal 
+        isOpen={isAuthOpen} 
+        onClose={() => setIsAuthOpen(false)} 
+        mode="signin"
       />
     </div>
   );
