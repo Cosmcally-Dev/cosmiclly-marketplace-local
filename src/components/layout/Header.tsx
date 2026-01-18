@@ -23,7 +23,7 @@ export const Header = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, credits } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -117,6 +117,9 @@ export const Header = () => {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 bg-card border-border z-50">
+                    <div className="px-2 py-1.5 text-sm font-medium text-foreground border-b border-border mb-1">
+                      Balance: <span className="text-primary">${credits}</span>
+                    </div>
                     <DropdownMenuItem onClick={() => navigate('/add-credit')} className="cursor-pointer">
                       <CreditCard className="w-4 h-4 mr-2" />
                       Add Credit

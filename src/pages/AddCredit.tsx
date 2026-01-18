@@ -4,6 +4,8 @@ import { ArrowLeft, Gift, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import PaymentMethodModal from '@/components/modals/PaymentMethodModal';
 import CardDetailsModal from '@/components/modals/CardDetailsModal';
 
@@ -18,6 +20,8 @@ const creditPackages = [
 
 const AddCredit = () => {
   const navigate = useNavigate();
+  const { addCredits, addCard } = useAuth();
+  const { toast } = useToast();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
@@ -32,10 +36,43 @@ const AddCredit = () => {
     setIsCardModalOpen(true);
   };
 
-  const handleCardSubmit = (cardDetails: any) => {
-    console.log('Card details submitted:', cardDetails);
+  const handleCardSubmit = (cardDetails: { cardholderName: string; cardNumber: string; expirationDate: string }) => {
+    const selectedPackage = creditPackages.find(p => p.amount === selectedAmount);
+    const totalCredits = (selectedAmount || 0) + (selectedPackage?.bonus || 0);
+    
+    // Save card (only last 4 digits)
+    addCard({
+      cardholderName: cardDetails.cardholderName,
+      lastFourDigits: cardDetails.cardNumber.replace(/\s/g, '').slice(-4),
+      expirationDate: cardDetails.expirationDate,
+    });
+    
+    // Add credits
+    addCredits(totalCredits);
+    
     setIsCardModalOpen(false);
-    // Handle payment processing
+    setSelectedAmount(null);
+    
+    toast({
+      title: "Payment Successful!",
+      description: `$${totalCredits} credits have been added to your account.`,
+    });
+  };
+
+  const handlePaymentMethod = (method: 'google' | 'paypal') => {
+    const selectedPackage = creditPackages.find(p => p.amount === selectedAmount);
+    const totalCredits = (selectedAmount || 0) + (selectedPackage?.bonus || 0);
+    
+    // Add credits
+    addCredits(totalCredits);
+    
+    setIsPaymentModalOpen(false);
+    setSelectedAmount(null);
+    
+    toast({
+      title: "Payment Successful!",
+      description: `$${totalCredits} credits have been added to your account via ${method === 'google' ? 'Google Pay' : 'PayPal'}.`,
+    });
   };
 
   const selectedPackage = creditPackages.find(p => p.amount === selectedAmount);
@@ -150,6 +187,7 @@ const AddCredit = () => {
         amount={selectedAmount || 0}
         bonus={selectedPackage?.bonus || 0}
         onAddCard={handleAddCard}
+        onPaymentMethod={handlePaymentMethod}
       />
 
       {/* Card Details Modal */}

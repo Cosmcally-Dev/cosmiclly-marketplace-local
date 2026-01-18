@@ -5,12 +5,23 @@ interface User {
   name?: string;
 }
 
+interface SavedCard {
+  id: string;
+  cardholderName: string;
+  lastFourDigits: string;
+  expirationDate: string;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => { success: boolean; error?: string };
   signup: (email: string, password: string, name: string) => { success: boolean; error?: string };
   logout: () => void;
   isAuthenticated: boolean;
+  credits: number;
+  addCredits: (amount: number) => void;
+  savedCards: SavedCard[];
+  addCard: (card: Omit<SavedCard, 'id'>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -22,12 +33,23 @@ const TEST_ACCOUNTS = [
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [credits, setCredits] = useState<number>(0);
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
 
   useEffect(() => {
     // Check session storage on mount
     const storedUser = sessionStorage.getItem('user');
+    const storedCredits = sessionStorage.getItem('credits');
+    const storedCards = sessionStorage.getItem('savedCards');
+    
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+    }
+    if (storedCredits) {
+      setCredits(JSON.parse(storedCredits));
+    }
+    if (storedCards) {
+      setSavedCards(JSON.parse(storedCards));
     }
   }, []);
 
@@ -56,11 +78,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
+    setCredits(0);
+    setSavedCards([]);
     sessionStorage.removeItem('user');
+    sessionStorage.removeItem('credits');
+    sessionStorage.removeItem('savedCards');
+  };
+
+  const addCredits = (amount: number) => {
+    const newCredits = credits + amount;
+    setCredits(newCredits);
+    sessionStorage.setItem('credits', JSON.stringify(newCredits));
+  };
+
+  const addCard = (card: Omit<SavedCard, 'id'>) => {
+    const newCard: SavedCard = {
+      ...card,
+      id: crypto.randomUUID(),
+    };
+    const newCards = [...savedCards, newCard];
+    setSavedCards(newCards);
+    sessionStorage.setItem('savedCards', JSON.stringify(newCards));
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      signup, 
+      logout, 
+      isAuthenticated: !!user,
+      credits,
+      addCredits,
+      savedCards,
+      addCard
+    }}>
       {children}
     </AuthContext.Provider>
   );
