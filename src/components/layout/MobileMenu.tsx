@@ -18,7 +18,7 @@ const menuItems = [
   { icon: Star, label: 'Fortune Telling', href: '/advisors?category=fortune' },
   { icon: TrendingUp, label: 'Career Forecasts', href: '/advisors?category=career' },
   { icon: Ghost, label: 'Psychic Mediums', href: '/advisors?category=mediums' },
-  { icon: Calendar, label: 'Daily Horoscope', href: '/#horoscope' },
+  { icon: Calendar, label: 'Horoscopes', href: '/horoscope' },
   { icon: BookOpen, label: 'Articles', href: '/#articles' },
 ];
 
@@ -69,7 +69,7 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                     onClick={onClose}
                     className="flex items-center gap-3 px-4 py-3 text-foreground/80 hover:bg-secondary hover:text-primary transition-colors group"
                   >
-                    <item.icon className="w-5 h-5 text-mystic-purple group-hover:text-primary transition-colors" />
+                    <item.icon className="w-5 h-5 text-accent group-hover:text-primary transition-colors" />
                     <span className="flex-1">{item.label}</span>
                     <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
