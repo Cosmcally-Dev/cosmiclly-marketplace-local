@@ -31,7 +31,7 @@ export const PromoBanner = () => {
                 <span className="text-sm text-white/90">Limited Time Offer</span>
               </div>
 
-              <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+              <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
                 Get 3 Free Minutes
                 <br />
                 <span className="text-accent">+ 70% Off</span>

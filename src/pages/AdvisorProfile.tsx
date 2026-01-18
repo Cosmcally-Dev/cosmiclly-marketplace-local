@@ -123,7 +123,7 @@ const AdvisorProfile = () => {
                 </div>
 
                 {/* Name & Title */}
-                <h1 className="font-serif text-2xl md:text-3xl font-bold text-foreground mb-1">
+                <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-1">
                   {advisor.name}
                 </h1>
                 <p className="text-muted-foreground mb-4">{advisor.title}</p>
@@ -264,7 +264,7 @@ const AdvisorProfile = () => {
               <div className="lg:col-span-2 space-y-8">
                 {/* AI Summary */}
                 <div className="p-6 rounded-xl bg-card border border-border">
-                  <h3 className="font-serif text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <h3 className="font-heading text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
                     <Award className="w-5 h-5 text-accent" />
                     What clients are saying
                   </h3>
@@ -275,7 +275,7 @@ const AdvisorProfile = () => {
 
                 {/* About Services */}
                 <div className="p-6 rounded-xl bg-card border border-border">
-                  <h3 className="font-serif text-xl font-semibold text-foreground mb-4">About my services</h3>
+                  <h3 className="font-heading text-xl font-semibold text-foreground mb-4">About my services</h3>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     {advisor.description}
                   </p>
@@ -302,7 +302,7 @@ const AdvisorProfile = () => {
 
                 {/* Specialties */}
                 <div className="p-6 rounded-xl bg-card border border-border">
-                  <h3 className="font-serif text-xl font-semibold text-foreground mb-4">Specialties</h3>
+                  <h3 className="font-heading text-xl font-semibold text-foreground mb-4">Specialties</h3>
                   <div className="flex flex-wrap gap-3">
                     {advisor.specialties.map((specialty) => (
                       <a
@@ -320,7 +320,7 @@ const AdvisorProfile = () => {
                 {/* Reviews */}
                 <div className="p-6 rounded-xl bg-card border border-border">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-serif text-xl font-semibold text-foreground">Reviews</h3>
+                    <h3 className="font-heading text-xl font-semibold text-foreground">Reviews</h3>
                     <div className="flex items-center gap-4 text-sm">
                       <span className="flex items-center gap-1 text-green-500">
                         <ThumbsUp className="w-4 h-4" />

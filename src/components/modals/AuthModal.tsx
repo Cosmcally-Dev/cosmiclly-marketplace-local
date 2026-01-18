@@ -39,7 +39,7 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
             <div className="absolute bottom-4 left-1/4 w-1 h-1 bg-mystic-purple-light rounded-full animate-twinkle" style={{ animationDelay: '1s' }} />
           </div>
           <Sparkles className="w-12 h-12 text-accent mx-auto mb-3" />
-          <h2 className="font-serif text-2xl font-semibold text-foreground">
+          <h2 className="font-heading text-2xl font-semibold text-foreground">
             {isSignUp ? 'Begin Your Journey' : 'Welcome Back'}
           </h2>
           <p className="text-muted-foreground text-sm mt-1">

@@ -262,7 +262,7 @@ const AdvisorsListing = () => {
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl">
-              <h1 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
+              <h1 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
                 {info.title}
               </h1>
               <p className="text-muted-foreground text-lg leading-relaxed">
@@ -412,7 +412,7 @@ const AdvisorsListing = () => {
             ) : (
               <div className="text-center py-16">
                 <div className="text-6xl mb-4">🔮</div>
-                <h3 className="font-serif text-xl font-semibold text-foreground mb-2">
+                <h3 className="font-heading text-xl font-semibold text-foreground mb-2">
                   No advisors found
                 </h3>
                 <p className="text-muted-foreground mb-6">

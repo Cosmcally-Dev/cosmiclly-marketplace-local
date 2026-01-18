@@ -25,7 +25,7 @@ export const FeaturedAdvisorsSection = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-2">
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-2">
               Online <span className="text-gradient">Advisors</span>
             </h2>
             <p className="text-muted-foreground">

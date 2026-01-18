@@ -98,7 +98,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
         </div>
 
         {/* Name & Title */}
-        <h3 className="font-serif text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+        <h3 className="font-heading text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
           {advisor.name}
         </h3>
         <p className="text-sm text-muted-foreground mb-3">{advisor.title}</p>

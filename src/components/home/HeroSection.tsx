@@ -33,7 +33,7 @@ export const HeroSection = () => {
           </div>
 
           {/* Main Heading */}
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
             <span className="text-foreground">Psychic Chat,</span>
             <br />
             <span className="text-gradient">Tarot & Astrology</span>
