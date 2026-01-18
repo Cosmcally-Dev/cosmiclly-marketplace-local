@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, Clock, MessageCircle, Bell } from 'lucide-react';
+import { Star, Clock, MessageCircle, Bell, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,7 @@ const StatusBadge = ({ status }: { status: Advisor['status'] }) => {
 export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   const navigate = useNavigate();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'chat' | 'call' | null>(null);
   const { isAuthenticated } = useAuth();
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -42,11 +43,29 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
     e.stopPropagation();
     
     if (!isAuthenticated) {
+      setPendingAction('chat');
       setIsAuthOpen(true);
       return;
     }
     
     navigate(`/chat/${advisor.id}`);
+  };
+
+  const handleCallClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      setPendingAction('call');
+      setIsAuthOpen(true);
+      return;
+    }
+    
+    navigate(`/call/${advisor.id}`);
+  };
+
+  const handleAuthClose = () => {
+    setIsAuthOpen(false);
+    setPendingAction(null);
   };
 
   return (
@@ -152,15 +171,26 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           )}
         </div>
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         {advisor.status === 'online' ? (
-          <Button
-            variant="hero"
-            className="w-full"
-            onClick={handleChatClick}
-          >
-            Chat Now
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="hero"
+              className="flex-1"
+              onClick={handleChatClick}
+            >
+              <MessageCircle className="w-4 h-4 mr-1" />
+              Chat
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleCallClick}
+              className="shrink-0"
+            >
+              <Phone className="w-4 h-4" />
+            </Button>
+          </div>
         ) : advisor.status === 'busy' ? (
           <Button variant="outline" className="w-full" onClick={(e) => e.stopPropagation()}>
             <Bell className="w-4 h-4 mr-2" />
@@ -176,7 +206,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
       
       <AuthModal 
         isOpen={isAuthOpen} 
-        onClose={() => setIsAuthOpen(false)} 
+        onClose={handleAuthClose} 
         mode="signin"
       />
     </div>

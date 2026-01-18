@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { advisors, type Advisor } from '@/data/advisors';
 import { useAuth } from '@/hooks/useAuth';
+import { ReviewModal } from '@/components/modals/ReviewModal';
+import { LowCreditWarning } from '@/components/session/LowCreditWarning';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
@@ -17,7 +20,8 @@ interface Message {
 const Chat = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, credits, addCredits, addSessionLog } = useAuth();
+  const { toast } = useToast();
   
   const advisor = advisors.find(a => a.id === id) || advisors[0];
   
@@ -32,7 +36,15 @@ const Chat = () => {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
+  const [showReview, setShowReview] = useState(false);
+  const [showLowCreditWarning, setShowLowCreditWarning] = useState(false);
+  const [creditsUsed, setCreditsUsed] = useState(0);
+  const [hasShownWarning, setHasShownWarning] = useState(false);
+  const [isSessionEnded, setIsSessionEnded] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sessionStartRef = useRef<Date>(new Date());
+  const lastDeductionRef = useRef(0);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -41,13 +53,54 @@ const Chat = () => {
     }
   }, [isAuthenticated, navigate, id]);
 
-  // Session timer
+  // Session timer and credit deduction
   useEffect(() => {
+    if (isSessionEnded) return;
+    
     const interval = setInterval(() => {
-      setSessionTime((prev) => prev + 1);
+      setSessionTime((prev) => {
+        const newTime = prev + 1;
+        
+        // Check for credit deduction every 60 seconds after free minutes
+        const freeSeconds = (advisor.freeMinutes || 0) * 60;
+        const billableSeconds = Math.max(0, newTime - freeSeconds);
+        const minutesBilled = Math.floor(billableSeconds / 60);
+        
+        if (minutesBilled > lastDeductionRef.current && billableSeconds > 0) {
+          const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
+          const deduction = pricePerMinute;
+          
+          // Check if enough credits
+          if (credits - creditsUsed - deduction < 0) {
+            // End session due to insufficient credits
+            handleEndChat();
+            toast({
+              variant: "destructive",
+              title: "Insufficient Credits",
+              description: "Your session has ended due to insufficient credits.",
+            });
+          } else {
+            setCreditsUsed(prev => prev + deduction);
+            lastDeductionRef.current = minutesBilled;
+          }
+        }
+        
+        // Show low credit warning at 2 minutes remaining worth of credits
+        const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
+        const remainingCredits = credits - creditsUsed;
+        const minutesRemaining = remainingCredits / pricePerMinute;
+        
+        if (minutesRemaining <= 2 && minutesRemaining > 0 && !hasShownWarning && billableSeconds > 0) {
+          setShowLowCreditWarning(true);
+          setHasShownWarning(true);
+        }
+        
+        return newTime;
+      });
     }, 1000);
+    
     return () => clearInterval(interval);
-  }, []);
+  }, [isSessionEnded, advisor, credits, creditsUsed, hasShownWarning, toast]);
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -60,8 +113,31 @@ const Chat = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleEndChat = () => {
+    setIsSessionEnded(true);
+    
+    // Log the session
+    if (addSessionLog) {
+      addSessionLog({
+        type: 'chat',
+        advisorId: advisor.id,
+        advisorName: advisor.name,
+        duration: sessionTime,
+        creditsUsed: creditsUsed,
+        timestamp: sessionStartRef.current,
+      });
+    }
+    
+    // Deduct credits
+    if (creditsUsed > 0) {
+      addCredits(-creditsUsed);
+    }
+    
+    setShowReview(true);
+  };
+
   const handleSend = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isSessionEnded) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -101,10 +177,20 @@ const Chat = () => {
     }
   };
 
+  const handleAddCredits = () => {
+    setShowLowCreditWarning(false);
+    navigate('/add-credit');
+  };
+
+  const handleReviewClose = () => {
+    setShowReview(false);
+    navigate(`/advisor/${advisor.id}`);
+  };
+
   const freeMinutesRemaining = Math.max(0, (advisor.freeMinutes || 0) * 60 - sessionTime);
-  const costSoFar = freeMinutesRemaining > 0 
-    ? 0 
-    : ((sessionTime - (advisor.freeMinutes || 0) * 60) / 60 * (advisor.discountedPrice || advisor.pricePerMinute)).toFixed(2);
+  const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
+  const remainingCredits = credits - creditsUsed;
+  const estimatedMinutesRemaining = Math.floor(remainingCredits / pricePerMinute);
 
   if (!isAuthenticated) {
     return null;
@@ -156,7 +242,7 @@ const Chat = () => {
                 </div>
               ) : (
                 <div className="text-xs text-muted-foreground">
-                  ${costSoFar} charged
+                  ${creditsUsed.toFixed(2)} • Balance: ${remainingCredits.toFixed(2)}
                 </div>
               )}
             </div>
@@ -164,7 +250,8 @@ const Chat = () => {
             <Button 
               variant="destructive"
               size="sm"
-              onClick={() => navigate(`/advisor/${advisor.id}`)}
+              onClick={handleEndChat}
+              disabled={isSessionEnded}
             >
               End Chat
             </Button>
@@ -238,18 +325,19 @@ const Chat = () => {
             <div className="flex items-center gap-3">
               <Input
                 type="text"
-                placeholder="Type your message..."
+                placeholder={isSessionEnded ? "Session ended" : "Type your message..."}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
                 className="flex-1 h-12 bg-background border-border"
+                disabled={isSessionEnded}
               />
               <Button
                 variant="hero"
                 size="icon"
                 className="h-12 w-12"
                 onClick={handleSend}
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isSessionEnded}
               >
                 <Send className="w-5 h-5" />
               </Button>
@@ -260,6 +348,26 @@ const Chat = () => {
           </div>
         </div>
       </main>
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={showReview}
+        onClose={handleReviewClose}
+        advisor={advisor}
+        sessionType="chat"
+        sessionDuration={sessionTime}
+        creditsUsed={creditsUsed}
+      />
+
+      {/* Low Credit Warning */}
+      <LowCreditWarning
+        isOpen={showLowCreditWarning}
+        onClose={() => setShowLowCreditWarning(false)}
+        currentCredits={remainingCredits}
+        estimatedTimeRemaining={`${estimatedMinutesRemaining} min`}
+        onAddCredits={handleAddCredits}
+        onEndSession={handleEndChat}
+      />
     </div>
   );
 };

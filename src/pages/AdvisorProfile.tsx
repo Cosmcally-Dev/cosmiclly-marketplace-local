@@ -46,6 +46,7 @@ const AdvisorProfile = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'chat' | 'call' | null>(null);
   
   const { isAuthenticated } = useAuth();
   
@@ -56,8 +57,23 @@ const AdvisorProfile = () => {
     if (isAuthenticated) {
       navigate(`/chat/${advisor.id}`);
     } else {
+      setPendingAction('chat');
       setIsAuthOpen(true);
     }
+  };
+
+  const handleCallClick = () => {
+    if (isAuthenticated) {
+      navigate(`/call/${advisor.id}`);
+    } else {
+      setPendingAction('call');
+      setIsAuthOpen(true);
+    }
+  };
+
+  const handleAuthClose = () => {
+    setIsAuthOpen(false);
+    setPendingAction(null);
   };
 
   return (
@@ -202,12 +218,15 @@ const AdvisorProfile = () => {
 
                   {/* Voice Call Card */}
                   <button
+                    onClick={handleCallClick}
                     disabled={advisor.status !== 'online'}
                     className="group relative p-6 rounded-xl bg-card/80 backdrop-blur-sm border border-border hover:border-primary transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Badge className="absolute top-3 right-3 bg-secondary text-secondary-foreground">
-                      Coming soon
-                    </Badge>
+                    {advisor.freeMinutes && (
+                      <Badge className="absolute top-3 right-3 bg-accent text-accent-foreground">
+                        {advisor.freeMinutes} free min
+                      </Badge>
+                    )}
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-12 h-12 rounded-xl bg-mystic-purple/20 flex items-center justify-center">
                         <Phone className="w-6 h-6 text-mystic-purple" />
@@ -218,8 +237,20 @@ const AdvisorProfile = () => {
                       </div>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-muted-foreground line-through text-sm">$39.99/min</span>
-                      <span className="text-2xl font-bold text-muted-foreground">$19.99/min</span>
+                      {advisor.discountedPrice ? (
+                        <>
+                          <span className="text-muted-foreground line-through text-sm">
+                            ${(advisor.pricePerMinute * 1.5).toFixed(2)}/min
+                          </span>
+                          <span className="text-2xl font-bold text-primary">
+                            ${(advisor.discountedPrice * 1.5).toFixed(2)}/min
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-2xl font-bold text-primary">
+                          ${(advisor.pricePerMinute * 1.5).toFixed(2)}/min
+                        </span>
+                      )}
                     </div>
                   </button>
                 </div>
@@ -407,7 +438,13 @@ const AdvisorProfile = () => {
                     Start Chat Now
                   </Button>
 
-                  <Button variant="outline" size="lg" className="w-full" disabled>
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full" 
+                    disabled={advisor.status !== 'online'}
+                    onClick={handleCallClick}
+                  >
                     <Phone className="w-5 h-5 mr-2" />
                     Voice Call
                   </Button>
@@ -437,7 +474,7 @@ const AdvisorProfile = () => {
       
       <AuthModal 
         isOpen={isAuthOpen} 
-        onClose={() => setIsAuthOpen(false)} 
+        onClose={handleAuthClose} 
         mode="signin"
       />
     </div>
