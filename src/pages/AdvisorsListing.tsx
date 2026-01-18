@@ -47,7 +47,7 @@ const AdvisorsListing = () => {
   const category = getCategoryBySlug(categorySlug);
   const pageTitle = category ? category.label : 'All Psychic Advisors';
   const pageDescription = category 
-    ? category.description 
+    ? category.longDescription 
     : 'Browse our complete directory of verified psychic advisors. Find your perfect match based on specialty, rating, and availability.';
 
   // Filter and sort advisors
@@ -267,25 +267,37 @@ const AdvisorsListing = () => {
           </div>
         </section>
 
-        {/* Category Quick Links */}
-        {!category && (
-          <div className="bg-card border-y border-border">
-            <div className="container mx-auto px-4 py-4">
-              <div className="flex flex-wrap gap-2">
-                {categories.slice(0, 10).map((cat) => (
-                  <Link
-                    key={cat.slug}
-                    to={`/advisors?category=${cat.slug}`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary text-sm text-muted-foreground hover:text-primary hover:bg-secondary/80 transition-colors"
-                  >
-                    <cat.icon className="w-3.5 h-3.5" />
-                    {cat.label}
-                  </Link>
-                ))}
-              </div>
+        {/* Category Quick Links - Always visible */}
+        <div className="bg-card border-y border-border">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to="/advisors"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                  !category 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80'
+                }`}
+              >
+                All
+              </Link>
+              {categories.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  to={`/advisors?category=${cat.slug}`}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                    category?.slug === cat.slug 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-secondary text-muted-foreground hover:text-primary hover:bg-secondary/80'
+                  }`}
+                >
+                  <cat.icon className="w-3.5 h-3.5" />
+                  {cat.label}
+                </Link>
+              ))}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Promo Banner */}
         <div className="bg-accent/10 border-y border-accent/20">

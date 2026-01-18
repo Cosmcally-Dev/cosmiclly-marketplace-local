@@ -131,7 +131,7 @@ export const Header = () => {
                                   {category.label}
                                 </p>
                                 <p className="text-xs text-muted-foreground line-clamp-2">
-                                  {category.description}
+                                  {category.shortDescription}
                                 </p>
                               </div>
                             </Link>

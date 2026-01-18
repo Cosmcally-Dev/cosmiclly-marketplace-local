@@ -34,7 +34,7 @@ export const CategoriesSection = () => {
                 {category.label}
               </h3>
               <p className="text-xs md:text-sm text-muted-foreground hidden md:block line-clamp-2">
-                {category.description}
+                {category.shortDescription}
               </p>
 
               {/* Hover Glow */}
