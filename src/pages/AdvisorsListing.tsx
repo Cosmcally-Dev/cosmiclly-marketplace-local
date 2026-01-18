@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
-  ChevronRight, SlidersHorizontal, Grid3X3, List, Loader2, ChevronDown
+  ChevronRight, SlidersHorizontal, Grid3X3, List, Loader2, ChevronDown, X
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AdvisorCard } from '@/components/advisors/AdvisorCard';
+import { AdvisorSearchBar } from '@/components/search/AdvisorSearchBar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
@@ -60,8 +61,10 @@ const relatedCategoryGroups: Record<string, string[]> = {
 };
 
 const AdvisorsListing = () => {
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const categorySlug = searchParams.get('category') || '';
+  const searchQuery = searchParams.get('search') || '';
   
   // Filter states
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -74,14 +77,47 @@ const AdvisorsListing = () => {
 
   // Get category info
   const category = getCategoryBySlug(categorySlug);
-  const pageTitle = category ? category.label : 'All Psychic Advisors';
-  const pageDescription = category 
-    ? category.longDescription 
-    : 'Browse our complete directory of verified psychic advisors. Find your perfect match based on specialty, rating, and availability.';
+  const pageTitle = searchQuery 
+    ? `Search: "${searchQuery}"` 
+    : category 
+      ? category.label 
+      : 'All Psychic Advisors';
+  const pageDescription = searchQuery
+    ? `Showing results for "${searchQuery}". Find advisors matching your search.`
+    : category 
+      ? category.longDescription 
+      : 'Browse our complete directory of verified psychic advisors. Find your perfect match based on specialty, rating, and availability.';
+
+  // Handle search
+  const handleSearch = (query: string) => {
+    const params = new URLSearchParams();
+    if (query) {
+      params.set('search', query);
+    }
+    setSearchParams(params);
+  };
+
+  // Clear search
+  const clearSearch = () => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('search');
+    setSearchParams(params);
+  };
 
   // Filter and sort advisors
   const filteredAdvisors = useMemo(() => {
     let result = [...advisors];
+
+    // Search filter - match by name, title, or specialty
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(advisor => 
+        advisor.name.toLowerCase().includes(lowerQuery) ||
+        advisor.title.toLowerCase().includes(lowerQuery) ||
+        advisor.specialties.some(s => s.toLowerCase().includes(lowerQuery)) ||
+        advisor.description.toLowerCase().includes(lowerQuery)
+      );
+    }
 
     // Category filter - match by specialty
     if (category) {
@@ -139,7 +175,7 @@ const AdvisorsListing = () => {
     }
 
     return result;
-  }, [category, statusFilter, showOffline, minReviews, priceRange, sortBy]);
+  }, [searchQuery, category, statusFilter, showOffline, minReviews, priceRange, sortBy]);
 
   // Infinite scroll
   const { displayedItems, hasMore, isLoading, loadMoreRef, totalItems } = useInfiniteScroll({
@@ -395,6 +431,36 @@ const AdvisorsListing = () => {
         {/* Filters & Grid */}
         <section className="py-8">
           <div className="container mx-auto px-4">
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <AdvisorSearchBar 
+                    variant="compact" 
+                    initialQuery={searchQuery}
+                    onSearch={handleSearch}
+                    placeholder="Search by name, specialty, or keyword..."
+                  />
+                </div>
+                {searchQuery && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={clearSearch}
+                    className="self-start sm:self-center"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Clear search
+                  </Button>
+                )}
+              </div>
+              {searchQuery && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Showing results for "<span className="text-foreground font-medium">{searchQuery}</span>"
+                </p>
+              )}
+            </div>
+
             {/* Filter Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6 p-4 rounded-xl bg-card border border-border">
               {/* Left: Filter Controls */}
