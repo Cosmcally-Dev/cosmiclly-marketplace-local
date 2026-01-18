@@ -181,6 +181,12 @@ export const Header = () => {
                     Horoscopes
                   </Link>
                 </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <Link to="/support" className="px-4 py-2 text-foreground/80 hover:text-accent transition-colors">
+                    Support
+                  </Link>
+                </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
 

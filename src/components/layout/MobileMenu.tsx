@@ -13,7 +13,7 @@ const bottomLinks = [
   { icon: Star, label: 'Daily Oracle', href: '/daily-oracle' },
   { icon: Calendar, label: 'Horoscopes', href: '/horoscope' },
   { icon: BookOpen, label: 'Articles', href: '/articles' },
-  { icon: HelpCircle, label: 'Customer Support', href: '/#support' },
+  { icon: HelpCircle, label: 'Support', href: '/support' },
   { icon: UserCheck, label: 'Become an Advisor', href: '/#apply' },
 ];
 
