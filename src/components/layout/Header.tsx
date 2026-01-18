@@ -124,7 +124,7 @@ export const Header = () => {
                       <CreditCard className="w-4 h-4 mr-2" />
                       Add Credit
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </DropdownMenuItem>
