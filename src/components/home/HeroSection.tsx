@@ -1,7 +1,38 @@
-import { Search, Sparkles, Star, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+const popularSearches = [
+  { label: 'Love Readings', category: 'love' },
+  { label: 'Tarot', category: 'tarot' },
+  { label: 'Career', category: 'career' },
+  { label: 'Soulmate', category: 'soulmates' },
+];
+
 export const HeroSection = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      // Navigate to advisors page with search query
+      navigate(`/advisors?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/advisors');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handlePopularClick = (category: string) => {
+    navigate(`/advisors?category=${category}`);
+  };
+
   return (
     <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-hero-gradient pt-20 md:pt-24">
       {/* Animated Stars Background */}
@@ -51,11 +82,15 @@ export const HeroSection = () => {
               <input
                 type="text"
                 placeholder="Find your perfect advisor..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="w-full h-14 pl-12 pr-36 rounded-full bg-card/80 backdrop-blur-sm border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
               <Button
                 variant="hero"
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
+                onClick={handleSearch}
               >
                 Find Advisor
               </Button>
@@ -65,14 +100,14 @@ export const HeroSection = () => {
           {/* Quick Links */}
           <div className="flex flex-wrap items-center justify-center gap-3 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <span className="text-sm text-muted-foreground">Popular:</span>
-            {['Love Readings', 'Tarot', 'Career', 'Soulmate'].map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="px-3 py-1.5 rounded-full text-sm bg-secondary/50 border border-border text-foreground/80 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
+            {popularSearches.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => handlePopularClick(item.category)}
+                className="px-3 py-1.5 rounded-full text-sm bg-secondary/50 border border-border text-foreground/80 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all cursor-pointer"
               >
-                {item}
-              </a>
+                {item.label}
+              </button>
             ))}
           </div>
 
