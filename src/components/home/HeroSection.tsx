@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Star } from 'lucide-react';
+import { AdvisorSearchBar } from '@/components/search/AdvisorSearchBar';
 
 const popularSearches = [
   { label: 'Love Readings', category: 'love' },
@@ -12,22 +11,6 @@ const popularSearches = [
 
 export const HeroSection = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      // Navigate to advisors page with search query
-      navigate(`/advisors?search=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-      navigate('/advisors');
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
 
   const handlePopularClick = (category: string) => {
     navigate(`/advisors?category=${category}`);
@@ -75,26 +58,9 @@ export const HeroSection = () => {
             Find your way to love, happiness, and clarity. Connect with gifted psychic advisors 24/7 for personalized guidance.
           </p>
 
-          {/* Search Bar */}
+          {/* Search Bar with Autocomplete */}
           <div className="max-w-xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Find your perfect advisor..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="w-full h-14 pl-12 pr-36 rounded-full bg-card/80 backdrop-blur-sm border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              />
-              <Button
-                variant="hero"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
-                onClick={handleSearch}
-              >
-                Find Advisor
-              </Button>
-            </div>
+            <AdvisorSearchBar variant="hero" />
           </div>
 
           {/* Quick Links */}
