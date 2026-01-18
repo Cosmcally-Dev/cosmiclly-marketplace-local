@@ -19,6 +19,7 @@ const VoiceCall = () => {
   const { toast } = useToast();
   
   const advisor = advisors.find(a => a.id === id) || advisors[0];
+  const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
   
   const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
   const [sessionTime, setSessionTime] = useState(0);
@@ -26,18 +27,30 @@ const VoiceCall = () => {
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [showReview, setShowReview] = useState(false);
   const [showLowCreditWarning, setShowLowCreditWarning] = useState(false);
+  const [showInsufficientCredits, setShowInsufficientCredits] = useState(false);
   const [creditsUsed, setCreditsUsed] = useState(0);
   const [hasShownWarning, setHasShownWarning] = useState(false);
+  const [continueUntilEnd, setContinueUntilEnd] = useState(false);
   
   const sessionStartRef = useRef<Date | null>(null);
   const lastDeductionRef = useRef(0);
 
-  // Redirect to login if not authenticated
+  // Check if user has enough credits to start session
+  const hasMinimumCredits = credits >= pricePerMinute || (advisor.freeMinutes && advisor.freeMinutes > 0);
+
+  // Redirect to login if not authenticated or show insufficient credits
   useEffect(() => {
     if (!isAuthenticated) {
       navigate(`/advisor/${id}`);
+      return;
     }
-  }, [isAuthenticated, navigate, id]);
+    
+    // Check if user has enough credits (unless there are free minutes)
+    if (!hasMinimumCredits) {
+      setShowInsufficientCredits(true);
+      setCallStatus('ended');
+    }
+  }, [isAuthenticated, navigate, id, hasMinimumCredits]);
 
   // Simulate connection
   useEffect(() => {
@@ -56,7 +69,7 @@ const VoiceCall = () => {
 
   // Session timer and credit deduction
   useEffect(() => {
-    if (callStatus !== 'connected') return;
+    if (callStatus !== 'connected' || showInsufficientCredits) return;
     
     const interval = setInterval(() => {
       setSessionTime((prev) => {
@@ -68,32 +81,43 @@ const VoiceCall = () => {
         const minutesBilled = Math.floor(billableSeconds / 60);
         
         if (minutesBilled > lastDeductionRef.current && billableSeconds > 0) {
-          const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
           const deduction = pricePerMinute;
+          const remainingAfterDeduction = credits - creditsUsed - deduction;
           
           // Check if enough credits
-          if (credits - creditsUsed - deduction < 0) {
+          if (remainingAfterDeduction < 0) {
             // End call due to insufficient credits
             handleEndCall();
             toast({
               variant: "destructive",
-              title: "Insufficient Credits",
-              description: "Your session has ended due to insufficient credits.",
+              title: "Session Ended",
+              description: "Your call has ended due to insufficient credits.",
             });
           } else {
             setCreditsUsed(prev => prev + deduction);
             lastDeductionRef.current = minutesBilled;
+            
+            // Check remaining credits after this deduction
+            const newRemainingCredits = credits - creditsUsed - deduction;
+            const minutesLeft = newRemainingCredits / pricePerMinute;
+            
+            // Show low credit warning at 2 minutes remaining (if not already shown and not continuing until end)
+            if (minutesLeft <= 2 && minutesLeft > 0 && !hasShownWarning && !continueUntilEnd) {
+              setShowLowCreditWarning(true);
+              setHasShownWarning(true);
+            }
           }
-        }
-        
-        // Show low credit warning at 2 minutes remaining worth of credits
-        const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
-        const remainingCredits = credits - creditsUsed;
-        const minutesRemaining = remainingCredits / pricePerMinute;
-        
-        if (minutesRemaining <= 2 && minutesRemaining > 0 && !hasShownWarning && billableSeconds > 0) {
-          setShowLowCreditWarning(true);
-          setHasShownWarning(true);
+        } else if (billableSeconds === 0) {
+          // Still in free minutes - check upcoming credit requirement
+          const remainingCredits = credits - creditsUsed;
+          const minutesRemaining = remainingCredits / pricePerMinute;
+          const secondsUntilBilling = freeSeconds - newTime;
+          
+          // Warn 30 seconds before free minutes end if credits are low
+          if (secondsUntilBilling <= 30 && secondsUntilBilling > 0 && minutesRemaining < 2 && !hasShownWarning && !continueUntilEnd) {
+            setShowLowCreditWarning(true);
+            setHasShownWarning(true);
+          }
         }
         
         return newTime;
@@ -101,7 +125,7 @@ const VoiceCall = () => {
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [callStatus, advisor, credits, creditsUsed, hasShownWarning, toast]);
+  }, [callStatus, showInsufficientCredits, advisor, credits, creditsUsed, hasShownWarning, continueUntilEnd, pricePerMinute, toast]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -134,7 +158,13 @@ const VoiceCall = () => {
 
   const handleAddCredits = () => {
     setShowLowCreditWarning(false);
+    setShowInsufficientCredits(false);
     navigate('/add-credit');
+  };
+
+  const handleContinueUntilEnd = () => {
+    setShowLowCreditWarning(false);
+    setContinueUntilEnd(true);
   };
 
   const handleReviewClose = () => {
@@ -143,7 +173,6 @@ const VoiceCall = () => {
   };
 
   const freeSecondsRemaining = Math.max(0, (advisor.freeMinutes || 0) * 60 - sessionTime);
-  const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
   const remainingCredits = credits - creditsUsed;
   const estimatedMinutesRemaining = Math.floor(remainingCredits / pricePerMinute);
 
@@ -302,6 +331,21 @@ const VoiceCall = () => {
         estimatedTimeRemaining={`${estimatedMinutesRemaining} min`}
         onAddCredits={handleAddCredits}
         onEndSession={handleEndCall}
+        onContinueUntilEnd={handleContinueUntilEnd}
+      />
+
+      {/* Insufficient Credits Modal */}
+      <LowCreditWarning
+        isOpen={showInsufficientCredits}
+        onClose={() => {
+          setShowInsufficientCredits(false);
+          navigate(`/advisor/${advisor.id}`);
+        }}
+        currentCredits={credits}
+        estimatedTimeRemaining="0 min"
+        onAddCredits={handleAddCredits}
+        onEndSession={() => navigate(`/advisor/${advisor.id}`)}
+        isInsufficientCredits
       />
     </div>
   );

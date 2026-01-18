@@ -1,4 +1,4 @@
-import { AlertTriangle, CreditCard, X } from 'lucide-react';
+import { AlertTriangle, CreditCard, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,6 +14,8 @@ interface LowCreditWarningProps {
   estimatedTimeRemaining: string;
   onAddCredits: () => void;
   onEndSession: () => void;
+  onContinueUntilEnd?: () => void;
+  isInsufficientCredits?: boolean;
 }
 
 export const LowCreditWarning = ({
@@ -23,35 +25,60 @@ export const LowCreditWarning = ({
   estimatedTimeRemaining,
   onAddCredits,
   onEndSession,
+  onContinueUntilEnd,
+  isInsufficientCredits = false,
 }: LowCreditWarningProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-amber-500">
-            <AlertTriangle className="w-5 h-5" />
-            Low Credits Warning
+          <DialogTitle className={`flex items-center gap-2 ${isInsufficientCredits ? 'text-destructive' : 'text-amber-500'}`}>
+            {isInsufficientCredits ? (
+              <>
+                <XCircle className="w-5 h-5" />
+                Insufficient Credits
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="w-5 h-5" />
+                Low Credits Warning
+              </>
+            )}
           </DialogTitle>
         </DialogHeader>
 
         <div className="py-4">
           <div className="text-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
-              <CreditCard className="w-8 h-8 text-amber-500" />
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+              isInsufficientCredits ? 'bg-destructive/20' : 'bg-amber-500/20'
+            }`}>
+              {isInsufficientCredits ? (
+                <XCircle className="w-8 h-8 text-destructive" />
+              ) : (
+                <CreditCard className="w-8 h-8 text-amber-500" />
+              )}
             </div>
             <p className="text-lg font-semibold text-foreground mb-2">
-              Your credits are running low!
+              {isInsufficientCredits 
+                ? "You don't have enough credits!" 
+                : "Your credits are running low!"}
             </p>
             <p className="text-muted-foreground">
-              Current balance: <span className="text-amber-500 font-bold">${currentCredits.toFixed(2)}</span>
+              Current balance: <span className={`font-bold ${isInsufficientCredits ? 'text-destructive' : 'text-amber-500'}`}>
+                ${currentCredits.toFixed(2)}
+              </span>
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Estimated time remaining: ~{estimatedTimeRemaining}
-            </p>
+            {!isInsufficientCredits && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Estimated time remaining: ~{estimatedTimeRemaining}
+              </p>
+            )}
           </div>
 
           <p className="text-center text-sm text-muted-foreground mb-6">
-            Add more credits to continue your session, or the session will end when credits run out.
+            {isInsufficientCredits
+              ? "Add credits to start your session with this advisor."
+              : "Add more credits to continue your session, or it will end when credits run out."}
           </p>
 
           <div className="flex flex-col gap-3">
@@ -59,12 +86,23 @@ export const LowCreditWarning = ({
               <CreditCard className="w-4 h-4 mr-2" />
               Add Credits Now
             </Button>
-            <Button variant="outline" className="w-full" onClick={onEndSession}>
-              End Session
-            </Button>
-            <Button variant="ghost" className="w-full text-muted-foreground" onClick={onClose}>
-              Continue (Remind me later)
-            </Button>
+            
+            {isInsufficientCredits ? (
+              <Button variant="outline" className="w-full" onClick={onEndSession}>
+                Go Back
+              </Button>
+            ) : (
+              <>
+                {onContinueUntilEnd && (
+                  <Button variant="outline" className="w-full" onClick={onContinueUntilEnd}>
+                    Continue Until Credits Run Out
+                  </Button>
+                )}
+                <Button variant="ghost" className="w-full text-muted-foreground" onClick={onEndSession}>
+                  End Session Now
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </DialogContent>
