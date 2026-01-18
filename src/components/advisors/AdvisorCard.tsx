@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Star, Clock, MessageCircle, Bell } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AuthModal } from '@/components/modals/AuthModal';
@@ -35,23 +35,18 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   const { isAuthenticated } = useAuth();
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Navigate to profile page
     navigate(`/advisor/${advisor.id}`);
   };
 
   const handleChatClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     
     if (!isAuthenticated) {
       setIsAuthOpen(true);
       return;
     }
     
-    if (onChat) {
-      onChat(advisor);
-    } else {
-      navigate(`/advisor/${advisor.id}`);
-    }
+    navigate(`/chat/${advisor.id}`);
   };
 
   return (
