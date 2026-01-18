@@ -52,13 +52,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        mystic: {
-          purple: "hsl(var(--mystic-purple))",
-          "purple-light": "hsl(var(--mystic-purple-light))",
-          blue: "hsl(var(--mystic-blue))",
-          gold: "hsl(var(--mystic-gold))",
-          pink: "hsl(var(--mystic-pink))",
+        blood: {
+          deep: "hsl(var(--blood-deep))",
+          dark: "hsl(var(--blood-dark))",
+          vibrant: "hsl(var(--blood-vibrant))",
+          black: "hsl(var(--blood-black))",
         },
+        platinum: "hsl(var(--platinum))",
+        "ghost-white": "hsl(var(--ghost-white))",
         status: {
           online: "hsl(var(--online-green))",
           busy: "hsl(var(--busy-orange))",
