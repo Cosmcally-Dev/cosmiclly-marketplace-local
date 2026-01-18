@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AdvisorCard } from '@/components/advisors/AdvisorCard';
 import { advisors, getOnlineAdvisors } from '@/data/advisors';
@@ -48,10 +49,12 @@ export const FeaturedAdvisorsSection = () => {
             >
               <ChevronRight className="w-5 h-5" />
             </Button>
-            <Button variant="mystical" className="hidden md:flex">
-              View All Advisors
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            <Link to="/advisors">
+              <Button variant="mystical" className="hidden md:flex">
+                View All Advisors
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -73,10 +76,12 @@ export const FeaturedAdvisorsSection = () => {
 
         {/* Mobile View All */}
         <div className="mt-8 text-center md:hidden">
-          <Button variant="mystical" size="lg">
-            View All Advisors
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
+          <Link to="/advisors">
+            <Button variant="mystical" size="lg">
+              View All Advisors
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
