@@ -9,11 +9,11 @@ import AdvisorProfile from "./pages/AdvisorProfile";
 import AdvisorsListing from "./pages/AdvisorsListing";
 import Horoscope from "./pages/Horoscope";
 import DailyOracle from "./pages/DailyOracle";
+import Articles from "./pages/Articles";
 import Chat from "./pages/Chat";
 import AddCredit from "./pages/AddCredit";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,6 +30,7 @@ const App = () => (
             <Route path="/chat/:id" element={<Chat />} />
             <Route path="/horoscope" element={<Horoscope />} />
             <Route path="/daily-oracle" element={<DailyOracle />} />
+            <Route path="/articles" element={<Articles />} />
             <Route path="/add-credit" element={<AddCredit />} />
             <Route path="/settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -176,6 +176,12 @@ export const Header = () => {
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
+                  <Link to="/articles" className="px-4 py-2 text-foreground/80 hover:text-accent transition-colors">
+                    Articles
+                  </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
                   <Link to="/horoscope" className="px-4 py-2 text-foreground/80 hover:text-accent transition-colors">
                     Horoscopes
                   </Link>
