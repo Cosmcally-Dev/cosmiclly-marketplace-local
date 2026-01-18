@@ -53,15 +53,6 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 
           {/* Menu Items */}
           <nav className="flex-1 overflow-y-auto py-4">
-            {/* All Advisors Link */}
-            <Link
-              to="/advisors"
-              onClick={onClose}
-              className="flex items-center gap-3 px-4 py-3 text-foreground font-medium hover:bg-secondary hover:text-primary transition-colors"
-            >
-              <span>All Advisors</span>
-            </Link>
-
             {/* Services Section */}
             <div className="mt-2">
               <button

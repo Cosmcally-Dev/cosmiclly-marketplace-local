@@ -95,11 +95,6 @@ export const Header = () => {
             {/* Desktop Navigation */}
             <NavigationMenu className="hidden md:flex">
               <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link to="/advisors" className="px-4 py-2 text-foreground/80 hover:text-accent transition-colors">
-                    All Advisors
-                  </Link>
-                </NavigationMenuItem>
 
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="bg-transparent text-foreground/80 hover:text-accent hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent">
