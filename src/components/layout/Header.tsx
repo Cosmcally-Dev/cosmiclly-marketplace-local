@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Search, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileMenu } from './MobileMenu';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export const Header = () => {
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -116,7 +117,7 @@ export const Header = () => {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 bg-card border-border z-50">
-                    <DropdownMenuItem className="cursor-pointer">
+                    <DropdownMenuItem onClick={() => navigate('/add-credit')} className="cursor-pointer">
                       <CreditCard className="w-4 h-4 mr-2" />
                       Add Credit
                     </DropdownMenuItem>
