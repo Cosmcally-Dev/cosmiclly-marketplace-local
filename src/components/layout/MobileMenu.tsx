@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { X, Sparkles, Calendar, BookOpen, HelpCircle, UserCheck, ChevronRight, ChevronDown } from 'lucide-react';
+import { X, Sparkles, Calendar, BookOpen, HelpCircle, UserCheck, ChevronRight, ChevronDown, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { categories } from '@/data/categories';
 
@@ -10,6 +10,7 @@ interface MobileMenuProps {
 }
 
 const bottomLinks = [
+  { icon: Star, label: 'Daily Oracle', href: '/daily-oracle' },
   { icon: Calendar, label: 'Horoscopes', href: '/horoscope' },
   { icon: BookOpen, label: 'Articles', href: '/#articles' },
   { icon: HelpCircle, label: 'Customer Support', href: '/#support' },

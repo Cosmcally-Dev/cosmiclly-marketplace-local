@@ -170,6 +170,12 @@ export const Header = () => {
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
+                  <Link to="/daily-oracle" className="px-4 py-2 text-foreground/80 hover:text-accent transition-colors">
+                    Daily Oracle
+                  </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
                   <Link to="/horoscope" className="px-4 py-2 text-foreground/80 hover:text-accent transition-colors">
                     Horoscopes
                   </Link>

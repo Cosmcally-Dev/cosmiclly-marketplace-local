@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import AdvisorProfile from "./pages/AdvisorProfile";
 import AdvisorsListing from "./pages/AdvisorsListing";
 import Horoscope from "./pages/Horoscope";
+import DailyOracle from "./pages/DailyOracle";
 import Chat from "./pages/Chat";
 import AddCredit from "./pages/AddCredit";
 import Settings from "./pages/Settings";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/advisor/:id" element={<AdvisorProfile />} />
             <Route path="/chat/:id" element={<Chat />} />
             <Route path="/horoscope" element={<Horoscope />} />
+            <Route path="/daily-oracle" element={<DailyOracle />} />
             <Route path="/add-credit" element={<AddCredit />} />
             <Route path="/settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
