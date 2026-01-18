@@ -24,34 +24,37 @@ export const DailyHoroscope = () => {
             <button
               key={sign.name}
               onClick={() => setSelectedSign(sign.name)}
-              className={`group relative p-4 md:p-6 rounded-xl border transition-all duration-300 hover:-translate-y-1 animate-fade-in ${
+              className={`group relative p-4 md:p-6 rounded-xl border transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20 animate-fade-in ${
                 selectedSign === sign.name
-                  ? 'bg-primary/20 border-primary'
-                  : 'bg-card border-border hover:border-primary/50'
+                  ? 'bg-primary/20 border-primary shadow-lg shadow-primary/30'
+                  : 'bg-card border-border hover:border-primary/50 hover:bg-card/80'
               }`}
               style={{ animationDelay: `${index * 0.05}s` }}
             >
               {/* Zodiac Image */}
-              <div className="w-12 h-12 md:w-14 md:h-14 mx-auto mb-2 rounded-lg overflow-hidden">
+              <div className="w-12 h-12 md:w-14 md:h-14 mx-auto mb-2 rounded-lg overflow-hidden transition-transform duration-300 group-hover:scale-110">
                 <img 
                   src={sign.image} 
                   alt={sign.name} 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-all duration-300 group-hover:brightness-110"
                 />
               </div>
 
+              {/* Glow effect on hover */}
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
               {/* Name */}
-              <h3 className="font-medium text-foreground text-sm md:text-base group-hover:text-primary transition-colors">
+              <h3 className="font-medium text-foreground text-sm md:text-base group-hover:text-primary transition-colors relative z-10">
                 {sign.name}
               </h3>
 
               {/* Dates */}
-              <p className="text-xs text-muted-foreground mt-1 hidden md:block">
+              <p className="text-xs text-muted-foreground mt-1 hidden md:block relative z-10">
                 {sign.dates}
               </p>
 
               {/* Arrow */}
-              <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ChevronRight className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-1" />
             </button>
           ))}
         </div>
