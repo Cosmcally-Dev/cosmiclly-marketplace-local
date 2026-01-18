@@ -20,7 +20,7 @@ export const CategoriesSection = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
             Explore Our <span className="text-gradient">Services</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">

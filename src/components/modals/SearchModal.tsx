@@ -28,7 +28,7 @@ export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="font-serif text-xl">Find Your Advisor</DialogTitle>
+          <DialogTitle className="font-heading text-xl">Find Your Advisor</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">

@@ -44,7 +44,7 @@ export const Footer = () => {
           <div className="col-span-2 md:col-span-1">
             <a href="/" className="flex items-center gap-2 mb-4">
               <Sparkles className="w-8 h-8 text-accent" />
-              <span className="font-serif text-xl font-semibold text-gradient-gold">Mystica</span>
+              <span className="font-heading text-xl font-semibold text-gradient-gold">Mystica</span>
             </a>
             <p className="text-muted-foreground text-sm mb-6">
               Connect with gifted psychic advisors for guidance on love, career, and life's biggest questions.

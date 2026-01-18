@@ -31,7 +31,7 @@ export const DailyHoroscope = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4">
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
             Daily <span className="text-gradient">Horoscope</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -81,7 +81,7 @@ export const DailyHoroscope = () => {
                 {zodiacSigns.find(s => s.name === selectedSign)?.symbol}
               </div>
               <div className="flex-1">
-                <h3 className="font-serif text-2xl font-bold text-foreground mb-2">
+                <h3 className="font-heading text-2xl font-bold text-foreground mb-2">
                   {selectedSign} - Today's Reading
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
