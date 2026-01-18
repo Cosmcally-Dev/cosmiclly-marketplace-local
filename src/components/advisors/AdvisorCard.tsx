@@ -1,4 +1,5 @@
 import { Star, Clock, MessageCircle, Bell } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Advisor } from '@/data/advisors';
@@ -26,8 +27,27 @@ const StatusBadge = ({ status }: { status: Advisor['status'] }) => {
 };
 
 export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Navigate to profile page
+    navigate(`/advisor/${advisor.id}`);
+  };
+
+  const handleChatClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    if (onChat) {
+      onChat(advisor);
+    } else {
+      navigate(`/advisor/${advisor.id}`);
+    }
+  };
+
   return (
-    <div className="group relative bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 card-shadow">
+    <div 
+      onClick={handleCardClick}
+      className="group relative bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 card-shadow cursor-pointer"
+    >
       {/* Top Rated Badge */}
       {advisor.isTopRated && (
         <div className="absolute top-3 left-3 z-10">
@@ -131,17 +151,17 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           <Button
             variant="hero"
             className="w-full"
-            onClick={() => onChat?.(advisor)}
+            onClick={handleChatClick}
           >
             Chat Now
           </Button>
         ) : advisor.status === 'busy' ? (
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" onClick={(e) => e.stopPropagation()}>
             <Bell className="w-4 h-4 mr-2" />
             Notify Me
           </Button>
         ) : (
-          <Button variant="secondary" className="w-full" disabled>
+          <Button variant="secondary" className="w-full" disabled onClick={(e) => e.stopPropagation()}>
             <Clock className="w-4 h-4 mr-2" />
             Offline
           </Button>
