@@ -13,6 +13,16 @@ interface SavedCard {
   isDefault?: boolean;
 }
 
+export interface SessionLog {
+  id: string;
+  type: 'chat' | 'call';
+  advisorId: string;
+  advisorName: string;
+  duration: number; // in seconds
+  creditsUsed: number;
+  timestamp: Date;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => { success: boolean; error?: string };
@@ -26,6 +36,8 @@ interface AuthContextType {
   deleteCard: (cardId: string) => void;
   setDefaultCard: (cardId: string) => void;
   getDefaultCard: () => SavedCard | undefined;
+  sessionLogs: SessionLog[];
+  addSessionLog: (log: Omit<SessionLog, 'id'>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -39,12 +51,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [credits, setCredits] = useState<number>(0);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+  const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
 
   useEffect(() => {
     // Check session storage on mount
     const storedUser = sessionStorage.getItem('user');
     const storedCredits = sessionStorage.getItem('credits');
     const storedCards = sessionStorage.getItem('savedCards');
+    const storedLogs = sessionStorage.getItem('sessionLogs');
     
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -54,6 +68,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     if (storedCards) {
       setSavedCards(JSON.parse(storedCards));
+    }
+    if (storedLogs) {
+      setSessionLogs(JSON.parse(storedLogs));
     }
   }, []);
 
@@ -84,15 +101,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setCredits(0);
     setSavedCards([]);
+    setSessionLogs([]);
     sessionStorage.removeItem('user');
     sessionStorage.removeItem('credits');
     sessionStorage.removeItem('savedCards');
+    sessionStorage.removeItem('sessionLogs');
   };
 
   const addCredits = (amount: number) => {
-    const newCredits = credits + amount;
+    const newCredits = Math.max(0, credits + amount);
     setCredits(newCredits);
     sessionStorage.setItem('credits', JSON.stringify(newCredits));
+  };
+
+  const addSessionLog = (log: Omit<SessionLog, 'id'>) => {
+    const newLog: SessionLog = {
+      ...log,
+      id: crypto.randomUUID(),
+    };
+    const newLogs = [newLog, ...sessionLogs];
+    setSessionLogs(newLogs);
+    sessionStorage.setItem('sessionLogs', JSON.stringify(newLogs));
   };
 
   const addCard = (card: Omit<SavedCard, 'id'>) => {
@@ -150,6 +179,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       deleteCard,
       setDefaultCard,
       getDefaultCard,
+      sessionLogs,
+      addSessionLog,
     }}>
       {children}
     </AuthContext.Provider>

@@ -12,6 +12,7 @@ import DailyOracle from "./pages/DailyOracle";
 import Articles from "./pages/Articles";
 import Support from "./pages/Support";
 import Chat from "./pages/Chat";
+import VoiceCall from "./pages/VoiceCall";
 import AddCredit from "./pages/AddCredit";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/advisors" element={<AdvisorsListing />} />
             <Route path="/advisor/:id" element={<AdvisorProfile />} />
             <Route path="/chat/:id" element={<Chat />} />
+            <Route path="/call/:id" element={<VoiceCall />} />
             <Route path="/horoscope" element={<Horoscope />} />
             <Route path="/daily-oracle" element={<DailyOracle />} />
             <Route path="/articles" element={<Articles />} />

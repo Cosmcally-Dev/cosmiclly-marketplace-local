@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, CreditCard, Bell, Shield, ChevronRight, Pencil, Trash2, Plus, Star } from 'lucide-react';
+import { ArrowLeft, User, CreditCard, Bell, Shield, ChevronRight, Pencil, Trash2, Plus, Star, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { SessionHistory } from '@/components/settings/SessionHistory';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,7 @@ const Settings = () => {
   const { user, savedCards, credits, deleteCard, setDefaultCard } = useAuth();
   const { toast } = useToast();
   
-  const [activeTab, setActiveTab] = useState<'profile' | 'payment' | 'notifications' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'payment' | 'history' | 'notifications' | 'security'>('profile');
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   
   // Profile form state
@@ -44,6 +45,7 @@ const Settings = () => {
   const tabs = [
     { id: 'profile' as const, label: 'Profile', icon: User },
     { id: 'payment' as const, label: 'Payment Methods', icon: CreditCard },
+    { id: 'history' as const, label: 'Session History', icon: History },
     { id: 'notifications' as const, label: 'Notifications', icon: Bell },
     { id: 'security' as const, label: 'Security', icon: Shield },
   ];
@@ -256,6 +258,15 @@ const Settings = () => {
                         <ChevronRight className="w-4 h-4 ml-1" />
                       </Button>
                     </div>
+                  </div>
+                )}
+
+                {/* Session History Tab */}
+                {activeTab === 'history' && (
+                  <div className="space-y-6">
+                    <h2 className="text-xl font-semibold text-foreground">Session History</h2>
+                    <Separator />
+                    <SessionHistory />
                   </div>
                 )}
 
