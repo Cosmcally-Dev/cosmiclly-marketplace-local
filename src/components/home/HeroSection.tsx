@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 
 export const HeroSection = () => {
   return (
-    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-hero-gradient">
+    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-hero-gradient pt-20 md:pt-24">
       {/* Animated Stars Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(20)].map((_, i) => (
@@ -21,8 +21,8 @@ export const HeroSection = () => {
       </div>
 
       {/* Gradient Orbs */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-mystic-purple/20 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-mystic-blue/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }} />
+      <div className="absolute top-1/4 -left-32 w-96 h-96 bg-blood-vibrant/20 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-blood-dark/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }} />
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
