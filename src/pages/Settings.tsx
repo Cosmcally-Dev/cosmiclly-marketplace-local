@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, CreditCard, Bell, Shield, ChevronRight, Pencil, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, User, CreditCard, Bell, Shield, ChevronRight, Pencil, Trash2, Plus, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,7 @@ import {
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, savedCards, credits } = useAuth();
+  const { user, savedCards, credits, deleteCard, setDefaultCard } = useAuth();
   const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState<'profile' | 'payment' | 'notifications' | 'security'>('profile');
@@ -176,20 +176,61 @@ const Settings = () => {
                         {savedCards.map((card) => (
                           <div
                             key={card.id}
-                            className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border"
+                            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-colors ${
+                              card.isDefault 
+                                ? 'bg-primary/5 border-primary' 
+                                : 'bg-muted/50 border-border'
+                            }`}
                           >
                             <div className="flex items-center gap-4">
                               <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded flex items-center justify-center">
                                 <CreditCard className="w-5 h-5 text-white" />
                               </div>
                               <div>
-                                <p className="font-medium text-foreground">•••• •••• •••• {card.lastFourDigits}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-foreground">•••• •••• •••• {card.lastFourDigits}</p>
+                                  {card.isDefault && (
+                                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                                      Default
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-sm text-muted-foreground">{card.cardholderName} · Expires {card.expirationDate}</p>
                               </div>
                             </div>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              {!card.isDefault && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-muted-foreground hover:text-primary"
+                                  onClick={() => {
+                                    setDefaultCard(card.id);
+                                    toast({
+                                      title: "Default card updated",
+                                      description: `Card ending in ${card.lastFourDigits} is now your default payment method.`,
+                                    });
+                                  }}
+                                >
+                                  <Star className="w-4 h-4 mr-1" />
+                                  Set Default
+                                </Button>
+                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-muted-foreground hover:text-destructive"
+                                onClick={() => {
+                                  deleteCard(card.id);
+                                  toast({
+                                    title: "Card removed",
+                                    description: `Card ending in ${card.lastFourDigits} has been removed.`,
+                                  });
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>

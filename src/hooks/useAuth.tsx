@@ -10,6 +10,7 @@ interface SavedCard {
   cardholderName: string;
   lastFourDigits: string;
   expirationDate: string;
+  isDefault?: boolean;
 }
 
 interface AuthContextType {
@@ -22,6 +23,9 @@ interface AuthContextType {
   addCredits: (amount: number) => void;
   savedCards: SavedCard[];
   addCard: (card: Omit<SavedCard, 'id'>) => void;
+  deleteCard: (cardId: string) => void;
+  setDefaultCard: (cardId: string) => void;
+  getDefaultCard: () => SavedCard | undefined;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -92,13 +96,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addCard = (card: Omit<SavedCard, 'id'>) => {
+    const isFirstCard = savedCards.length === 0;
     const newCard: SavedCard = {
       ...card,
       id: crypto.randomUUID(),
+      isDefault: isFirstCard, // First card is default
     };
     const newCards = [...savedCards, newCard];
     setSavedCards(newCards);
     sessionStorage.setItem('savedCards', JSON.stringify(newCards));
+  };
+
+  const deleteCard = (cardId: string) => {
+    const cardToDelete = savedCards.find(c => c.id === cardId);
+    let newCards = savedCards.filter(c => c.id !== cardId);
+    
+    // If we deleted the default card, set the first remaining card as default
+    if (cardToDelete?.isDefault && newCards.length > 0) {
+      newCards = newCards.map((c, index) => ({
+        ...c,
+        isDefault: index === 0,
+      }));
+    }
+    
+    setSavedCards(newCards);
+    sessionStorage.setItem('savedCards', JSON.stringify(newCards));
+  };
+
+  const setDefaultCard = (cardId: string) => {
+    const newCards = savedCards.map(card => ({
+      ...card,
+      isDefault: card.id === cardId,
+    }));
+    setSavedCards(newCards);
+    sessionStorage.setItem('savedCards', JSON.stringify(newCards));
+  };
+
+  const getDefaultCard = () => {
+    return savedCards.find(card => card.isDefault);
   };
 
   return (
@@ -111,7 +146,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       credits,
       addCredits,
       savedCards,
-      addCard
+      addCard,
+      deleteCard,
+      setDefaultCard,
+      getDefaultCard,
     }}>
       {children}
     </AuthContext.Provider>
