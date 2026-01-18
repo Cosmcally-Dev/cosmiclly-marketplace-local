@@ -1,33 +1,24 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { X, Sparkles, Star, Heart, Moon, Sun, Eye, Hand, TrendingUp, Ghost, Calendar, BookOpen, HelpCircle, UserCheck, ChevronRight } from 'lucide-react';
+import { X, Sparkles, Calendar, BookOpen, HelpCircle, UserCheck, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { categories } from '@/data/categories';
 
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const menuItems = [
-  { icon: Eye, label: 'Psychic Readings', href: '/advisors' },
-  { icon: Sun, label: 'Astrology Readings', href: '/advisors?category=astrology' },
-  { icon: Star, label: 'Numerology', href: '/advisors?category=numerology' },
-  { icon: Sparkles, label: 'Tarot Readings', href: '/advisors?category=tarot' },
-  { icon: Moon, label: 'Dream Analysis', href: '/advisors?category=dreams' },
-  { icon: Hand, label: 'Palm Readings', href: '/advisors?category=palm' },
-  { icon: Heart, label: 'Love Psychics', href: '/advisors?category=love' },
-  { icon: Star, label: 'Fortune Telling', href: '/advisors?category=fortune' },
-  { icon: TrendingUp, label: 'Career Forecasts', href: '/advisors?category=career' },
-  { icon: Ghost, label: 'Psychic Mediums', href: '/advisors?category=mediums' },
+const bottomLinks = [
   { icon: Calendar, label: 'Horoscopes', href: '/horoscope' },
   { icon: BookOpen, label: 'Articles', href: '/#articles' },
-];
-
-const bottomLinks = [
   { icon: HelpCircle, label: 'Customer Support', href: '/#support' },
   { icon: UserCheck, label: 'Become an Advisor', href: '/#apply' },
 ];
 
 export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
+  const [isServicesExpanded, setIsServicesExpanded] = useState(true);
+
   return (
     <>
       {/* Backdrop */}
@@ -61,21 +52,44 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 
           {/* Menu Items */}
           <nav className="flex-1 overflow-y-auto py-4">
-            <ul className="space-y-1">
-              {menuItems.map((item) => (
-                <li key={item.label}>
-                  <Link
-                    to={item.href}
-                    onClick={onClose}
-                    className="flex items-center gap-3 px-4 py-3 text-foreground/80 hover:bg-secondary hover:text-primary transition-colors group"
-                  >
-                    <item.icon className="w-5 h-5 text-accent group-hover:text-primary transition-colors" />
-                    <span className="flex-1">{item.label}</span>
-                    <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {/* All Advisors Link */}
+            <Link
+              to="/advisors"
+              onClick={onClose}
+              className="flex items-center gap-3 px-4 py-3 text-foreground font-medium hover:bg-secondary hover:text-primary transition-colors"
+            >
+              <span>All Advisors</span>
+            </Link>
+
+            {/* Services Section */}
+            <div className="mt-2">
+              <button
+                onClick={() => setIsServicesExpanded(!isServicesExpanded)}
+                className="flex items-center justify-between w-full px-4 py-3 text-foreground font-medium hover:bg-secondary transition-colors"
+              >
+                <span>Explore Services</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isServicesExpanded ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isServicesExpanded && (
+                <div className="bg-secondary/30">
+                  {categories.map((category) => (
+                    <Link
+                      key={category.slug}
+                      to={`/advisors?category=${category.slug}`}
+                      onClick={onClose}
+                      className="flex items-center gap-3 px-6 py-2.5 text-foreground/80 hover:bg-secondary hover:text-primary transition-colors group"
+                    >
+                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${category.color} flex items-center justify-center flex-shrink-0`}>
+                        <category.icon className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="flex-1 text-sm">{category.label}</span>
+                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="h-px bg-border my-4 mx-4" />
 
