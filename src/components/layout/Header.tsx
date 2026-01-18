@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, X, Search, User, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileMenu } from './MobileMenu';
@@ -30,27 +31,27 @@ export const Header = () => {
             </button>
 
             {/* Logo */}
-            <a href="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <Sparkles className="w-8 h-8 text-accent" />
               <span className="font-serif text-xl md:text-2xl font-semibold text-gradient-gold">
                 Mystica
               </span>
-            </a>
+            </Link>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-8">
-              <a href="#" className="text-foreground/80 hover:text-primary transition-colors">
+              <Link to="/advisors" className="text-foreground/80 hover:text-primary transition-colors">
                 Psychic Readings
-              </a>
-              <a href="#" className="text-foreground/80 hover:text-primary transition-colors">
+              </Link>
+              <Link to="/advisors?category=tarot" className="text-foreground/80 hover:text-primary transition-colors">
                 Tarot
-              </a>
-              <a href="#" className="text-foreground/80 hover:text-primary transition-colors">
+              </Link>
+              <Link to="/advisors?category=astrology" className="text-foreground/80 hover:text-primary transition-colors">
                 Astrology
-              </a>
-              <a href="#" className="text-foreground/80 hover:text-primary transition-colors">
+              </Link>
+              <Link to="/advisors?category=love" className="text-foreground/80 hover:text-primary transition-colors">
                 Love & Relationships
-              </a>
+              </Link>
             </nav>
 
             {/* Right Actions */}

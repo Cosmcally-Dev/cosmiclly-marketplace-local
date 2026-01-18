@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { X, Sparkles, Star, Heart, Moon, Sun, Eye, Hand, TrendingUp, Ghost, Calendar, BookOpen, HelpCircle, UserCheck, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -7,23 +8,23 @@ interface MobileMenuProps {
 }
 
 const menuItems = [
-  { icon: Eye, label: 'Psychic Readings', href: '#psychic' },
-  { icon: Sun, label: 'Astrology Readings', href: '#astrology' },
-  { icon: Star, label: 'Numerology', href: '#numerology' },
-  { icon: Sparkles, label: 'Tarot Readings', href: '#tarot' },
-  { icon: Moon, label: 'Dream Analysis', href: '#dreams' },
-  { icon: Hand, label: 'Palm Readings', href: '#palm' },
-  { icon: Heart, label: 'Love Psychics', href: '#love' },
-  { icon: Star, label: 'Fortune Telling', href: '#fortune' },
-  { icon: TrendingUp, label: 'Career Forecasts', href: '#career' },
-  { icon: Ghost, label: 'Psychic Mediums', href: '#mediums' },
-  { icon: Calendar, label: 'Daily Horoscope', href: '#horoscope' },
-  { icon: BookOpen, label: 'Articles', href: '#articles' },
+  { icon: Eye, label: 'Psychic Readings', href: '/advisors' },
+  { icon: Sun, label: 'Astrology Readings', href: '/advisors?category=astrology' },
+  { icon: Star, label: 'Numerology', href: '/advisors?category=numerology' },
+  { icon: Sparkles, label: 'Tarot Readings', href: '/advisors?category=tarot' },
+  { icon: Moon, label: 'Dream Analysis', href: '/advisors?category=dreams' },
+  { icon: Hand, label: 'Palm Readings', href: '/advisors?category=palm' },
+  { icon: Heart, label: 'Love Psychics', href: '/advisors?category=love' },
+  { icon: Star, label: 'Fortune Telling', href: '/advisors?category=fortune' },
+  { icon: TrendingUp, label: 'Career Forecasts', href: '/advisors?category=career' },
+  { icon: Ghost, label: 'Psychic Mediums', href: '/advisors?category=mediums' },
+  { icon: Calendar, label: 'Daily Horoscope', href: '/#horoscope' },
+  { icon: BookOpen, label: 'Articles', href: '/#articles' },
 ];
 
 const bottomLinks = [
-  { icon: HelpCircle, label: 'Customer Support', href: '#support' },
-  { icon: UserCheck, label: 'Become an Advisor', href: '#apply' },
+  { icon: HelpCircle, label: 'Customer Support', href: '/#support' },
+  { icon: UserCheck, label: 'Become an Advisor', href: '/#apply' },
 ];
 
 export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
@@ -46,10 +47,10 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <div className="flex items-center gap-2">
+            <Link to="/" onClick={onClose} className="flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-accent" />
               <span className="font-serif text-lg font-semibold text-gradient-gold">Mystica</span>
-            </div>
+            </Link>
             <button
               onClick={onClose}
               className="p-2 text-foreground/70 hover:text-primary transition-colors"
@@ -63,15 +64,15 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             <ul className="space-y-1">
               {menuItems.map((item) => (
                 <li key={item.label}>
-                  <a
-                    href={item.href}
+                  <Link
+                    to={item.href}
                     onClick={onClose}
                     className="flex items-center gap-3 px-4 py-3 text-foreground/80 hover:bg-secondary hover:text-primary transition-colors group"
                   >
                     <item.icon className="w-5 h-5 text-mystic-purple group-hover:text-primary transition-colors" />
                     <span className="flex-1">{item.label}</span>
                     <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -81,14 +82,14 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             <ul className="space-y-1">
               {bottomLinks.map((item) => (
                 <li key={item.label}>
-                  <a
-                    href={item.href}
+                  <Link
+                    to={item.href}
                     onClick={onClose}
                     className="flex items-center gap-3 px-4 py-3 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors group"
                   >
                     <item.icon className="w-5 h-5" />
                     <span className="flex-1">{item.label}</span>
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
