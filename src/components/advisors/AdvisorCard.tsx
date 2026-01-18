@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Star, Clock, MessageCircle, Bell } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AuthModal } from '@/components/modals/AuthModal';
+import { useAuth } from '@/hooks/useAuth';
 import type { Advisor } from '@/data/advisors';
 
 interface AdvisorCardProps {
@@ -28,6 +31,8 @@ const StatusBadge = ({ status }: { status: Advisor['status'] }) => {
 
 export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   const navigate = useNavigate();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Navigate to profile page
@@ -36,6 +41,12 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
+    
+    if (!isAuthenticated) {
+      setIsAuthOpen(true);
+      return;
+    }
+    
     if (onChat) {
       onChat(advisor);
     } else {
@@ -167,6 +178,12 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           </Button>
         )}
       </div>
+      
+      <AuthModal 
+        isOpen={isAuthOpen} 
+        onClose={() => setIsAuthOpen(false)} 
+        mode="signin"
+      />
     </div>
   );
 };
