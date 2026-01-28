@@ -93,6 +93,11 @@ const palettes: ThemePalette[] = [
     colors: ['#30343F', '#FAFAFF', '#E4D9FF', '#273469', '#1E2749'],
     mapping: { background: 4, foreground: -1, card: 0, primary: 2, secondary: 3, accent: 2, muted: 0 }
   },
+  {
+    name: 'Neon Spiritual',
+    colors: ['#BF5AF2', '#32D74B', '#0A0A0A', '#FF375F', '#E5E5EA'],
+    mapping: { background: 2, foreground: -1, card: 2, primary: 0, secondary: 1, accent: 3, muted: 4 }
+  },
 ];
 
 // Original Blood Moon theme
