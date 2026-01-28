@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, Clock, MessageCircle, Bell, Phone, Video, Bot } from 'lucide-react';
+import { Star, Clock, MessageCircle, Bell, Phone, Video, Sparkles } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -104,16 +104,16 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           </div>
         )}
 
-        {/* AI Badge */}
+        {/* Magical Sparkle Badge */}
         <div className="absolute top-3 right-3 z-10">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={handleAIClick}
-                className="w-8 h-8 min-w-[44px] min-h-[44px] -m-2 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg"
+                className="w-8 h-8 min-w-[44px] min-h-[44px] -m-2 rounded-full bg-gradient-to-br from-[#1A103C] to-[#7B61FF] flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
                 aria-label="Chat with AI Twin"
               >
-                <Bot className="w-4 h-4" />
+                <Sparkles className="w-5 h-5 fill-current text-[#39F3FF]" />
               </button>
             </TooltipTrigger>
             <TooltipContent>
