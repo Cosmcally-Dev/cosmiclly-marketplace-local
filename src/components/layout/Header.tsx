@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown, Sun } from 'lucide-react';
+import { Menu, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown, Sun, BookOpen, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileMenu } from './MobileMenu';
 import { AuthModal } from '@/components/modals/AuthModal';
@@ -35,10 +35,10 @@ export const Header = () => {
       <header className="sticky top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14 md:h-16">
-            {/* Hamburger Menu Button */}
+            {/* Hamburger Menu Button - Only visible on mobile/tablet */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 text-foreground hover:text-accent transition-colors"
+              className="lg:hidden p-2 min-w-11 min-h-11 flex items-center justify-center text-foreground hover:text-accent transition-colors"
               aria-label="Open menu"
             >
               <Menu className="w-6 h-6" />
@@ -52,12 +52,37 @@ export const Header = () => {
               </span>
             </Link>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
-              {/* Horoscope Link */}
+            {/* Desktop Navigation - Hidden on mobile/tablet */}
+            <nav className="hidden lg:flex items-center gap-6">
+              <Link
+                to="/advisors"
+                className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1.5"
+              >
+                <Layers className="w-4 h-4" />
+                Specialties
+              </Link>
               <Link
                 to="/horoscope"
-                className="p-2 text-foreground/70 hover:text-accent transition-colors hidden sm:flex items-center gap-1"
+                className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1.5"
+              >
+                <Sun className="w-4 h-4" />
+                Horoscope
+              </Link>
+              <Link
+                to="/articles"
+                className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1.5"
+              >
+                <BookOpen className="w-4 h-4" />
+                Articles
+              </Link>
+            </nav>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-2">
+              {/* Horoscope Link - Mobile only (since it's in desktop nav) */}
+              <Link
+                to="/horoscope"
+                className="lg:hidden p-2 min-w-11 min-h-11 flex items-center justify-center text-foreground/70 hover:text-accent transition-colors"
                 title="Daily Horoscope"
               >
                 <Sun className="w-5 h-5" />
@@ -66,7 +91,7 @@ export const Header = () => {
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                    <button className="flex items-center gap-2 px-2 py-1.5 min-h-11 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors font-sans">
                       <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center">
                         <User className="w-4 h-4 text-accent" />
                       </div>
@@ -76,7 +101,7 @@ export const Header = () => {
                       <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-card border-border z-50">
+                  <DropdownMenuContent align="end" className="w-48 bg-card border-border z-50 font-sans">
                     <div className="px-2 py-1.5 text-sm font-medium text-foreground border-b border-border mb-1">
                       Balance: <span className="text-primary">${credits}</span>
                     </div>
@@ -96,14 +121,25 @@ export const Header = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button 
-                  variant="hero" 
-                  size="sm"
-                  onClick={() => handleAuth('signup')}
-                  className="text-xs px-3 h-8"
-                >
-                  Join Free
-                </Button>
+                <>
+                  {/* Desktop: Show both Sign In and Join */}
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleAuth('signin')}
+                    className="hidden lg:inline-flex text-xs font-sans"
+                  >
+                    Sign In
+                  </Button>
+                  <Button 
+                    variant="hero" 
+                    size="sm"
+                    onClick={() => handleAuth('signup')}
+                    className="text-xs px-3 h-8 font-sans"
+                  >
+                    Join Free
+                  </Button>
+                </>
               )}
             </div>
           </div>

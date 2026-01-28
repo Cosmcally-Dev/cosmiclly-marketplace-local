@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Lora', 'serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
         serif: ['Lora', 'serif'],
         heading: ['Poppins', 'sans-serif'],
       },
