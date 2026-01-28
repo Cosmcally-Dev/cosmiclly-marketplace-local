@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown, Sun, BookOpen } from 'lucide-react';
+import { Menu, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown, Sun, BookOpen, Heart, Scroll, Moon, Star, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileMenu } from './MobileMenu';
 import { AuthModal } from '@/components/modals/AuthModal';
@@ -12,14 +12,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from '@/components/ui/navigation-menu';
 
 const specialtyCategories = [
-  { name: 'Love Advice', slug: 'love-advice' },
-  { name: 'Intuitive Readings', slug: 'intuitive-readings' },
-  { name: 'Tarot Readings', slug: 'tarot-readings' },
-  { name: 'Dream Analysis', slug: 'dream-analysis' },
-  { name: 'Astrology', slug: 'astrology' },
-  { name: 'Career Forecasts', slug: 'career-forecasts' },
+  { name: 'Love Advice', slug: 'love-advice', icon: Heart },
+  { name: 'Intuitive Readings', slug: 'intuitive-readings', icon: Sparkles },
+  { name: 'Tarot Readings', slug: 'tarot-readings', icon: Scroll },
+  { name: 'Dream Analysis', slug: 'dream-analysis', icon: Moon },
+  { name: 'Astrology', slug: 'astrology', icon: Star },
+  { name: 'Career Forecasts', slug: 'career-forecasts', icon: Briefcase },
 ];
 
 export const Header = () => {
@@ -63,24 +71,39 @@ export const Header = () => {
 
             {/* Desktop Navigation - Hidden on mobile/tablet */}
             <nav className="hidden lg:flex items-center gap-6">
-              {/* Specialties Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1 outline-none">
-                  Specialties
-                  <ChevronDown className="w-4 h-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48 bg-card border-border">
-                  {specialtyCategories.map((category) => (
-                    <DropdownMenuItem
-                      key={category.slug}
-                      onClick={() => navigate(`/advisors?category=${category.slug}`)}
-                      className="cursor-pointer font-sans"
-                    >
-                      {category.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {/* Specialties Navigation Menu - Airbnb Style */}
+              <NavigationMenu>
+                <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger className="font-sans text-sm font-medium text-foreground/80 hover:text-accent bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
+                      Specialties
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <div className="w-[400px] p-4 bg-white rounded-lg shadow-xl">
+                        <div className="grid grid-cols-2 gap-2">
+                          {specialtyCategories.map((category) => {
+                            const IconComponent = category.icon;
+                            return (
+                              <NavigationMenuLink
+                                key={category.slug}
+                                onClick={() => navigate(`/advisors?category=${category.slug}`)}
+                                className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:bg-gray-50 group"
+                              >
+                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-[#7B61FF]/10 transition-colors">
+                                  <IconComponent className="w-5 h-5 text-gray-600 group-hover:text-[#39F3FF] transition-colors" />
+                                </div>
+                                <span className="font-sans text-sm font-medium text-gray-800 group-hover:text-[#7B61FF] transition-colors">
+                                  {category.name}
+                                </span>
+                              </NavigationMenuLink>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
               
               <Link
                 to="/horoscope"

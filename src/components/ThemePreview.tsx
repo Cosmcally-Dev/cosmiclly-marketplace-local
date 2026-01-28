@@ -94,9 +94,9 @@ const palettes: ThemePalette[] = [
     mapping: { background: 4, foreground: -1, card: 0, primary: 2, secondary: 3, accent: 2, muted: 0 }
   },
   {
-    name: 'Neon Spiritual',
-    colors: ['#BF5AF2', '#32D74B', '#0A0A0A', '#FF375F', '#E5E5EA'],
-    mapping: { background: 2, foreground: -1, card: 2, primary: 0, secondary: 1, accent: 3, muted: 4 }
+    name: 'Ethereal Neon',
+    colors: ['#1A103C', '#FDF7FF', '#7B61FF', '#39F3FF', '#FFA9FF', '#C8FF8C'],
+    mapping: { background: 0, foreground: 1, card: 0, primary: 2, secondary: 3, accent: 4, muted: 5 }
   },
 ];
 
