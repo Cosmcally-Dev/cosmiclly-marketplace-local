@@ -15,6 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
+  				'Lora',
   				'ui-sans-serif',
   				'system-ui',
   				'sans-serif',
@@ -24,6 +25,7 @@ export default {
   				'Noto Color Emoji'
   			],
   			serif: [
+  				'Lora',
   				'ui-serif',
   				'Georgia',
   				'Cambria',
