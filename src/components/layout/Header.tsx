@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown, Sun, BookOpen, Layers } from 'lucide-react';
+import { Menu, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown, Sun, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileMenu } from './MobileMenu';
 import { AuthModal } from '@/components/modals/AuthModal';
@@ -12,6 +12,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
+const specialtyCategories = [
+  { name: 'Love Advice', slug: 'love-advice' },
+  { name: 'Intuitive Readings', slug: 'intuitive-readings' },
+  { name: 'Tarot Readings', slug: 'tarot-readings' },
+  { name: 'Dream Analysis', slug: 'dream-analysis' },
+  { name: 'Astrology', slug: 'astrology' },
+  { name: 'Career Forecasts', slug: 'career-forecasts' },
+];
 
 export const Header = () => {
   const navigate = useNavigate();
@@ -32,7 +41,7 @@ export const Header = () => {
 
   return (
     <>
-      <header className="sticky top-[42px] left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
+      <header className="bg-background/95 backdrop-blur-xl border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14 md:h-16">
             {/* Hamburger Menu Button - Only visible on mobile/tablet */}
@@ -54,13 +63,25 @@ export const Header = () => {
 
             {/* Desktop Navigation - Hidden on mobile/tablet */}
             <nav className="hidden lg:flex items-center gap-6">
-              <Link
-                to="/advisors"
-                className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1.5"
-              >
-                <Layers className="w-4 h-4" />
-                Specialties
-              </Link>
+              {/* Specialties Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1 outline-none">
+                  Specialties
+                  <ChevronDown className="w-4 h-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-card border-border">
+                  {specialtyCategories.map((category) => (
+                    <DropdownMenuItem
+                      key={category.slug}
+                      onClick={() => navigate(`/advisors?category=${category.slug}`)}
+                      className="cursor-pointer font-sans"
+                    >
+                      {category.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <Link
                 to="/horoscope"
                 className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1.5"

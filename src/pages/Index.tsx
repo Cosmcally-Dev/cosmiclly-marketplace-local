@@ -1,6 +1,5 @@
-import { Header } from '@/components/layout/Header';
+import { StickyHeader } from '@/components/layout/StickyHeader';
 import { Footer } from '@/components/layout/Footer';
-import { StickyPromoBar } from '@/components/home/StickyPromoBar';
 import { HeroSection } from '@/components/home/HeroSection';
 import { FeaturedAdvisorsSection } from '@/components/home/FeaturedAdvisorsSection';
 import { RecentlyViewedSection } from '@/components/home/RecentlyViewedSection';
@@ -13,8 +12,7 @@ import { ThemePreview } from '@/components/ThemePreview';
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <StickyPromoBar />
-      <Header />
+      <StickyHeader />
       <main>
         <HeroSection />
         <FeaturedAdvisorsSection />
