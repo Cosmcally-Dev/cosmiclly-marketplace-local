@@ -63,7 +63,7 @@ export const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
                   align="start" 
-                  className="w-64 max-h-[70vh] overflow-y-auto bg-popover border-border z-50"
+                  className="w-64 max-h-[70vh] overflow-y-auto bg-popover border-border z-50 shadow-2xl rounded-xl"
                 >
                   {categories.map((category) => {
                     const IconComponent = category.icon;
@@ -71,7 +71,7 @@ export const Header = () => {
                       <DropdownMenuItem
                         key={category.slug}
                         onClick={() => navigate(`/advisors?category=${category.slug}`)}
-                        className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-accent/10 group"
+                        className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
                       >
                         <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                           <IconComponent className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />

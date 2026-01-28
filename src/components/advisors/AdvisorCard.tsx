@@ -111,13 +111,13 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
             <TooltipTrigger asChild>
               <button
                 onClick={handleAIClick}
-                className="w-8 h-8 min-w-[44px] min-h-[44px] -m-2 rounded-full bg-gradient-to-br from-[#1A103C] to-[#7B61FF] flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                className="w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
                 aria-label="Chat with AI Twin"
               >
                 <img 
                   src={aiChatIcon} 
                   alt="AI Chat" 
-                  className="w-6 h-6 object-contain"
+                  className="w-full h-full object-contain p-1"
                 />
               </button>
             </TooltipTrigger>
