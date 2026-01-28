@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, Search, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileMenu } from './MobileMenu';
-import { SearchModal } from '@/components/modals/SearchModal';
 import { AuthModal } from '@/components/modals/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -17,32 +16,10 @@ import {
 export const Header = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   const { user, isAuthenticated, logout, credits } = useAuth();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY < 50) {
-        setIsVisible(true);
-      } else if (currentScrollY < lastScrollY) {
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY) {
-        setIsVisible(false);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
 
   const handleAuth = (mode: 'signin' | 'signup') => {
     setAuthMode(mode);
@@ -55,14 +32,10 @@ export const Header = () => {
 
   return (
     <>
-      <header 
-        className={`fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border transition-transform duration-300 ${
-          isVisible ? 'translate-y-0' : '-translate-y-full'
-        }`}
-      >
+      <header className="sticky top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Hamburger Menu Button - Always visible */}
+          <div className="flex items-center justify-between h-14 md:h-16">
+            {/* Hamburger Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="p-2 text-foreground hover:text-accent transition-colors"
@@ -73,30 +46,31 @@ export const Header = () => {
 
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <Sparkles className="w-8 h-8 text-accent" />
-              <span className="font-heading text-xl md:text-2xl font-semibold text-gradient-gold">
+              <Sparkles className="w-7 h-7 text-accent" />
+              <span className="font-heading text-lg md:text-xl font-semibold text-gradient-gold">
                 Mystica
               </span>
             </Link>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-2 md:gap-4">
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="p-2 text-foreground/70 hover:text-accent transition-colors"
-                aria-label="Search"
+            <div className="flex items-center gap-2">
+              {/* Horoscope Link */}
+              <Link
+                to="/horoscope"
+                className="p-2 text-foreground/70 hover:text-accent transition-colors hidden sm:flex items-center gap-1"
+                title="Daily Horoscope"
               >
-                <Search className="w-5 h-5" />
-              </button>
+                <Sun className="w-5 h-5" />
+              </Link>
               
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
-                      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                    <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+                      <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center">
                         <User className="w-4 h-4 text-accent" />
                       </div>
-                      <span className="hidden md:block text-sm font-medium text-foreground">
+                      <span className="hidden md:block text-sm font-medium text-foreground max-w-[100px] truncate">
                         {user?.name || user?.email}
                       </span>
                       <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
@@ -126,7 +100,7 @@ export const Header = () => {
                   variant="hero" 
                   size="sm"
                   onClick={() => handleAuth('signup')}
-                  className="hidden sm:inline-flex"
+                  className="text-xs px-3 h-8"
                 >
                   Join Free
                 </Button>
@@ -137,7 +111,6 @@ export const Header = () => {
       </header>
 
       <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} mode={authMode} />
     </>
   );
