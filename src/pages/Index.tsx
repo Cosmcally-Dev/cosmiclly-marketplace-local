@@ -8,6 +8,7 @@ import { AllAdvisorsSection } from '@/components/home/AllAdvisorsSection';
 import { HowItWorksSection } from '@/components/home/HowItWorksSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { CookieConsent } from '@/components/CookieConsent';
+import { ThemePreview } from '@/components/ThemePreview';
 
 const Index = () => {
   return (
@@ -24,6 +25,7 @@ const Index = () => {
       </main>
       <Footer />
       <CookieConsent />
+      <ThemePreview />
     </div>
   );
 };
