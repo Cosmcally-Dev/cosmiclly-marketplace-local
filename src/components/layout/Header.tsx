@@ -32,7 +32,7 @@ export const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
+      <header className="sticky top-[42px] left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-14 md:h-16">
             {/* Hamburger Menu Button - Only visible on mobile/tablet */}
