@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, Clock, MessageCircle, Bell, Phone, Video, Sparkles } from 'lucide-react';
+import { Star, Clock, MessageCircle, Bell, Phone, Video } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { AuthModal } from '@/components/modals/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { addToRecentlyViewed } from '@/components/home/RecentlyViewedSection';
 import type { Advisor } from '@/data/advisors';
+import aiChatIcon from '@/assets/ai-chat-icon.png';
 import {
   Tooltip,
   TooltipContent,
@@ -104,7 +105,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           </div>
         )}
 
-        {/* Magical Sparkle Badge */}
+        {/* AI Chat Badge */}
         <div className="absolute top-3 right-3 z-10">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -113,7 +114,11 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                 className="w-8 h-8 min-w-[44px] min-h-[44px] -m-2 rounded-full bg-gradient-to-br from-[#1A103C] to-[#7B61FF] flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
                 aria-label="Chat with AI Twin"
               >
-                <Sparkles className="w-5 h-5 fill-current text-[#39F3FF]" />
+                <img 
+                  src={aiChatIcon} 
+                  alt="AI Chat" 
+                  className="w-6 h-6 object-contain"
+                />
               </button>
             </TooltipTrigger>
             <TooltipContent>
