@@ -1,26 +1,26 @@
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { StickyPromoBar } from '@/components/home/StickyPromoBar';
 import { HeroSection } from '@/components/home/HeroSection';
-import { CategoriesSection } from '@/components/home/CategoriesSection';
 import { FeaturedAdvisorsSection } from '@/components/home/FeaturedAdvisorsSection';
+import { RecentlyViewedSection } from '@/components/home/RecentlyViewedSection';
+import { AllAdvisorsSection } from '@/components/home/AllAdvisorsSection';
 import { HowItWorksSection } from '@/components/home/HowItWorksSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
-import { PromoBanner } from '@/components/home/PromoBanner';
-import { DailyHoroscope } from '@/components/home/DailyHoroscope';
 import { CookieConsent } from '@/components/CookieConsent';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <StickyPromoBar />
       <Header />
       <main>
         <HeroSection />
         <FeaturedAdvisorsSection />
-        <CategoriesSection />
+        <RecentlyViewedSection />
+        <AllAdvisorsSection />
         <HowItWorksSection />
-        <DailyHoroscope />
         <TestimonialsSection />
-        <PromoBanner />
       </main>
       <Footer />
       <CookieConsent />
