@@ -85,7 +85,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
     <TooltipProvider>
       <article className="group relative bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 card-shadow h-full">
         {/* Top Left Badges - Only Top Rated and New */}
-        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+        <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
           {advisor.isTopRated && (
             <Badge className="bg-secondary text-secondary-foreground font-sans font-bold text-xs shadow-lg">
               <Award className="w-3 h-3 mr-1" />
@@ -103,7 +103,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
         <Link 
           to={profileUrl} 
           onClick={handleProfileClick}
-          className="block relative pt-6 px-4"
+          className="block relative pt-8 px-5"
         >
           <div className="relative mx-auto w-20 h-20 md:w-24 md:h-24">
             <img
@@ -119,7 +119,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
         </Link>
 
         {/* Content */}
-        <div className="p-4 text-center">
+        <div className="p-5 pt-4 text-center">
           {/* Rating */}
           <div className="flex items-center justify-center gap-1 mb-1.5">
             {[...Array(5)].map((_, i) => (
@@ -148,10 +148,10 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           <p className="text-xs text-muted-foreground mb-2">{advisor.title}</p>
 
           {/* Stats */}
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-3">
+          <div className="flex items-center justify-center gap-2 text-xs text-foreground/70 mb-3">
             <span className="flex items-center gap-1 font-sans">
               <MessageCircle className="w-3 h-3" />
-              {advisor.readingsCount.toLocaleString()}
+              {advisor.readingsCount.toLocaleString()} readings
             </span>
           </div>
 
@@ -192,17 +192,17 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
           {/* Action Buttons - Icons Only */}
           {advisor.status === 'online' ? (
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-2.5 mt-4">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="default"
                     size="icon"
                     onClick={handleChatClick}
-                    className="w-11 h-11 font-sans bg-primary hover:bg-primary/90"
+                    className="w-11 h-11 font-sans bg-primary hover:bg-primary/90 text-primary-foreground"
                     aria-label="Chat with advisor"
                   >
-                    <MessageCircle className="w-4 h-4" />
+                    <MessageCircle className="w-5 h-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Chat</TooltipContent>
@@ -211,13 +211,13 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="icon"
                     onClick={handleCallClick}
-                    className="w-11 h-11 font-sans"
+                    className="w-11 h-11 font-sans bg-primary hover:bg-primary/90 text-primary-foreground"
                     aria-label="Call advisor"
                   >
-                    <Phone className="w-4 h-4" />
+                    <Phone className="w-5 h-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Call</TooltipContent>
@@ -229,10 +229,10 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                     variant="outline"
                     size="icon"
                     onClick={handleVideoClick}
-                    className="w-11 h-11 font-sans"
+                    className="w-11 h-11 font-sans border-primary/30 hover:bg-primary/10"
                     aria-label="Video call advisor"
                   >
-                    <Video className="w-4 h-4" />
+                    <Video className="w-5 h-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Video</TooltipContent>
@@ -244,7 +244,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                     variant="outline"
                     size="icon"
                     onClick={handleAIClick}
-                    className="w-11 h-11 font-sans"
+                    className="w-11 h-11 font-sans border-primary/30 hover:bg-primary/10"
                     aria-label="Chat with AI Twin"
                   >
                     <img 

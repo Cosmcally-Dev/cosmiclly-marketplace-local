@@ -42,12 +42,12 @@ export const RecentlyViewedSection = () => {
   if (recentAdvisors.length === 0) return null;
 
   return (
-    <section className="py-12 bg-background">
+    <section className="py-12 bg-gradient-to-r from-secondary/5 via-primary/5 to-secondary/5 border-y border-border/50">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-accent" />
+            <Clock className="w-5 h-5 text-primary" />
             <h2 className="font-heading text-xl md:text-2xl font-bold text-foreground">
               Recently Viewed
             </h2>
