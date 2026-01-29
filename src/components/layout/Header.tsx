@@ -21,7 +21,7 @@ import {
   DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 
-// Explore Advisors menu items with icons
+// Explore Advisors menu items with icons (removed NEW Advisors from specialties submenu)
 const exploreMenuItems = [
   { label: 'Psychic Readings', icon: Sparkles, slug: 'psychic-readings' },
   { label: 'Love & Relationships', icon: Heart, slug: 'love-relationships' },
@@ -29,7 +29,6 @@ const exploreMenuItems = [
   { label: 'Psychic Mediums', icon: Users, slug: 'psychic-mediums' },
   { label: 'Spiritual Readings', icon: Flame, slug: 'spiritual-readings' },
   { label: 'Tarot Card Readings', icon: ScrollText, slug: 'tarot-readings' },
-  { label: 'NEW Advisors!', icon: Zap, slug: 'new-advisors', isNew: true },
   { label: 'Astrology Readings', icon: Star, slug: 'astrology' },
   { label: 'Dream Interpretation', icon: Moon, slug: 'dream-interpretation' },
   { label: 'Financial Guidance', icon: DollarSign, slug: 'financial-guidance' },
@@ -103,7 +102,7 @@ export const Header = () => {
                   {/* Featured Advisors */}
                   <DropdownMenuItem
                     onClick={() => navigate('/advisors?filter=featured')}
-                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary group data-[highlighted]:bg-primary"
+                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[highlighted]:bg-primary group"
                   >
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
                       <Star className="w-4 h-4 text-muted-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
@@ -116,12 +115,12 @@ export const Header = () => {
                   {/* NEW Advisors */}
                   <DropdownMenuItem
                     onClick={() => navigate('/advisors?filter=new')}
-                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
+                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[highlighted]:bg-primary group"
                   >
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <Zap className="w-4 h-4 text-accent group-hover:text-primary transition-colors" />
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
+                      <Zap className="w-4 h-4 text-primary group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
                     </div>
-                    <span className="font-sans text-sm font-medium text-accent group-hover:text-primary transition-colors">
+                    <span className="font-sans text-sm font-medium text-primary group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
                       NEW Advisors
                     </span>
                   </DropdownMenuItem>
@@ -129,12 +128,12 @@ export const Header = () => {
                   {/* All Advisors */}
                   <DropdownMenuItem
                     onClick={() => navigate('/advisors')}
-                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
+                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[highlighted]:bg-primary group"
                   >
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                      <LayoutGrid className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
+                      <LayoutGrid className="w-4 h-4 text-muted-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
                     </div>
-                    <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                    <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
                       All Advisors
                     </span>
                   </DropdownMenuItem>
@@ -143,11 +142,11 @@ export const Header = () => {
 
                   {/* Specialties Sub-Menu */}
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group">
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                        <Compass className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <DropdownMenuSubTrigger className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[state=open]:bg-primary data-[highlighted]:bg-primary group">
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[state=open]:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
+                        <Compass className="w-4 h-4 text-muted-foreground group-hover:text-primary-foreground group-data-[state=open]:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
                       </div>
-                      <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary-foreground group-data-[state=open]:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
                         Specialties
                       </span>
                     </DropdownMenuSubTrigger>
@@ -158,12 +157,12 @@ export const Header = () => {
                           <DropdownMenuItem
                             key={item.slug}
                             onClick={() => navigate(`/advisors?category=${item.slug}`)}
-                            className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
+                            className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[highlighted]:bg-primary group"
                           >
-                            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                              <IconComponent className={`w-4 h-4 ${item.isNew ? 'text-accent' : 'text-muted-foreground'} group-hover:text-primary transition-colors`} />
+                            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
+                              <IconComponent className="w-4 h-4 text-muted-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
                             </div>
-                            <span className={`font-sans text-sm font-medium ${item.isNew ? 'text-accent' : 'text-foreground'} group-hover:text-primary transition-colors`}>
+                            <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
                               {item.label}
                             </span>
                           </DropdownMenuItem>
