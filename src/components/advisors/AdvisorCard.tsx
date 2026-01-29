@@ -105,27 +105,6 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           )}
         </div>
 
-        {/* AI Chat Badge */}
-        <div className="absolute top-3 right-3 z-10">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleAIClick}
-                className="w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
-                aria-label="Chat with AI Twin"
-              >
-                <img 
-                  src={aiChatIcon} 
-                  alt="AI Chat" 
-                  className="w-full h-full object-contain p-1"
-                />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Chat with AI Twin</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
 
         {/* Avatar Section - Clickable Link */}
         <Link 
@@ -260,6 +239,25 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Video</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleAIClick}
+                    className="w-11 h-11 font-sans"
+                    aria-label="Chat with AI Twin"
+                  >
+                    <img 
+                      src={aiChatIcon} 
+                      alt="AI Chat" 
+                      className="w-5 h-5 object-contain"
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>AI Twin</TooltipContent>
               </Tooltip>
             </div>
           ) : advisor.status === 'busy' ? (

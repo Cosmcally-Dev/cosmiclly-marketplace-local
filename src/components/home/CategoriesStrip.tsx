@@ -1,11 +1,8 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { categories } from '@/data/categories';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRef } from 'react';
 
 export const CategoriesStrip = () => {
   const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Reorder categories so Love is first
   const orderedCategories = [...categories].sort((a, b) => {
@@ -14,39 +11,12 @@ export const CategoriesStrip = () => {
     return 0;
   });
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = 200;
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth',
-      });
-    }
-  };
-
   return (
     <div className="relative">
-      {/* Scroll Buttons */}
-      <button
-        onClick={() => scroll('left')}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-card/90 backdrop-blur-sm border border-border rounded-full flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-colors shadow-lg hidden md:flex"
-        aria-label="Scroll left"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
-      
-      <button
-        onClick={() => scroll('right')}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-card/90 backdrop-blur-sm border border-border rounded-full flex items-center justify-center text-foreground hover:bg-primary hover:text-primary-foreground transition-colors shadow-lg hidden md:flex"
-        aria-label="Scroll right"
-      >
-        <ChevronRight className="w-4 h-4" />
-      </button>
-
-      {/* Categories */}
+      {/* Native Horizontal Scroll Container */}
       <div
-        ref={scrollRef}
-        className="flex gap-2 overflow-x-auto scrollbar-hide py-2 px-1 md:px-8"
+        className="flex gap-3 overflow-x-auto scrollbar-hide py-2 px-1"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {orderedCategories.map((category) => (
           <button

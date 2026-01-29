@@ -16,6 +16,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 
 // Explore Advisors menu items with icons
@@ -95,26 +98,35 @@ export const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
                   align="start" 
-                  className="w-64 max-h-[70vh] overflow-y-auto bg-popover border-border z-50 shadow-2xl rounded-xl"
+                  className="w-56 bg-popover border-border z-50 shadow-2xl rounded-xl"
                 >
-                  {exploreMenuItems.map((item) => {
-                    const IconComponent = item.icon;
-                    return (
-                      <DropdownMenuItem
-                        key={item.slug}
-                        onClick={() => navigate(`/advisors?category=${item.slug}`)}
-                        className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                          <IconComponent className={`w-4 h-4 ${item.isNew ? 'text-[#FFA500]' : 'text-muted-foreground'} group-hover:text-primary transition-colors`} />
-                        </div>
-                        <span className={`font-sans text-sm font-medium ${item.isNew ? 'text-[#FFA500]' : 'text-foreground'} group-hover:text-primary transition-colors`}>
-                          {item.label}
-                        </span>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                  <DropdownMenuSeparator />
+                  {/* Featured Advisors */}
+                  <DropdownMenuItem
+                    onClick={() => navigate('/advisors?filter=featured')}
+                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                      <Star className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      Featured Advisors
+                    </span>
+                  </DropdownMenuItem>
+
+                  {/* NEW Advisors */}
+                  <DropdownMenuItem
+                    onClick={() => navigate('/advisors?filter=new')}
+                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                      <Zap className="w-4 h-4 text-accent group-hover:text-primary transition-colors" />
+                    </div>
+                    <span className="font-sans text-sm font-medium text-accent group-hover:text-primary transition-colors">
+                      NEW Advisors
+                    </span>
+                  </DropdownMenuItem>
+
+                  {/* All Advisors */}
                   <DropdownMenuItem
                     onClick={() => navigate('/advisors')}
                     className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
@@ -123,9 +135,42 @@ export const Header = () => {
                       <LayoutGrid className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                     <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                      All Categories
+                      All Advisors
                     </span>
                   </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Specialties Sub-Menu */}
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group">
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                        <Compass className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
+                      <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                        Specialties
+                      </span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="w-64 max-h-[60vh] overflow-y-auto bg-popover border-border shadow-2xl rounded-xl">
+                      {exploreMenuItems.map((item) => {
+                        const IconComponent = item.icon;
+                        return (
+                          <DropdownMenuItem
+                            key={item.slug}
+                            onClick={() => navigate(`/advisors?category=${item.slug}`)}
+                            className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                              <IconComponent className={`w-4 h-4 ${item.isNew ? 'text-accent' : 'text-muted-foreground'} group-hover:text-primary transition-colors`} />
+                            </div>
+                            <span className={`font-sans text-sm font-medium ${item.isNew ? 'text-accent' : 'text-foreground'} group-hover:text-primary transition-colors`}>
+                              {item.label}
+                            </span>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
                 </DropdownMenuContent>
               </DropdownMenu>
               
