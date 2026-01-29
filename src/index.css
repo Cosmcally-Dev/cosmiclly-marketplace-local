@@ -14,105 +14,114 @@
 }
 @layer base {
   :root {
-    /* Cosmic Violet Theme - Mystical & Modern */
-    --background: 255 45% 6%;
-    --foreground: 270 15% 95%;
+    /* Mystical Elegance Theme - Strict 3-Color Palette */
+    /* PRIMARY: Coral/Salmon Pink - CTAs, headlines, important actions */
+    /* SECONDARY: Violet Purple - Buttons, interactive elements, pills */
+    /* ACCENT: Gold Amber - Highlights, badges, special callouts */
+    
+    --background: 260 45% 7%;
+    --foreground: 270 20% 95%;
 
-    --card: 255 35% 10%;
-    --card-foreground: 270 15% 95%;
+    --card: 260 40% 11%;
+    --card-foreground: 270 20% 95%;
 
-    --popover: 255 35% 12%;
-    --popover-foreground: 270 15% 95%;
+    --popover: 260 40% 13%;
+    --popover-foreground: 270 20% 95%;
 
-    --primary: 15 85% 65%;
-    --primary-foreground: 255 45% 6%;
+    /* PRIMARY: Coral/Salmon Pink */
+    --primary: 12 76% 61%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 85 75% 55%;
-    --secondary-foreground: 255 45% 6%;
+    /* SECONDARY: Violet Purple */
+    --secondary: 263 70% 58%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 255 30% 15%;
-    --muted-foreground: 270 15% 65%;
+    --muted: 260 30% 18%;
+    --muted-foreground: 270 15% 60%;
 
-    --accent: 185 90% 55%;
-    --accent-foreground: 255 45% 6%;
+    /* ACCENT: Gold Amber */
+    --accent: 38 92% 50%;
+    --accent-foreground: 260 45% 7%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 255 25% 18%;
-    --input: 255 30% 15%;
-    --ring: 15 85% 65%;
+    --border: 260 30% 20%;
+    --input: 260 35% 16%;
+    --ring: 263 70% 58%;
 
     --radius: 0.75rem;
 
-    /* Mystical Neon custom colors */
-    --neon-violet: 270 100% 70%;
-    --neon-cyan: 185 90% 55%;
-    --neon-pink: 15 85% 65%;
-    --neon-lime: 85 75% 55%;
-    --deep-purple: 255 45% 10%;
+    /* Unified accent colors (all map to the 3-color system) */
+    --neon-violet: 263 70% 58%;
+    --neon-cyan: 263 70% 58%;
+    --neon-pink: 12 76% 61%;
+    --neon-lime: 38 92% 50%;
+    --deep-purple: 260 45% 10%;
     --midnight: 260 50% 4%;
+    
+    /* Status colors (functional, not decorative) */
     --online-green: 142 70% 45%;
-    --busy-orange: 30 90% 50%;
-    --offline-gray: 255 15% 40%;
+    --busy-orange: 38 92% 50%;
+    --offline-gray: 260 20% 40%;
 
-    /* Blood theme (legacy - mapped to coral/pink) */
-    --blood-deep: 15 70% 25%;
-    --blood-dark: 15 60% 20%;
-    --blood-vibrant: 15 85% 65%;
-    --blood-black: 255 45% 6%;
+    /* Legacy blood theme (mapped to primary coral) */
+    --blood-deep: 12 60% 25%;
+    --blood-dark: 12 50% 20%;
+    --blood-vibrant: 12 76% 61%;
+    --blood-black: 260 45% 7%;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(180deg, hsl(255 45% 8%) 0%, hsl(260 50% 4%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(255 35% 12%) 0%, hsl(255 35% 8%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(15 85% 65%) 0%, hsl(340 80% 60%) 100%);
-    --gradient-neon: linear-gradient(135deg, hsl(270 100% 70%) 0%, hsl(185 90% 55%) 100%);
-    --gradient-mystical: linear-gradient(135deg, hsl(270 80% 70%) 0%, hsl(15 85% 65%) 100%);
+    /* Gradients - Unified Purple tones */
+    --gradient-hero: linear-gradient(180deg, hsl(260 45% 9%) 0%, hsl(260 50% 4%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(260 40% 13%) 0%, hsl(260 40% 9%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(12 76% 61%) 0%, hsl(350 70% 55%) 100%);
+    --gradient-neon: linear-gradient(135deg, hsl(263 70% 58%) 0%, hsl(280 60% 50%) 100%);
+    --gradient-mystical: linear-gradient(135deg, hsl(263 70% 58%) 0%, hsl(12 76% 61%) 100%);
 
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(270 100% 70% / 0.3);
-    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.5);
-    --shadow-elevated: 0 8px 40px hsl(0 0% 0% / 0.6);
-    --shadow-neon: 0 0 30px hsl(270 100% 70% / 0.4);
+    --shadow-glow: 0 0 40px hsl(263 70% 58% / 0.25);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.4);
+    --shadow-elevated: 0 8px 40px hsl(0 0% 0% / 0.5);
+    --shadow-neon: 0 0 30px hsl(263 70% 58% / 0.3);
 
-    --sidebar-background: 255 45% 6%;
-    --sidebar-foreground: 270 15% 95%;
-    --sidebar-primary: 15 85% 65%;
-    --sidebar-primary-foreground: 255 45% 6%;
-    --sidebar-accent: 255 30% 18%;
-    --sidebar-accent-foreground: 270 15% 95%;
-    --sidebar-border: 255 25% 20%;
-    --sidebar-ring: 15 85% 65%;
+    --sidebar-background: 260 45% 7%;
+    --sidebar-foreground: 270 20% 95%;
+    --sidebar-primary: 12 76% 61%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 260 35% 18%;
+    --sidebar-accent-foreground: 270 20% 95%;
+    --sidebar-border: 260 30% 22%;
+    --sidebar-ring: 263 70% 58%;
   }
 
   .dark {
-    --background: 255 50% 5%;
-    --foreground: 270 15% 95%;
-    --card: 255 40% 8%;
-    --card-foreground: 270 15% 95%;
-    --popover: 255 40% 10%;
-    --popover-foreground: 270 15% 95%;
-    --primary: 15 85% 65%;
-    --primary-foreground: 255 45% 6%;
-    --secondary: 85 75% 55%;
-    --secondary-foreground: 255 45% 6%;
-    --muted: 255 30% 12%;
-    --muted-foreground: 270 15% 60%;
-    --accent: 185 90% 55%;
-    --accent-foreground: 255 45% 6%;
+    --background: 260 50% 5%;
+    --foreground: 270 20% 95%;
+    --card: 260 45% 9%;
+    --card-foreground: 270 20% 95%;
+    --popover: 260 45% 11%;
+    --popover-foreground: 270 20% 95%;
+    --primary: 12 76% 61%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 263 70% 58%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 260 30% 15%;
+    --muted-foreground: 270 15% 55%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 260 45% 7%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 255 25% 15%;
-    --input: 255 30% 12%;
-    --ring: 15 85% 65%;
-    --sidebar-background: 255 50% 5%;
-    --sidebar-foreground: 270 15% 95%;
-    --sidebar-primary: 15 85% 65%;
-    --sidebar-primary-foreground: 255 45% 6%;
-    --sidebar-accent: 255 30% 15%;
-    --sidebar-accent-foreground: 270 15% 95%;
-    --sidebar-border: 255 25% 18%;
-    --sidebar-ring: 15 85% 65%;
+    --border: 260 30% 18%;
+    --input: 260 35% 14%;
+    --ring: 263 70% 58%;
+    --sidebar-background: 260 50% 5%;
+    --sidebar-foreground: 270 20% 95%;
+    --sidebar-primary: 12 76% 61%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 260 35% 16%;
+    --sidebar-accent-foreground: 270 20% 95%;
+    --sidebar-border: 260 30% 20%;
+    --sidebar-ring: 263 70% 58%;
   }
 }
 
