@@ -1,8 +1,16 @@
+import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { categories } from '@/data/categories';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
 
 export const CategoriesStrip = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   // Reorder categories so Love is first
   const orderedCategories = [...categories].sort((a, b) => {
@@ -11,28 +19,82 @@ export const CategoriesStrip = () => {
     return 0;
   });
 
+  const checkScrollButtons = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkScrollButtons();
+    const container = scrollRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScrollButtons);
+      return () => container.removeEventListener('scroll', checkScrollButtons);
+    }
+  }, []);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 300;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
   return (
     <div className="relative">
-      {/* Native Horizontal Scroll Container */}
+      {/* Desktop Left Chevron */}
+      {!isMobile && canScrollLeft && (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-md border-border/50 hover:bg-accent"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+      )}
+
+      {/* Scrollable Container */}
       <div
-        className="flex gap-3 overflow-x-auto scrollbar-hide py-2 px-1"
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-1"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {orderedCategories.map((category) => (
           <button
             key={category.slug}
             onClick={() => navigate(`/advisors?category=${category.slug}`)}
-            className="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/80 hover:bg-primary hover:text-primary-foreground border border-border hover:border-primary transition-all group"
+            className="flex-shrink-0 snap-start flex flex-col items-center justify-center gap-2 w-24 h-24 rounded-xl bg-card border border-border/50 shadow-sm hover:shadow-md hover:border-primary/30 transition-all group"
           >
-            <div className={`w-6 h-6 rounded-full bg-gradient-to-br ${category.color} flex items-center justify-center`}>
-              <category.icon className="w-3.5 h-3.5 text-white" />
+            {/* Icon Circle */}
+            <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+              <category.icon className="w-5 h-5 text-primary" />
             </div>
-            <span className="text-sm font-medium text-foreground group-hover:text-primary-foreground whitespace-nowrap">
+            {/* Label */}
+            <span className="text-xs font-medium text-foreground text-center leading-tight px-1 line-clamp-2">
               {category.label}
             </span>
           </button>
         ))}
       </div>
+
+      {/* Desktop Right Chevron */}
+      {!isMobile && canScrollRight && (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-md border-border/50 hover:bg-accent"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </Button>
+      )}
     </div>
   );
 };
