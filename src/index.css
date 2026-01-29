@@ -14,99 +14,105 @@
 }
 @layer base {
   :root {
-    /* Ethereal Neon Theme - Modern Polish */
-    --background: 260 40% 8%;
-    --foreground: 280 20% 98%;
+    /* Cosmic Violet Theme - Mystical & Modern */
+    --background: 255 45% 6%;
+    --foreground: 270 15% 95%;
 
-    --card: 260 30% 12%;
-    --card-foreground: 280 20% 98%;
+    --card: 255 35% 10%;
+    --card-foreground: 270 15% 95%;
 
-    --popover: 260 30% 14%;
-    --popover-foreground: 280 20% 98%;
+    --popover: 255 35% 12%;
+    --popover-foreground: 270 15% 95%;
 
-    --primary: 260 100% 70%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 15 85% 65%;
+    --primary-foreground: 255 45% 6%;
 
-    --secondary: 180 100% 60%;
-    --secondary-foreground: 260 60% 12%;
+    --secondary: 85 75% 55%;
+    --secondary-foreground: 255 45% 6%;
 
-    --muted: 260 40% 20%;
-    --muted-foreground: 280 20% 70%;
+    --muted: 255 30% 15%;
+    --muted-foreground: 270 15% 65%;
 
-    --accent: 300 100% 80%;
-    --accent-foreground: 260 60% 12%;
+    --accent: 185 90% 55%;
+    --accent-foreground: 255 45% 6%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 30% 20%;
-    --input: 260 40% 20%;
-    --ring: 260 100% 70%;
+    --border: 255 25% 18%;
+    --input: 255 30% 15%;
+    --ring: 15 85% 65%;
 
     --radius: 0.75rem;
 
-    /* Ethereal Neon custom colors */
-    --neon-violet: 260 100% 70%;
-    --neon-cyan: 190 100% 50%;
-    --neon-pink: 300 100% 80%;
-    --neon-lime: 90 100% 75%;
-    --deep-purple: 260 60% 12%;
-    --midnight: 280 60% 5%;
+    /* Mystical Neon custom colors */
+    --neon-violet: 270 100% 70%;
+    --neon-cyan: 185 90% 55%;
+    --neon-pink: 15 85% 65%;
+    --neon-lime: 85 75% 55%;
+    --deep-purple: 255 45% 10%;
+    --midnight: 260 50% 4%;
     --online-green: 142 70% 45%;
     --busy-orange: 30 90% 50%;
-    --offline-gray: 260 20% 40%;
+    --offline-gray: 255 15% 40%;
+
+    /* Blood theme (legacy - mapped to coral/pink) */
+    --blood-deep: 15 70% 25%;
+    --blood-dark: 15 60% 20%;
+    --blood-vibrant: 15 85% 65%;
+    --blood-black: 255 45% 6%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(260 60% 12%) 0%, hsl(280 60% 5%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(260 50% 18%) 0%, hsl(260 50% 12%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(260 100% 70%) 0%, hsl(300 100% 80%) 100%);
-    --gradient-neon: linear-gradient(135deg, hsl(260 100% 70%) 0%, hsl(180 100% 60%) 100%);
-    --gradient-mystical: linear-gradient(135deg, #A78BFA 0%, #22D3EE 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(255 45% 8%) 0%, hsl(260 50% 4%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(255 35% 12%) 0%, hsl(255 35% 8%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(15 85% 65%) 0%, hsl(340 80% 60%) 100%);
+    --gradient-neon: linear-gradient(135deg, hsl(270 100% 70%) 0%, hsl(185 90% 55%) 100%);
+    --gradient-mystical: linear-gradient(135deg, hsl(270 80% 70%) 0%, hsl(15 85% 65%) 100%);
 
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(260 100% 70% / 0.4);
+    --shadow-glow: 0 0 40px hsl(270 100% 70% / 0.3);
     --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.5);
     --shadow-elevated: 0 8px 40px hsl(0 0% 0% / 0.6);
-    --shadow-neon: 0 0 30px hsl(260 100% 70% / 0.5);
+    --shadow-neon: 0 0 30px hsl(270 100% 70% / 0.4);
 
-    --sidebar-background: 260 60% 8%;
-    --sidebar-foreground: 280 20% 98%;
-    --sidebar-primary: 260 100% 70%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 50% 20%;
-    --sidebar-accent-foreground: 280 20% 98%;
-    --sidebar-border: 260 40% 25%;
-    --sidebar-ring: 260 100% 70%;
+    --sidebar-background: 255 45% 6%;
+    --sidebar-foreground: 270 15% 95%;
+    --sidebar-primary: 15 85% 65%;
+    --sidebar-primary-foreground: 255 45% 6%;
+    --sidebar-accent: 255 30% 18%;
+    --sidebar-accent-foreground: 270 15% 95%;
+    --sidebar-border: 255 25% 20%;
+    --sidebar-ring: 15 85% 65%;
   }
 
   .dark {
-    --background: 260 60% 12%;
-    --foreground: 280 20% 98%;
-    --card: 260 50% 15%;
-    --card-foreground: 280 20% 98%;
-    --popover: 260 50% 18%;
-    --popover-foreground: 280 20% 98%;
-    --primary: 260 100% 70%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 180 100% 60%;
-    --secondary-foreground: 260 60% 12%;
-    --muted: 260 40% 20%;
-    --muted-foreground: 280 20% 70%;
-    --accent: 300 100% 80%;
-    --accent-foreground: 260 60% 12%;
+    --background: 255 50% 5%;
+    --foreground: 270 15% 95%;
+    --card: 255 40% 8%;
+    --card-foreground: 270 15% 95%;
+    --popover: 255 40% 10%;
+    --popover-foreground: 270 15% 95%;
+    --primary: 15 85% 65%;
+    --primary-foreground: 255 45% 6%;
+    --secondary: 85 75% 55%;
+    --secondary-foreground: 255 45% 6%;
+    --muted: 255 30% 12%;
+    --muted-foreground: 270 15% 60%;
+    --accent: 185 90% 55%;
+    --accent-foreground: 255 45% 6%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 260 40% 30%;
-    --input: 260 40% 20%;
-    --ring: 260 100% 70%;
-    --sidebar-background: 260 60% 8%;
-    --sidebar-foreground: 280 20% 98%;
-    --sidebar-primary: 260 100% 70%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 50% 20%;
-    --sidebar-accent-foreground: 280 20% 98%;
-    --sidebar-border: 260 40% 25%;
-    --sidebar-ring: 260 100% 70%;
+    --border: 255 25% 15%;
+    --input: 255 30% 12%;
+    --ring: 15 85% 65%;
+    --sidebar-background: 255 50% 5%;
+    --sidebar-foreground: 270 15% 95%;
+    --sidebar-primary: 15 85% 65%;
+    --sidebar-primary-foreground: 255 45% 6%;
+    --sidebar-accent: 255 30% 15%;
+    --sidebar-accent-foreground: 270 15% 95%;
+    --sidebar-border: 255 25% 18%;
+    --sidebar-ring: 15 85% 65%;
   }
 }
 
