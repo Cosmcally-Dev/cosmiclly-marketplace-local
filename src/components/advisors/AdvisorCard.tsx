@@ -22,16 +22,16 @@ interface AdvisorCardProps {
 
 const StatusBadge = ({ status }: { status: Advisor['status'] }) => {
   const statusConfig = {
-    online: { label: 'ONLINE', className: 'bg-[#C8FF8C] text-[#1A103C]' },
-    busy: { label: 'BUSY', className: 'status-busy' },
-    offline: { label: 'OFFLINE', className: 'status-offline' },
+    online: { label: 'ONLINE', className: 'bg-status-online text-background' },
+    busy: { label: 'BUSY', className: 'bg-accent text-accent-foreground' },
+    offline: { label: 'OFFLINE', className: 'bg-muted text-muted-foreground' },
   };
 
   const config = statusConfig[status];
 
   return (
     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-sans font-bold ${config.className}`}>
-      {status === 'online' && <span className="w-1.5 h-1.5 rounded-full bg-[#1A103C] animate-pulse" />}
+      {status === 'online' && <span className="w-1.5 h-1.5 rounded-full bg-background animate-pulse" />}
       {config.label}
     </span>
   );
@@ -90,7 +90,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
         {/* Top Left Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {advisor.isTopRated && (
-            <Badge className="bg-[#39F3FF] text-[#1A103C] font-sans font-bold text-xs shadow-lg">
+            <Badge className="bg-secondary text-secondary-foreground font-sans font-bold text-xs shadow-lg">
               <Award className="w-3 h-3 mr-1" />
               Top Rated
             </Badge>
@@ -179,12 +179,12 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
             </span>
           </div>
 
-          {/* Specialties - Blue Pills */}
+          {/* Specialties - Violet Pills */}
           <div className="flex flex-wrap justify-center gap-1 mb-3">
             {advisor.specialties.slice(0, 2).map((specialty) => (
               <span
                 key={specialty}
-                className="px-2 py-0.5 rounded-full text-[10px] font-sans bg-[#39F3FF]/20 text-[#39F3FF] border border-[#39F3FF]/30"
+                className="px-2 py-0.5 rounded-full text-[10px] font-sans bg-secondary/20 text-secondary border border-secondary/30"
               >
                 {specialty}
               </span>
@@ -194,7 +194,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           {/* Pricing - Enhanced Display */}
           <div className="flex items-center justify-center gap-2 mb-3 font-sans">
             {advisor.freeMinutes && (
-              <span className="text-xs font-bold text-[#C8FF8C]">
+              <span className="text-xs font-bold text-accent">
                 {advisor.freeMinutes} free min
               </span>
             )}
