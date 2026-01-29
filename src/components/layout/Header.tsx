@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown, Sun, BookOpen } from 'lucide-react';
+import { 
+  Menu, User, Sparkles, CreditCard, Settings, LogOut, ChevronDown, Sun, BookOpen,
+  Heart, Star, Compass, Users, Flame, ScrollText, Zap, Moon, DollarSign, 
+  Layers, Feather, Waves, LayoutGrid, Wallet, Activity, Clock
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileMenu } from './MobileMenu';
 import { AuthModal } from '@/components/modals/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
-import { categories } from '@/data/categories';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +17,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
+// Explore Advisors menu items with icons
+const exploreMenuItems = [
+  { label: 'Psychic Readings', icon: Sparkles, slug: 'psychic-readings' },
+  { label: 'Love & Relationships', icon: Heart, slug: 'love-relationships' },
+  { label: 'Life Path & Advice', icon: Compass, slug: 'life-path' },
+  { label: 'Psychic Mediums', icon: Users, slug: 'psychic-mediums' },
+  { label: 'Spiritual Readings', icon: Flame, slug: 'spiritual-readings' },
+  { label: 'Tarot Card Readings', icon: ScrollText, slug: 'tarot-readings' },
+  { label: 'NEW Advisors!', icon: Zap, slug: 'new-advisors', isNew: true },
+  { label: 'Astrology Readings', icon: Star, slug: 'astrology' },
+  { label: 'Dream Interpretation', icon: Moon, slug: 'dream-interpretation' },
+  { label: 'Financial Guidance', icon: DollarSign, slug: 'financial-guidance' },
+  { label: 'Cartomancy Readings', icon: Layers, slug: 'cartomancy' },
+  { label: 'Angel Readings', icon: Feather, slug: 'angel-readings' },
+  { label: 'Aura Cleansing', icon: Waves, slug: 'aura-cleansing' },
+];
 
 export const Header = () => {
   const navigate = useNavigate();
@@ -29,6 +50,17 @@ export const Header = () => {
 
   const handleSignOut = () => {
     logout();
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (user?.name) {
+      return user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return 'U';
   };
 
   return (
@@ -55,33 +87,45 @@ export const Header = () => {
 
             {/* Desktop Navigation - Hidden on mobile/tablet */}
             <nav className="hidden lg:flex items-center gap-6">
-              {/* Specialties Dropdown - Click to Open */}
+              {/* Explore Advisors Dropdown - Click to Open */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1 outline-none">
-                  Specialties
+                  Explore Advisors
                   <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
                   align="start" 
                   className="w-64 max-h-[70vh] overflow-y-auto bg-popover border-border z-50 shadow-2xl rounded-xl"
                 >
-                  {categories.map((category) => {
-                    const IconComponent = category.icon;
+                  {exploreMenuItems.map((item) => {
+                    const IconComponent = item.icon;
                     return (
                       <DropdownMenuItem
-                        key={category.slug}
-                        onClick={() => navigate(`/advisors?category=${category.slug}`)}
+                        key={item.slug}
+                        onClick={() => navigate(`/advisors?category=${item.slug}`)}
                         className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
                       >
                         <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                          <IconComponent className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <IconComponent className={`w-4 h-4 ${item.isNew ? 'text-[#FFA500]' : 'text-muted-foreground'} group-hover:text-primary transition-colors`} />
                         </div>
-                        <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                          {category.label}
+                        <span className={`font-sans text-sm font-medium ${item.isNew ? 'text-[#FFA500]' : 'text-foreground'} group-hover:text-primary transition-colors`}>
+                          {item.label}
                         </span>
                       </DropdownMenuItem>
                     );
                   })}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => navigate('/advisors')}
+                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary/10 group"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                      <LayoutGrid className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                    <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      All Categories
+                    </span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               
@@ -92,13 +136,13 @@ export const Header = () => {
                 <Sun className="w-4 h-4" />
                 Horoscope
               </Link>
-              <Link
-                to="/articles"
-                className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1.5"
+              <span
+                className="font-sans text-sm font-medium text-muted-foreground flex items-center gap-1.5 cursor-not-allowed"
+                title="Coming Soon"
               >
                 <BookOpen className="w-4 h-4" />
-                Articles
-              </Link>
+                Articles (Coming Soon)
+              </span>
             </nav>
 
             {/* Right Actions */}
@@ -115,32 +159,49 @@ export const Header = () => {
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 px-2 py-1.5 min-h-11 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors font-sans">
-                      <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center">
-                        <User className="w-4 h-4 text-accent" />
-                      </div>
-                      <span className="hidden md:block text-sm font-medium text-foreground max-w-[100px] truncate">
-                        {user?.name || user?.email}
-                      </span>
+                    <button className="flex items-center gap-2 p-1 min-h-11 rounded-full hover:bg-secondary/50 transition-colors">
+                      <Avatar className="w-9 h-9 border-2 border-primary/30">
+                        <AvatarImage src={undefined} alt={user?.name || 'User'} />
+                        <AvatarFallback className="bg-accent/20 text-accent font-medium text-sm">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
                       <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 bg-card border-border z-50 font-sans">
-                    <div className="px-2 py-1.5 text-sm font-medium text-foreground border-b border-border mb-1">
-                      Balance: <span className="text-primary">${credits}</span>
+                  <DropdownMenuContent align="end" className="w-56 bg-popover border-border z-50 font-sans shadow-2xl rounded-xl">
+                    <div className="px-3 py-2 border-b border-border mb-1">
+                      <p className="text-sm font-medium text-foreground">{user?.name || user?.email}</p>
+                      <p className="text-xs text-muted-foreground">Balance: <span className="text-primary font-medium">${credits}</span></p>
                     </div>
-                    <DropdownMenuItem onClick={() => navigate('/add-credit')} className="cursor-pointer">
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Add Credit
+                    <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer flex items-center gap-2 p-2.5">
+                      <User className="w-4 h-4" />
+                      My Profile
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
+                    <DropdownMenuItem onClick={() => navigate('/activity')} className="cursor-pointer flex items-center gap-2 p-2.5">
+                      <Activity className="w-4 h-4" />
+                      My Activity
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/favorites')} className="cursor-pointer flex items-center gap-2 p-2.5">
+                      <Heart className="w-4 h-4" />
+                      Favorite Advisors
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/add-credit')} className="cursor-pointer flex items-center gap-2 p-2.5">
+                      <Wallet className="w-4 h-4" />
+                      Add Funds
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/payment-methods')} className="cursor-pointer flex items-center gap-2 p-2.5">
+                      <CreditCard className="w-4 h-4" />
+                      Payment Methods
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
+                    <DropdownMenuItem onClick={() => navigate('/settings')} className="cursor-pointer flex items-center gap-2 p-2.5">
+                      <Settings className="w-4 h-4" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive flex items-center gap-2 p-2.5">
+                      <LogOut className="w-4 h-4" />
+                      Log Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

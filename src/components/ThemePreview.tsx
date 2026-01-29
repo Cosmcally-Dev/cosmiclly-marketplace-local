@@ -95,7 +95,7 @@ const palettes: ThemePalette[] = [
   },
   {
     name: 'Ethereal Neon',
-    colors: ['#1A103C', '#FDF7FF', '#7B61FF', '#39F3FF', '#FFA9FF', '#C8FF8C'],
+    colors: ['#050511', '#FDF7FF', '#7B61FF', '#39F3FF', '#FFA9FF', '#C8FF8C'],
     mapping: { background: 0, foreground: 1, card: 0, primary: 2, secondary: 3, accent: 4, muted: 5 }
   },
 ];

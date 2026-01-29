@@ -1,9 +1,22 @@
 import { useNavigate } from 'react-router-dom';
+import { LayoutGrid, Leaf, DollarSign, ThumbsUp, MessageCircle } from 'lucide-react';
 import { AdvisorSearchBar } from '@/components/search/AdvisorSearchBar';
 import { CategoriesStrip } from './CategoriesStrip';
 
+const quickFilters = [
+  { label: 'All advisors', icon: LayoutGrid, filter: 'all' },
+  { label: 'New advisors', icon: Leaf, filter: 'new' },
+  { label: 'Under $3', icon: DollarSign, filter: 'under-3' },
+  { label: '+50 reviews', icon: ThumbsUp, filter: 'reviews-50' },
+  { label: 'Live chat', icon: MessageCircle, filter: 'live-chat' },
+];
+
 export const HeroSection = () => {
   const navigate = useNavigate();
+
+  const handleFilterClick = (filter: string) => {
+    navigate(`/advisors?filter=${filter}`);
+  };
 
   return (
     <section className="relative bg-hero-gradient pt-6 pb-8 md:pt-10 md:pb-12">
@@ -41,8 +54,25 @@ export const HeroSection = () => {
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-lg mx-auto mb-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            <AdvisorSearchBar variant="hero" />
+          <div className="max-w-lg mx-auto mb-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <AdvisorSearchBar variant="hero" placeholder="Search by specialty or reading type" />
+          </div>
+
+          {/* Quick Filter Pills */}
+          <div className="flex flex-wrap justify-center gap-2 mb-6 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+            {quickFilters.map((filter) => {
+              const IconComponent = filter.icon;
+              return (
+                <button
+                  key={filter.filter}
+                  onClick={() => handleFilterClick(filter.filter)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/60 backdrop-blur-sm border border-border text-sm font-sans text-foreground/80 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
+                >
+                  <IconComponent className="w-3.5 h-3.5" />
+                  <span>{filter.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Categories Strip */}
