@@ -14,8 +14,8 @@
 }
 @layer base {
   :root {
-    /* Mystical Elegance Theme - Strict 3-Color Palette */
-    /* PRIMARY: Coral/Salmon Pink - CTAs, headlines, important actions */
+    /* Northern Lights Theme - Electric Turquoise Palette */
+    /* PRIMARY: Electric Turquoise/Cyan - CTAs, headlines, important actions */
     /* SECONDARY: Violet Purple - Buttons, interactive elements, pills */
     /* ACCENT: Gold Amber - Highlights, badges, special callouts */
     
@@ -28,16 +28,16 @@
     --popover: 260 40% 13%;
     --popover-foreground: 270 20% 95%;
 
-    /* PRIMARY: Coral/Salmon Pink */
-    --primary: 12 76% 61%;
-    --primary-foreground: 0 0% 100%;
+    /* PRIMARY: Electric Turquoise/Cyan (#06b6d4) */
+    --primary: 187 94% 43%;
+    --primary-foreground: 260 45% 10%;
 
     /* SECONDARY: Violet Purple */
     --secondary: 263 70% 58%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 260 30% 18%;
-    --muted-foreground: 270 15% 60%;
+    --muted-foreground: 270 20% 70%;
 
     /* ACCENT: Gold Amber */
     --accent: 38 92% 50%;
@@ -48,14 +48,14 @@
 
     --border: 260 30% 20%;
     --input: 260 35% 16%;
-    --ring: 263 70% 58%;
+    --ring: 187 94% 43%;
 
     --radius: 0.75rem;
 
-    /* Unified accent colors (all map to the 3-color system) */
+    /* Unified accent colors (Northern Lights palette) */
     --neon-violet: 263 70% 58%;
-    --neon-cyan: 263 70% 58%;
-    --neon-pink: 12 76% 61%;
+    --neon-cyan: 187 94% 43%;
+    --neon-pink: 280 80% 60%;
     --neon-lime: 38 92% 50%;
     --deep-purple: 260 45% 10%;
     --midnight: 260 50% 4%;
@@ -65,33 +65,33 @@
     --busy-orange: 38 92% 50%;
     --offline-gray: 260 20% 40%;
 
-    /* Legacy blood theme (mapped to primary coral) */
-    --blood-deep: 12 60% 25%;
-    --blood-dark: 12 50% 20%;
-    --blood-vibrant: 12 76% 61%;
+    /* Legacy theme (mapped to new palette) */
+    --blood-deep: 187 60% 25%;
+    --blood-dark: 187 50% 20%;
+    --blood-vibrant: 187 94% 43%;
     --blood-black: 260 45% 7%;
 
-    /* Gradients - Unified Purple tones */
+    /* Gradients - Purple to Turquoise Northern Lights */
     --gradient-hero: linear-gradient(180deg, hsl(260 45% 9%) 0%, hsl(260 50% 4%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(260 40% 13%) 0%, hsl(260 40% 9%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(12 76% 61%) 0%, hsl(350 70% 55%) 100%);
-    --gradient-neon: linear-gradient(135deg, hsl(263 70% 58%) 0%, hsl(280 60% 50%) 100%);
-    --gradient-mystical: linear-gradient(135deg, hsl(263 70% 58%) 0%, hsl(12 76% 61%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(263 70% 58%) 0%, hsl(187 94% 43%) 100%);
+    --gradient-neon: linear-gradient(135deg, hsl(263 70% 58%) 0%, hsl(187 94% 50%) 100%);
+    --gradient-mystical: linear-gradient(135deg, hsl(263 70% 58%) 0%, hsl(187 94% 43%) 100%);
 
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(263 70% 58% / 0.25);
+    --shadow-glow: 0 0 40px hsl(187 94% 43% / 0.25);
     --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.4);
     --shadow-elevated: 0 8px 40px hsl(0 0% 0% / 0.5);
-    --shadow-neon: 0 0 30px hsl(263 70% 58% / 0.3);
+    --shadow-neon: 0 0 30px hsl(187 94% 43% / 0.3);
 
     --sidebar-background: 260 45% 7%;
     --sidebar-foreground: 270 20% 95%;
-    --sidebar-primary: 12 76% 61%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 187 94% 43%;
+    --sidebar-primary-foreground: 260 45% 10%;
     --sidebar-accent: 260 35% 18%;
     --sidebar-accent-foreground: 270 20% 95%;
     --sidebar-border: 260 30% 22%;
-    --sidebar-ring: 263 70% 58%;
+    --sidebar-ring: 187 94% 43%;
   }
 
   .dark {
@@ -101,27 +101,27 @@
     --card-foreground: 270 20% 95%;
     --popover: 260 45% 11%;
     --popover-foreground: 270 20% 95%;
-    --primary: 12 76% 61%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 187 94% 43%;
+    --primary-foreground: 260 45% 10%;
     --secondary: 263 70% 58%;
     --secondary-foreground: 0 0% 100%;
     --muted: 260 30% 15%;
-    --muted-foreground: 270 15% 55%;
+    --muted-foreground: 270 20% 65%;
     --accent: 38 92% 50%;
     --accent-foreground: 260 45% 7%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 260 30% 18%;
     --input: 260 35% 14%;
-    --ring: 263 70% 58%;
+    --ring: 187 94% 43%;
     --sidebar-background: 260 50% 5%;
     --sidebar-foreground: 270 20% 95%;
-    --sidebar-primary: 12 76% 61%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 187 94% 43%;
+    --sidebar-primary-foreground: 260 45% 10%;
     --sidebar-accent: 260 35% 16%;
     --sidebar-accent-foreground: 270 20% 95%;
     --sidebar-border: 260 30% 20%;
-    --sidebar-ring: 263 70% 58%;
+    --sidebar-ring: 187 94% 43%;
   }
 }
 

@@ -24,7 +24,7 @@ export const FeaturedAdvisorsSection = () => {
   };
 
   return (
-    <section className="py-10 md:py-14 bg-background">
+    <section className="py-10 md:py-14 mb-8 bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">

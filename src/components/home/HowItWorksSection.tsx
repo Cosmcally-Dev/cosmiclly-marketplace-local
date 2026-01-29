@@ -5,25 +5,25 @@ const steps = [
     icon: UserPlus,
     title: 'Create Free Account',
     description: 'Sign up in seconds and get 3 free minutes with your first advisor.',
-    color: 'from-purple-500 to-violet-600',
+    color: 'from-violet-600 to-purple-500',
   },
   {
     icon: Search,
     title: 'Find Your Advisor',
     description: 'Browse our verified advisors by specialty, rating, and availability.',
-    color: 'from-blue-500 to-cyan-500',
+    color: 'from-purple-500 to-cyan-500',
   },
   {
     icon: MessageCircle,
     title: 'Start Your Reading',
     description: 'Connect instantly via chat for personal guidance and insights.',
-    color: 'from-pink-500 to-rose-500',
+    color: 'from-cyan-500 to-teal-400',
   },
   {
     icon: Sparkles,
     title: 'Get Clarity',
     description: 'Receive the answers and guidance you need to move forward.',
-    color: 'from-amber-500 to-orange-500',
+    color: 'from-teal-400 to-cyan-400',
   },
 ];
 
@@ -63,13 +63,13 @@ export const HowItWorksSection = () => {
                 {index + 1}
               </div>
 
-              {/* Icon */}
-              <div className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-6 shadow-lg`}>
-                <step.icon className="w-10 h-10 text-white" />
+              {/* Icon - 15% larger */}
+              <div className={`w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-6 shadow-lg`}>
+                <step.icon className="w-12 h-12 text-white" />
               </div>
 
               {/* Content */}
-              <h3 className="font-semibold text-lg text-foreground mb-2">
+              <h3 className="font-semibold text-lg text-foreground mb-2" style={{ fontWeight: 600 }}>
                 {step.title}
               </h3>
               <p className="text-sm text-muted-foreground">
