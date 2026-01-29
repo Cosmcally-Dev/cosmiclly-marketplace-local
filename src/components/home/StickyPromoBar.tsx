@@ -8,7 +8,7 @@ export const StickyPromoBar = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="bg-mystical-gradient text-white relative">
+    <div className="bg-hero-gradient text-white relative border-b border-white/10">
       <div className="container mx-auto px-4 py-2.5">
         <div className="flex items-center justify-center gap-2 sm:gap-3 text-sm">
           <Sparkles className="w-4 h-4 text-accent hidden sm:block" />
