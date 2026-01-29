@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, Clock, MessageCircle, Bell, Phone, Video } from 'lucide-react';
+import { Star, Clock, MessageCircle, Bell, Phone, Video, Award } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +22,7 @@ interface AdvisorCardProps {
 
 const StatusBadge = ({ status }: { status: Advisor['status'] }) => {
   const statusConfig = {
-    online: { label: 'ONLINE', className: 'status-online' },
+    online: { label: 'ONLINE', className: 'bg-[#C8FF8C] text-[#1A103C]' },
     busy: { label: 'BUSY', className: 'status-busy' },
     offline: { label: 'OFFLINE', className: 'status-offline' },
   };
@@ -30,8 +30,8 @@ const StatusBadge = ({ status }: { status: Advisor['status'] }) => {
   const config = statusConfig[status];
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-sans font-medium text-white ${config.className}`}>
-      {status === 'online' && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-sans font-bold ${config.className}`}>
+      {status === 'online' && <span className="w-1.5 h-1.5 rounded-full bg-[#1A103C] animate-pulse" />}
       {config.label}
     </span>
   );
@@ -87,23 +87,23 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   return (
     <TooltipProvider>
       <article className="group relative bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 card-shadow h-full">
-        {/* Top Rated Badge */}
-        {advisor.isTopRated && (
-          <div className="absolute top-3 left-3 z-10">
-            <Badge className="bg-accent text-accent-foreground font-sans font-medium text-xs">
-              <Star className="w-3 h-3 mr-1 fill-current" />
+        {/* Top Left Badges */}
+        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+          {advisor.isTopRated && (
+            <Badge className="bg-[#FFA9FF] text-[#1A103C] font-sans font-bold text-xs shadow-lg">
+              <Award className="w-3 h-3 mr-1" />
               Top Rated
             </Badge>
-          </div>
-        )}
-
-        {advisor.isNew && (
-          <div className="absolute top-3 left-3 z-10">
+          )}
+          {advisor.status === 'online' && (
+            <StatusBadge status={advisor.status} />
+          )}
+          {advisor.isNew && (
             <Badge className="bg-primary text-primary-foreground font-sans font-medium text-xs">
               New
             </Badge>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* AI Chat Badge */}
         <div className="absolute top-3 right-3 z-10">
@@ -139,9 +139,6 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
               alt={advisor.name}
               className="w-full h-full rounded-full object-cover border-2 border-primary/30 group-hover:border-primary transition-colors"
             />
-            <div className="absolute -bottom-1 right-0">
-              <StatusBadge status={advisor.status} />
-            </div>
           </div>
         </Link>
 
@@ -182,22 +179,22 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
             </span>
           </div>
 
-          {/* Specialties */}
+          {/* Specialties - Blue Pills */}
           <div className="flex flex-wrap justify-center gap-1 mb-3">
             {advisor.specialties.slice(0, 2).map((specialty) => (
               <span
                 key={specialty}
-                className="px-2 py-0.5 rounded-full text-[10px] font-sans bg-secondary text-secondary-foreground"
+                className="px-2 py-0.5 rounded-full text-[10px] font-sans bg-[#39F3FF]/20 text-[#39F3FF] border border-[#39F3FF]/30"
               >
                 {specialty}
               </span>
             ))}
           </div>
 
-          {/* Pricing */}
+          {/* Pricing - Enhanced Display */}
           <div className="flex items-center justify-center gap-2 mb-3 font-sans">
             {advisor.freeMinutes && (
-              <span className="text-xs font-medium text-accent">
+              <span className="text-xs font-bold text-[#C8FF8C]">
                 {advisor.freeMinutes} free min
               </span>
             )}
