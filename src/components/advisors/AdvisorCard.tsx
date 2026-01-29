@@ -90,7 +90,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
         {/* Top Left Badges */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {advisor.isTopRated && (
-            <Badge className="bg-[#FFA9FF] text-[#1A103C] font-sans font-bold text-xs shadow-lg">
+            <Badge className="bg-[#39F3FF] text-[#1A103C] font-sans font-bold text-xs shadow-lg">
               <Award className="w-3 h-3 mr-1" />
               Top Rated
             </Badge>
