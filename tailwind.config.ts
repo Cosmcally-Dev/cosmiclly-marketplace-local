@@ -61,9 +61,12 @@ export default {
         platinum: "hsl(var(--platinum))",
         "ghost-white": "hsl(var(--ghost-white))",
         status: {
-          online: "hsl(var(--online-green))",
+          online: "145 80% 42%",
           busy: "hsl(var(--busy-orange))",
           offline: "hsl(var(--offline-gray))",
+        },
+        emerald: {
+          500: "hsl(160 84% 39%)",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

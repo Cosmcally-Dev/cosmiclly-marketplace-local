@@ -47,14 +47,15 @@ export const CategoriesStrip = () => {
   };
 
   return (
-    <div className="relative">
-      {/* Desktop Left Chevron */}
-      {!isMobile && canScrollLeft && (
+    <div className="relative flex items-center gap-2">
+      {/* Desktop Left Chevron - Outside the scroll container */}
+      {!isMobile && (
         <Button
           variant="outline"
           size="icon"
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-md border-border/50 hover:bg-accent"
+          disabled={!canScrollLeft}
+          className="flex-shrink-0 w-9 h-9 rounded-full bg-card shadow-md border-border/50 hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="w-5 h-5" />
         </Button>
@@ -63,7 +64,7 @@ export const CategoriesStrip = () => {
       {/* Scrollable Container */}
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2 px-1"
+        className="flex-1 flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {orderedCategories.map((category) => (
@@ -84,13 +85,14 @@ export const CategoriesStrip = () => {
         ))}
       </div>
 
-      {/* Desktop Right Chevron */}
-      {!isMobile && canScrollRight && (
+      {/* Desktop Right Chevron - Outside the scroll container */}
+      {!isMobile && (
         <Button
           variant="outline"
           size="icon"
           onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-md border-border/50 hover:bg-accent"
+          disabled={!canScrollRight}
+          className="flex-shrink-0 w-9 h-9 rounded-full bg-card shadow-md border-border/50 hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronRight className="w-5 h-5" />
         </Button>
