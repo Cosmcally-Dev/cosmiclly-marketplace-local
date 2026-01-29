@@ -20,21 +20,18 @@ interface AdvisorCardProps {
   onChat?: (advisor: Advisor) => void;
 }
 
-const StatusBadge = ({ status }: { status: Advisor['status'] }) => {
-  const statusConfig = {
-    online: { label: 'ONLINE', className: 'bg-status-online text-background' },
-    busy: { label: 'BUSY', className: 'bg-accent text-accent-foreground' },
-    offline: { label: 'OFFLINE', className: 'bg-muted text-muted-foreground' },
-  };
-
-  const config = statusConfig[status];
-
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-sans font-bold ${config.className}`}>
-      {status === 'online' && <span className="w-1.5 h-1.5 rounded-full bg-background animate-pulse" />}
-      {config.label}
-    </span>
-  );
+// Status ring colors - using semantic colors that complement the palette
+const getStatusRingClass = (status: Advisor['status']) => {
+  switch (status) {
+    case 'online':
+      return 'ring-4 ring-emerald-500/80 ring-offset-2 ring-offset-card';
+    case 'busy':
+      return 'ring-4 ring-muted-foreground/50 ring-offset-2 ring-offset-card';
+    case 'offline':
+      return 'ring-4 ring-muted/50 ring-offset-2 ring-offset-card';
+    default:
+      return '';
+  }
 };
 
 export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
@@ -87,16 +84,13 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   return (
     <TooltipProvider>
       <article className="group relative bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 card-shadow h-full">
-        {/* Top Left Badges */}
+        {/* Top Left Badges - Only Top Rated and New */}
         <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
           {advisor.isTopRated && (
             <Badge className="bg-secondary text-secondary-foreground font-sans font-bold text-xs shadow-lg">
               <Award className="w-3 h-3 mr-1" />
               Top Rated
             </Badge>
-          )}
-          {advisor.status === 'online' && (
-            <StatusBadge status={advisor.status} />
           )}
           {advisor.isNew && (
             <Badge className="bg-primary text-primary-foreground font-sans font-medium text-xs">
@@ -105,19 +99,22 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           )}
         </div>
 
-
-        {/* Avatar Section - Clickable Link */}
+        {/* Avatar Section - Clickable Link with Status Ring */}
         <Link 
           to={profileUrl} 
           onClick={handleProfileClick}
-          className="block relative pt-5 px-4"
+          className="block relative pt-6 px-4"
         >
           <div className="relative mx-auto w-20 h-20 md:w-24 md:h-24">
             <img
               src={advisor.avatar}
               alt={advisor.name}
-              className="w-full h-full rounded-full object-cover border-2 border-primary/30 group-hover:border-primary transition-colors"
+              className={`w-full h-full rounded-full object-cover transition-all ${getStatusRingClass(advisor.status)}`}
             />
+            {/* Small status dot indicator */}
+            {advisor.status === 'online' && (
+              <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-card animate-pulse" />
+            )}
           </div>
         </Link>
 
@@ -199,10 +196,10 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="hero"
+                    variant="default"
                     size="icon"
                     onClick={handleChatClick}
-                    className="w-11 h-11 font-sans"
+                    className="w-11 h-11 font-sans bg-primary hover:bg-primary/90"
                     aria-label="Chat with advisor"
                   >
                     <MessageCircle className="w-4 h-4" />
