@@ -75,7 +75,7 @@ export const Header = () => {
             {/* Hamburger Menu Button - Only visible on mobile/tablet */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 min-w-11 min-h-11 flex items-center justify-center text-foreground hover:text-accent transition-colors"
+              className="lg:hidden p-2 min-w-11 min-h-11 flex items-center justify-center text-foreground hover:text-primary transition-colors"
               aria-label="Open menu"
             >
               <Menu className="w-6 h-6" />
@@ -93,7 +93,7 @@ export const Header = () => {
             <nav className="hidden lg:flex items-center gap-6">
               {/* Explore Advisors Dropdown - Click to Open */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1 outline-none">
+                <DropdownMenuTrigger className="font-sans text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1 outline-none">
                   Explore Advisors
                   <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
@@ -177,7 +177,7 @@ export const Header = () => {
               
               <Link
                 to="/horoscope"
-                className="font-sans text-sm font-medium text-foreground/80 hover:text-accent transition-colors flex items-center gap-1.5"
+                className="font-sans text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1.5"
               >
                 <Sun className="w-4 h-4" />
                 Horoscope
@@ -196,7 +196,7 @@ export const Header = () => {
               {/* Horoscope Link - Mobile only (since it's in desktop nav) */}
               <Link
                 to="/horoscope"
-                className="lg:hidden p-2 min-w-11 min-h-11 flex items-center justify-center text-foreground/70 hover:text-accent transition-colors"
+                className="lg:hidden p-2 min-w-11 min-h-11 flex items-center justify-center text-foreground/70 hover:text-primary transition-colors"
                 title="Daily Horoscope"
               >
                 <Sun className="w-5 h-5" />
