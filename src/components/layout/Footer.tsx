@@ -45,8 +45,8 @@ export const Footer = () => {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-7 h-7 text-accent" />
-              <span className="font-heading text-lg font-semibold text-gradient-gold">Mystica</span>
+              <Sparkles className="w-7 h-7 text-primary" />
+              <span className="font-heading text-lg font-semibold text-gradient">Mystica</span>
             </Link>
             <p className="text-muted-foreground text-sm mb-5">
               Connect with gifted psychic advisors for guidance on love, career, and life.

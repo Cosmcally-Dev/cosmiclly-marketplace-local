@@ -91,8 +91,8 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
             <Link to="/" onClick={onClose} className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-accent" />
-              <span className="font-heading text-lg font-semibold text-gradient-gold">Mystica</span>
+              <Sparkles className="w-6 h-6 text-primary" />
+              <span className="font-heading text-lg font-semibold text-gradient">Mystica</span>
             </Link>
             <button
               onClick={onClose}
@@ -149,7 +149,7 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                       <item.icon className="w-5 h-5 text-muted-foreground" />
                       <span className="flex-1 font-medium">{item.label}</span>
                       {item.badge && (
-                        <Badge variant="secondary" className="bg-accent text-accent-foreground text-xs font-sans">
+                        <Badge variant="secondary" className="bg-primary text-primary-foreground text-xs font-sans">
                           {item.badge}
                         </Badge>
                       )}
