@@ -29,7 +29,7 @@ export const FeaturedAdvisorsSection = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <Star className="w-5 h-5 text-accent fill-accent" />
+            <Star className="w-5 h-5 text-primary fill-primary" />
             <h2 className="font-heading text-xl md:text-2xl font-bold text-foreground">
               Featured <span className="text-gradient">Advisors</span>
             </h2>
