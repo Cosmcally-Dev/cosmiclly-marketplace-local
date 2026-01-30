@@ -27,21 +27,21 @@ export const PromoBanner = () => {
             {/* Content */}
             <div className="text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-6">
-                <Sparkles className="w-4 h-4 text-accent" />
-                <span className="text-sm text-white/90">Limited Time Offer</span>
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-sm text-white/90 font-sans">Limited Time Offer</span>
               </div>
 
               <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
                 Get 3 Free Minutes
                 <br />
-                <span className="text-accent">+ 70% Off</span>
+                <span className="text-primary">+ 70% Off</span>
               </h2>
 
-              <p className="text-lg text-white/80 max-w-md mb-8">
+              <p className="text-lg text-white/80 max-w-md mb-8 font-sans">
                 Start your spiritual journey today. Connect with a gifted advisor and discover the answers you seek.
               </p>
 
-              <Button variant="gold" size="xl" className="shadow-xl">
+              <Button variant="default" size="xl" className="shadow-xl font-sans">
                 Claim Your Free Reading
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
@@ -59,12 +59,12 @@ export const PromoBanner = () => {
                   key={feature}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 backdrop-blur-sm"
                 >
-                  <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center">
-                    <svg className="w-3 h-3 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <span className="text-white/90">{feature}</span>
+                  <span className="text-white/90 font-sans">{feature}</span>
                 </div>
               ))}
             </div>

@@ -85,7 +85,7 @@ export const AllAdvisorsSection = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Sort By */}
                 <div>
-                  <Label className="text-sm font-medium text-foreground mb-3 block">
+                  <Label className="text-sm font-sans font-medium text-foreground mb-3 block">
                     Sort By
                   </Label>
                   <div className="flex flex-wrap gap-2">
@@ -98,10 +98,10 @@ export const AllAdvisorsSection = () => {
                       <button
                         key={option.value}
                         onClick={() => setSortBy(option.value as SortOption)}
-                        className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                        className={`px-3 py-1.5 rounded-full text-sm font-sans transition-colors ${
                           sortBy === option.value
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-secondary text-foreground hover:bg-secondary/80'
+                            ? 'bg-primary text-primary-foreground font-medium'
+                            : 'bg-card text-foreground border border-border hover:border-primary/50'
                         }`}
                       >
                         {option.label}
@@ -112,7 +112,7 @@ export const AllAdvisorsSection = () => {
 
                 {/* Price Range */}
                 <div>
-                  <Label className="text-sm font-medium text-foreground mb-3 block">
+                  <Label className="text-sm font-sans font-medium text-foreground mb-3 block">
                     Price per minute: ${priceRange[0]} - ${priceRange[1]}
                   </Label>
                   <Slider

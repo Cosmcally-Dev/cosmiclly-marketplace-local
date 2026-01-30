@@ -11,14 +11,14 @@ export const StickyPromoBar = () => {
     <div className="bg-hero-gradient text-white relative border-b border-white/10">
       <div className="container mx-auto px-4 py-2.5">
         <div className="flex items-center justify-center gap-2 sm:gap-3 text-sm">
-          <Sparkles className="w-4 h-4 text-accent hidden sm:block" />
-          <span className="font-medium text-xs sm:text-sm">
-            Get <span className="text-accent font-bold">3 Free Minutes</span> + <span className="text-accent font-bold">70% Off</span>
+          <Sparkles className="w-4 h-4 text-primary hidden sm:block" />
+          <span className="font-medium text-xs sm:text-sm font-sans">
+            Get <span className="text-primary font-bold">3 Free Minutes</span> + <span className="text-primary font-bold">70% Off</span>
           </span>
           <Button 
-            variant="gold" 
+            variant="default" 
             size="sm" 
-            className="h-9 sm:h-8 px-4 sm:px-3 text-xs font-bold shadow-lg hover:shadow-xl transition-shadow min-w-[140px]"
+            className="h-9 sm:h-8 px-4 sm:px-3 text-xs font-bold shadow-lg hover:shadow-xl transition-shadow min-w-[140px] font-sans"
           >
             Claim Your Free Reading
             <ArrowRight className="w-3 h-3 ml-1" />

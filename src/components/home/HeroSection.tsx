@@ -8,7 +8,7 @@ const quickFilters = [
   { label: 'New advisors', icon: Leaf, filter: 'new' },
   { label: 'Under $3', icon: DollarSign, filter: 'under-3' },
   { label: '+50 reviews', icon: ThumbsUp, filter: 'reviews-50' },
-  { label: 'Live chat', icon: MessageCircle, filter: 'live-chat' },
+  { label: 'AI Chat', icon: MessageCircle, filter: 'ai-chat' },
 ];
 
 export const HeroSection = () => {
