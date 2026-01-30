@@ -83,8 +83,8 @@ export const Header = () => {
 
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <Sparkles className="w-7 h-7 text-accent" />
-              <span className="font-heading text-lg md:text-xl font-semibold text-gradient-gold">
+              <Sparkles className="w-7 h-7 text-primary" />
+              <span className="font-heading text-lg md:text-xl font-semibold text-gradient">
                 Mystica
               </span>
             </Link>

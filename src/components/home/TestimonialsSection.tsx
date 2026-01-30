@@ -35,7 +35,7 @@ export const TestimonialsSection = () => {
         {[...Array(15)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-1 h-1 bg-accent rounded-full animate-twinkle"
+            className="absolute w-1 h-1 bg-primary rounded-full animate-twinkle"
             style={{
               top: `${Math.random() * 100}%`,
               left: `${Math.random() * 100}%`,
@@ -49,7 +49,7 @@ export const TestimonialsSection = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
-            What Our <span className="text-gradient-gold">Clients Say</span>
+            What Our <span className="text-gradient">Clients Say</span>
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Real stories from people who found clarity and guidance through our advisors
@@ -70,7 +70,7 @@ export const TestimonialsSection = () => {
               {/* Rating */}
               <div className="flex gap-1 mb-4">
                 {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 text-accent fill-accent" />
+                  <Star key={i} className="w-4 h-4 text-primary fill-primary" />
                 ))}
               </div>
 
