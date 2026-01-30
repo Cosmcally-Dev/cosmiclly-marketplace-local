@@ -120,9 +120,9 @@ export const Header = () => {
                     className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[highlighted]:bg-primary group"
                   >
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
-                      <Zap className="w-4 h-4 text-primary group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
+                      <Zap className="w-4 h-4 text-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
                     </div>
-                    <span className="font-sans text-sm font-medium text-primary group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
+                    <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
                       NEW Advisors
                     </span>
                   </DropdownMenuItem>
