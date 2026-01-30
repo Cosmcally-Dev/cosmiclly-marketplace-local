@@ -127,7 +127,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                 key={i}
                 className={`w-3.5 h-3.5 ${
                   i < Math.floor(advisor.rating)
-                    ? 'text-accent fill-accent'
+                    ? 'text-primary fill-primary'
                     : 'text-muted-foreground'
                 }`}
               />
@@ -170,7 +170,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           {/* Pricing - Enhanced Display */}
           <div className="flex items-center justify-center gap-2 mb-3 font-sans">
             {advisor.freeMinutes && (
-              <span className="text-xs font-bold text-accent">
+              <span className="text-xs font-bold text-primary">
                 {advisor.freeMinutes} free min
               </span>
             )}
