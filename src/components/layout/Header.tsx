@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { MobileMenu } from './MobileMenu';
 import { AuthModal } from '@/components/modals/AuthModal';
+import { AdvisorApplicationModal } from '@/components/modals/AdvisorApplicationModal';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -41,6 +42,7 @@ export const Header = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isApplicationOpen, setIsApplicationOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
 
   const { user, isAuthenticated, logout, credits } = useAuth();
@@ -251,7 +253,7 @@ export const Header = () => {
                 </DropdownMenu>
               ) : (
                 <>
-                  {/* Desktop: Show both Sign In and Join */}
+                  {/* Desktop: Show both Sign In and Apply Now */}
                   <Button 
                     variant="ghost" 
                     size="sm"
@@ -263,10 +265,10 @@ export const Header = () => {
                   <Button 
                     variant="hero" 
                     size="sm"
-                    onClick={() => handleAuth('signup')}
+                    onClick={() => setIsApplicationOpen(true)}
                     className="text-xs px-3 h-8 font-sans"
                   >
-                    Join Free
+                    Apply Now
                   </Button>
                 </>
               )}
@@ -277,6 +279,7 @@ export const Header = () => {
 
       <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} mode={authMode} />
+      <AdvisorApplicationModal isOpen={isApplicationOpen} onClose={() => setIsApplicationOpen(false)} />
     </>
   );
 };
