@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // TESTING: Trigger N8N Webhook instead of Supabase
       const response = await fetch(
-        "https://automateoptinet.app.n8n.cloud/webhook-test/505e70cb-a6ff-4ffa-a0f8-96b626e30fb7",
+        "https://automateoptinet.app.n8n.cloud/webhook/505e70cb-a6ff-4ffa-a0f8-96b626e30fb7",
         {
           method: "POST",
           headers: {
