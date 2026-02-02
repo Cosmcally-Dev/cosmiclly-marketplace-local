@@ -7,7 +7,7 @@ import { AuthModal } from '@/components/modals/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { addToRecentlyViewed } from '@/components/home/RecentlyViewedSection';
 import type { Advisor } from '@/data/advisors';
-import aiChatIcon from '@/assets/ai-chat-icon.png';
+import aiTwinIcon from '@/assets/ai-twin-icon.png';
 import {
   Tooltip,
   TooltipContent,
@@ -248,8 +248,8 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                     aria-label="Chat with AI Twin"
                   >
                     <img 
-                      src={aiChatIcon} 
-                      alt="AI Chat" 
+                      src={aiTwinIcon} 
+                      alt="AI Twin" 
                       className="w-5 h-5 object-contain"
                     />
                   </Button>
