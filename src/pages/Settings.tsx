@@ -27,8 +27,15 @@ const Settings = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   
   // Profile form state
+  const getFullName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user?.firstName || '';
+  };
+
   const [profileData, setProfileData] = useState({
-    name: user?.name || '',
+    name: getFullName(),
     email: user?.email || '',
     phone: '',
     dateOfBirth: '',
@@ -135,7 +142,7 @@ const Settings = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <Label className="text-muted-foreground text-sm">Full Name</Label>
-                        <p className="text-foreground font-medium mt-1">{user?.name || 'Not set'}</p>
+                        <p className="text-foreground font-medium mt-1">{getFullName() || 'Not set'}</p>
                       </div>
                       <div>
                         <Label className="text-muted-foreground text-sm">Email Address</Label>
