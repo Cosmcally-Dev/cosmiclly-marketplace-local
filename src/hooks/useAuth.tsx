@@ -1,8 +1,15 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface User {
+  id: string;
   email: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  dateOfBirth?: string;
+  timeOfBirth?: string;
 }
 
 interface SavedCard {
@@ -18,17 +25,29 @@ export interface SessionLog {
   type: 'chat' | 'call';
   advisorId: string;
   advisorName: string;
-  duration: number; // in seconds
+  duration: number;
   creditsUsed: number;
   timestamp: Date;
 }
 
+export interface SignUpData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  dateOfBirth: string;
+  timeOfBirth?: string;
+}
+
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => { success: boolean; error?: string };
-  signup: (email: string, password: string, name: string) => { success: boolean; error?: string };
-  logout: () => void;
+  session: Session | null;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (data: SignUpData) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
+  isLoading: boolean;
   credits: number;
   addCredits: (amount: number) => void;
   savedCards: SavedCard[];
@@ -42,76 +61,131 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Test account credentials
-const TEST_ACCOUNTS = [
-  { email: 'testclient', password: '1234', name: 'Test Client' }
-];
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [credits, setCredits] = useState<number>(0);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
 
   useEffect(() => {
-    // Check session storage on mount
-    const storedUser = sessionStorage.getItem('user');
-    const storedCredits = sessionStorage.getItem('credits');
-    const storedCards = sessionStorage.getItem('savedCards');
-    const storedLogs = sessionStorage.getItem('sessionLogs');
-    
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    if (storedCredits) {
-      setCredits(JSON.parse(storedCredits));
-    }
-    if (storedCards) {
-      setSavedCards(JSON.parse(storedCards));
-    }
-    if (storedLogs) {
-      setSessionLogs(JSON.parse(storedLogs));
-    }
-  }, []);
-
-  const login = (email: string, password: string) => {
-    const account = TEST_ACCOUNTS.find(
-      (acc) => acc.email === email && acc.password === password
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        if (session?.user) {
+          const supabaseUser = session.user;
+          const metadata = supabaseUser.user_metadata;
+          setUser({
+            id: supabaseUser.id,
+            email: supabaseUser.email || '',
+            firstName: metadata?.firstName,
+            lastName: metadata?.lastName,
+            username: metadata?.username,
+            dateOfBirth: metadata?.dateOfBirth,
+            timeOfBirth: metadata?.timeOfBirth,
+          });
+        } else {
+          setUser(null);
+        }
+        setIsLoading(false);
+      }
     );
 
-    if (account) {
-      const userData = { email: account.email, name: account.name };
-      setUser(userData);
-      sessionStorage.setItem('user', JSON.stringify(userData));
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        const supabaseUser = session.user;
+        const metadata = supabaseUser.user_metadata;
+        setUser({
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          firstName: metadata?.firstName,
+          lastName: metadata?.lastName,
+          username: metadata?.username,
+          dateOfBirth: metadata?.dateOfBirth,
+          timeOfBirth: metadata?.timeOfBirth,
+        });
+      }
+      setIsLoading(false);
+    });
+
+    // Load credits and cards from localStorage
+    const storedCredits = localStorage.getItem('credits');
+    const storedCards = localStorage.getItem('savedCards');
+    const storedLogs = localStorage.getItem('sessionLogs');
+    
+    if (storedCredits) setCredits(JSON.parse(storedCredits));
+    if (storedCards) setSavedCards(JSON.parse(storedCards));
+    if (storedLogs) setSessionLogs(JSON.parse(storedLogs));
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
       return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Login failed' };
     }
-
-    return { success: false, error: 'Invalid email or password' };
   };
 
-  const signup = (email: string, password: string, name: string) => {
-    // For MVP, just create a session
-    const userData = { email, name };
-    setUser(userData);
-    sessionStorage.setItem('user', JSON.stringify(userData));
-    return { success: true };
+  const signup = async (data: SignUpData): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            username: data.username,
+            dateOfBirth: data.dateOfBirth,
+            timeOfBirth: data.timeOfBirth || null,
+          },
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Signup failed' };
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    setSession(null);
     setCredits(0);
     setSavedCards([]);
     setSessionLogs([]);
-    sessionStorage.removeItem('user');
-    sessionStorage.removeItem('credits');
-    sessionStorage.removeItem('savedCards');
-    sessionStorage.removeItem('sessionLogs');
+    localStorage.removeItem('credits');
+    localStorage.removeItem('savedCards');
+    localStorage.removeItem('sessionLogs');
   };
 
   const addCredits = (amount: number) => {
     const newCredits = Math.max(0, credits + amount);
     setCredits(newCredits);
-    sessionStorage.setItem('credits', JSON.stringify(newCredits));
+    localStorage.setItem('credits', JSON.stringify(newCredits));
   };
 
   const addSessionLog = (log: Omit<SessionLog, 'id'>) => {
@@ -121,7 +195,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     const newLogs = [newLog, ...sessionLogs];
     setSessionLogs(newLogs);
-    sessionStorage.setItem('sessionLogs', JSON.stringify(newLogs));
+    localStorage.setItem('sessionLogs', JSON.stringify(newLogs));
   };
 
   const addCard = (card: Omit<SavedCard, 'id'>) => {
@@ -129,18 +203,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newCard: SavedCard = {
       ...card,
       id: crypto.randomUUID(),
-      isDefault: isFirstCard, // First card is default
+      isDefault: isFirstCard,
     };
     const newCards = [...savedCards, newCard];
     setSavedCards(newCards);
-    sessionStorage.setItem('savedCards', JSON.stringify(newCards));
+    localStorage.setItem('savedCards', JSON.stringify(newCards));
   };
 
   const deleteCard = (cardId: string) => {
     const cardToDelete = savedCards.find(c => c.id === cardId);
     let newCards = savedCards.filter(c => c.id !== cardId);
     
-    // If we deleted the default card, set the first remaining card as default
     if (cardToDelete?.isDefault && newCards.length > 0) {
       newCards = newCards.map((c, index) => ({
         ...c,
@@ -149,7 +222,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     
     setSavedCards(newCards);
-    sessionStorage.setItem('savedCards', JSON.stringify(newCards));
+    localStorage.setItem('savedCards', JSON.stringify(newCards));
   };
 
   const setDefaultCard = (cardId: string) => {
@@ -158,7 +231,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isDefault: card.id === cardId,
     }));
     setSavedCards(newCards);
-    sessionStorage.setItem('savedCards', JSON.stringify(newCards));
+    localStorage.setItem('savedCards', JSON.stringify(newCards));
   };
 
   const getDefaultCard = () => {
@@ -168,10 +241,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{ 
       user, 
+      session,
       login, 
       signup, 
       logout, 
       isAuthenticated: !!user,
+      isLoading,
       credits,
       addCredits,
       savedCards,

@@ -58,13 +58,26 @@ export const Header = () => {
 
   // Get user initials for avatar
   const getUserInitials = () => {
-    if (user?.name) {
-      return user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    }
+    if (user?.firstName) {
+      return user.firstName[0].toUpperCase();
     }
     if (user?.email) {
       return user.email[0].toUpperCase();
     }
     return 'U';
+  };
+
+  const getDisplayName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user?.firstName) {
+      return user.firstName;
+    }
+    return user?.email || 'User';
   };
 
   return (
@@ -207,7 +220,7 @@ export const Header = () => {
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 p-1 min-h-11 rounded-full hover:bg-secondary/50 transition-colors">
                       <Avatar className="w-9 h-9 border-2 border-primary/30">
-                        <AvatarImage src={undefined} alt={user?.name || 'User'} />
+                        <AvatarImage src={undefined} alt={getDisplayName()} />
                         <AvatarFallback className="bg-accent/20 text-accent font-medium text-sm">
                           {getUserInitials()}
                         </AvatarFallback>
@@ -217,7 +230,7 @@ export const Header = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 bg-popover border-border z-50 font-sans shadow-2xl rounded-xl">
                     <div className="px-3 py-2 border-b border-border mb-1">
-                      <p className="text-sm font-medium text-foreground">{user?.name || user?.email}</p>
+                      <p className="text-sm font-medium text-foreground">{getDisplayName()}</p>
                       <p className="text-xs text-muted-foreground">Balance: <span className="text-primary font-medium">${credits}</span></p>
                     </div>
                     <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer flex items-center gap-2 p-2.5">
@@ -265,10 +278,10 @@ export const Header = () => {
                   <Button 
                     variant="hero" 
                     size="sm"
-                    onClick={() => setIsApplicationOpen(true)}
+                    onClick={() => handleAuth('signup')}
                     className="text-xs px-3 h-8 font-sans"
                   >
-                    Apply Now
+                    Sign Up
                   </Button>
                 </>
               )}
