@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Star, Heart, MessageCircle, Phone, ArrowLeft, Share2, 
   ThumbsUp, ThumbsDown, Clock, Calendar, Shield, Award,
-  ChevronRight, Play
+  ChevronRight, Play, Video
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -12,12 +12,13 @@ import { Badge } from '@/components/ui/badge';
 import { advisors, type Advisor } from '@/data/advisors';
 import { AuthModal } from '@/components/modals/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
+import aiTwinIcon from '@/assets/ai-twin-icon.png';
 
 const StatusBadge = ({ status }: { status: Advisor['status'] }) => {
   const statusConfig = {
-    online: { label: 'ONLINE', className: 'bg-green-500 shadow-[0_0_10px_hsl(142,70%,45%,0.6)]' },
-    busy: { label: 'BUSY', className: 'bg-orange-500' },
-    offline: { label: 'OFFLINE', className: 'bg-gray-500' },
+    online: { label: 'ONLINE', className: 'bg-emerald-500 shadow-[0_0_10px_hsl(142,70%,45%,0.6)]' },
+    busy: { label: 'BUSY', className: 'bg-rose-500' },
+    offline: { label: 'OFFLINE', className: 'bg-muted-foreground' },
   };
   const config = statusConfig[status];
 
@@ -69,6 +70,18 @@ const AdvisorProfile = () => {
       setPendingAction('call');
       setIsAuthOpen(true);
     }
+  };
+
+  const handleVideoClick = () => {
+    if (isAuthenticated) {
+      navigate(`/video/${advisor.id}`);
+    } else {
+      setIsAuthOpen(true);
+    }
+  };
+
+  const handleTwinClick = () => {
+    navigate(`/advisor/${advisor.id}/ai`);
   };
 
   const handleAuthClose = () => {
@@ -176,83 +189,78 @@ const AdvisorProfile = () => {
 
               {/* Right: Action Cards & Stats */}
               <div className="flex-1 space-y-6">
-                {/* Service Cards */}
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {/* Chat Card */}
-                  <button
-                    onClick={handleChatClick}
-                    disabled={advisor.status !== 'online'}
-                    className="group relative p-6 rounded-xl bg-card/80 backdrop-blur-sm border border-border hover:border-primary transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                {/* Action Buttons Glass Card */}
+                <div className="bg-card/30 backdrop-blur-md border border-border/50 rounded-2xl p-4 shadow-xl w-full md:w-auto md:min-w-[320px]">
+                  {/* Pricing Header */}
+                  <div className="mb-4 text-center">
                     {advisor.freeMinutes && (
-                      <Badge className="absolute top-3 right-3 bg-accent text-accent-foreground">
+                      <Badge className="mb-2 bg-accent text-accent-foreground">
                         {advisor.freeMinutes} free min
                       </Badge>
                     )}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                        <MessageCircle className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-foreground">Live Chat</div>
-                        <div className="text-sm text-muted-foreground">Instant messaging</div>
-                      </div>
-                    </div>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       {advisor.discountedPrice ? (
                         <>
                           <span className="text-muted-foreground line-through text-sm">
                             ${advisor.pricePerMinute}/min
                           </span>
-                          <span className="text-2xl font-bold text-primary">
+                          <span className="text-xl font-bold text-primary">
                             ${advisor.discountedPrice}/min
                           </span>
                         </>
                       ) : (
-                        <span className="text-2xl font-bold text-primary">
+                        <span className="text-xl font-bold text-primary">
                           ${advisor.pricePerMinute}/min
                         </span>
                       )}
                     </div>
-                  </button>
+                  </div>
 
-                  {/* Voice Call Card */}
-                  <button
-                    onClick={handleCallClick}
-                    disabled={advisor.status !== 'online'}
-                    className="group relative p-6 rounded-xl bg-card/80 backdrop-blur-sm border border-border hover:border-primary transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {advisor.freeMinutes && (
-                      <Badge className="absolute top-3 right-3 bg-accent text-accent-foreground">
-                        {advisor.freeMinutes} free min
-                      </Badge>
-                    )}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-mystic-purple/20 flex items-center justify-center">
-                        <Phone className="w-6 h-6 text-mystic-purple" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-foreground">Voice Call</div>
-                        <div className="text-sm text-muted-foreground">Live conversation</div>
-                      </div>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      {advisor.discountedPrice ? (
-                        <>
-                          <span className="text-muted-foreground line-through text-sm">
-                            ${(advisor.pricePerMinute * 1.5).toFixed(2)}/min
-                          </span>
-                          <span className="text-2xl font-bold text-primary">
-                            ${(advisor.discountedPrice * 1.5).toFixed(2)}/min
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold text-primary">
-                          ${(advisor.pricePerMinute * 1.5).toFixed(2)}/min
-                        </span>
-                      )}
-                    </div>
-                  </button>
+                  {/* 2x2 Action Buttons Grid */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Live Chat */}
+                    <button
+                      onClick={handleChatClick}
+                      disabled={advisor.status !== 'online'}
+                      className="h-20 flex flex-col items-center justify-center gap-2 rounded-xl border border-border/50 bg-background/20 hover:bg-primary/20 hover:border-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <MessageCircle className="w-6 h-6 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Live Chat</span>
+                    </button>
+
+                    {/* Voice Call */}
+                    <button
+                      onClick={handleCallClick}
+                      disabled={advisor.status !== 'online'}
+                      className="h-20 flex flex-col items-center justify-center gap-2 rounded-xl border border-border/50 bg-background/20 hover:bg-primary/20 hover:border-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Phone className="w-6 h-6 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Voice Call</span>
+                    </button>
+
+                    {/* Video Call */}
+                    <button
+                      onClick={handleVideoClick}
+                      disabled={advisor.status !== 'online'}
+                      className="h-20 flex flex-col items-center justify-center gap-2 rounded-xl border border-border/50 bg-background/20 hover:bg-primary/20 hover:border-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Video className="w-6 h-6 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Video Call</span>
+                    </button>
+
+                    {/* Twin Call */}
+                    <button
+                      onClick={handleTwinClick}
+                      className="h-20 flex flex-col items-center justify-center gap-2 rounded-xl border border-border/50 bg-background/20 hover:bg-secondary/20 hover:border-secondary/50 transition-all"
+                    >
+                      <img 
+                        src={aiTwinIcon} 
+                        alt="AI Twin" 
+                        className="w-6 h-6 object-contain"
+                      />
+                      <span className="text-sm font-medium text-foreground">Twin Call</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Stats Bar */}

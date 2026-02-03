@@ -26,7 +26,7 @@ const getStatusRingClass = (status: Advisor['status']) => {
     case 'online':
       return 'ring-4 ring-emerald-500/80 ring-offset-2 ring-offset-card';
     case 'busy':
-      return 'ring-4 ring-muted-foreground/50 ring-offset-2 ring-offset-card';
+      return 'ring-4 ring-rose-500/50 ring-offset-2 ring-offset-card';
     case 'offline':
       return 'ring-4 ring-muted/50 ring-offset-2 ring-offset-card';
     default:
