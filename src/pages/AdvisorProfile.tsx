@@ -460,27 +460,50 @@ const AdvisorProfile = () => {
                     )}
                   </div>
 
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="w-full mb-3"
-                    onClick={handleChatClick}
-                    disabled={advisor.status !== "online"}
-                  >
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    Start Chat Now
-                  </Button>
+                  <div className="space-y-3">
+                    <Button
+                      variant="default"
+                      size="lg"
+                      className="w-full"
+                      onClick={handleChatClick}
+                      disabled={advisor.status !== "online"}
+                    >
+                      <MessageCircle className="w-5 h-5 mr-2" />
+                      Start Chat Now
+                    </Button>
 
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full"
-                    disabled={advisor.status !== "online"}
-                    onClick={handleCallClick}
-                  >
-                    <Phone className="w-5 h-5 mr-2" />
-                    Voice Call
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full"
+                      disabled={advisor.status !== "online"}
+                      onClick={handleCallClick}
+                    >
+                      <Phone className="w-5 h-5 mr-2" />
+                      Voice Call
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full"
+                      disabled={advisor.status !== "online"}
+                      onClick={handleVideoClick}
+                    >
+                      <Video className="w-5 h-5 mr-2" />
+                      Video Call
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full"
+                      onClick={handleTwinClick}
+                    >
+                      <img src={aiTwinIcon} alt="AI Twin" className="w-5 h-5 mr-2 object-contain" />
+                      Twin Call
+                    </Button>
+                  </div>
 
                   <div className="mt-6 pt-6 border-t border-border space-y-3">
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
