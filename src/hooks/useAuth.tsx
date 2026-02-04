@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  /*const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -137,6 +137,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return { success: true };
     } catch (err: any) {
+      return { success: false, error: err.message || "Login failed" };
+    }
+  };*/
+
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // Direct POST to n8n webhook for Airtable authentication
+      const response = await fetch(
+        "https://automateoptinet.app.n8n.cloud/webhook/99d434f6-0822-435e-8c9d-cb225500f2c2", // Replace with your actual Sign-In webhook URL
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        },
+      );
+
+      const result = await response.json();
+
+      // Check for the success flag and username returned from Airtable/n8n
+      if (result.success === true) {
+        setUser({
+          id: crypto.randomUUID(), // Temporary ID for Airtable-based session
+          email: email,
+          username: result.username, // Username retrieved from Airtable
+        });
+
+        // Set a mock session to satisfy isAuthenticated checks elsewhere in the app
+        setSession({ user: { id: "airtable-user" } } as any);
+
+        return { success: true };
+      } else {
+        return { success: false, error: result.message || "Invalid email or password." };
+      }
+    } catch (err: any) {
+      console.error("Airtable Login Error:", err);
       return { success: false, error: err.message || "Login failed" };
     }
   };
