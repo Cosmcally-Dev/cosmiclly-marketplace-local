@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/layout/Header";
@@ -5,12 +6,16 @@ import { Footer } from "@/components/layout/Footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, MapPin, Calendar, ImageIcon } from "lucide-react";
-import { format } from "date-fns";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Settings, MessageCircle, Users, Sparkles, ArrowRight } from "lucide-react";
+import { advisors } from "@/data/advisors";
+import { AdvisorCard } from "@/components/advisors/AdvisorCard";
+import { zodiacSigns } from "@/data/zodiacSigns";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, credits } = useAuth();
+  const [horoscopeTab, setHoroscopeTab] = useState("today");
 
   const getInitials = () => {
     if (user?.firstName && user?.lastName) {
@@ -20,11 +25,50 @@ const Profile = () => {
     return "?";
   };
 
-  const formattedDob = user?.dateOfBirth
-    ? format(new Date(user.dateOfBirth), "MMMM d, yyyy")
-    : "Not set";
+  // Static zodiac profile data
+  const zodiacProfile = {
+    sunSign: "Capricorn",
+    moonSign: "Aquarius",
+    ascendant: "Libra",
+    planet: "Saturn",
+    element: "Earth",
+    modality: "Cardinal",
+    luckyNumbers: "6, 8, 15",
+  };
 
-  const passions = ["Astrology", "Tarot", "Meditation", "Yoga", "Spirituality", "Crystal Healing"];
+  const zodiacSign = zodiacSigns.find(
+    (s) => s.name.toLowerCase() === zodiacProfile.sunSign.toLowerCase()
+  );
+
+  // Static horoscope readings
+  const horoscopeReadings: Record<string, { dateRange: string; text: string }> = {
+    today: {
+      dateRange: "February 9, 2026",
+      text: "Today brings a wave of clarity to your personal goals. Trust your instincts when making decisions, especially regarding financial matters. A conversation with someone close could reveal an unexpected opportunity. Stay grounded and focus on what truly matters to you.",
+    },
+    tomorrow: {
+      dateRange: "February 10, 2026",
+      text: "Tomorrow favors creative endeavors and self-expression. You may feel a surge of inspiration that leads to a breakthrough in a project you've been working on. Don't be afraid to share your ideas with others — collaboration could amplify your success.",
+    },
+    week: {
+      dateRange: "February 9 - February 15, 2026",
+      text: "This week challenges you to step outside your comfort zone. A professional opportunity may arise mid-week that tests your adaptability. Embrace change and remain open to new perspectives. By the weekend, you'll feel a renewed sense of purpose.",
+    },
+    month: {
+      dateRange: "February 1 - February 28, 2026",
+      text: "February is a month of transformation. Planetary alignments encourage deep reflection on your relationships and career path. Mid-month brings a pivotal moment that could reshape your long-term plans. Stay patient and let things unfold naturally.",
+    },
+    year: {
+      dateRange: "January 1, 2026 - December 31, 2026",
+      text: "In 2026, your ruling planet, Saturn, moves through Aries, bringing a noticeable shift in pace and attitude. You may feel faster, bolder, and more decisive than usual. There is a stronger desire for independence, initiative, and starting something new. This year pushes you out of long planning phases and into action. You are encouraged to take risks, rely on yourself, and actively reshape areas of life that no longer feel aligned.",
+    },
+  };
+
+  // Get 6 random advisors for "Psychics you match with"
+  const matchedAdvisors = advisors.slice(0, 6);
+
+  // Affirmation
+  const affirmation = "I am constantly growing and evolving into a better person.";
 
   if (!isAuthenticated) {
     return (
@@ -38,116 +82,201 @@ const Profile = () => {
     );
   }
 
+  const currentReading = horoscopeReadings[horoscopeTab];
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container max-w-6xl mx-auto pt-24 pb-12 px-4 flex flex-col md:flex-row gap-8">
+      <main className="container max-w-7xl mx-auto pt-24 pb-12 px-4 flex flex-col md:flex-row gap-6">
         {/* Left Sidebar - Sticky */}
-        <aside className="w-full md:w-1/3 lg:w-1/4 md:sticky md:top-24 h-fit space-y-6">
-          <div className="bg-card border border-border rounded-2xl p-6 text-center space-y-4">
-            <Avatar className="w-28 h-28 mx-auto ring-4 ring-primary/30">
+        <aside className="w-full md:w-56 lg:w-60 shrink-0 md:sticky md:top-24 h-fit space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-5 text-center space-y-4">
+            <Avatar className="w-20 h-20 mx-auto ring-4 ring-primary/30">
               <AvatarImage src="" />
-              <AvatarFallback className="bg-primary/20 text-primary text-3xl font-bold">
+              <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
                 {getInitials()}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-xl font-bold text-foreground font-heading">
-                {user?.firstName} {user?.lastName}
+              <h1 className="text-base font-bold text-foreground font-heading">
+                {user?.username || `${user?.firstName} ${user?.lastName}`}
               </h1>
-              {user?.username && (
-                <p className="text-muted-foreground text-sm">@{user.username}</p>
-              )}
             </div>
-            <div className="text-sm text-muted-foreground">
-              Balance: <span className="text-primary font-semibold">{credits} credits</span>
-            </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => navigate("/settings")}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Edit Profile
-            </Button>
+
+            {/* Navigation Links */}
+            <nav className="space-y-1 text-left">
+              {[
+                { label: "Profile", icon: Users, path: "/profile" },
+                { label: "Chatroom", icon: MessageCircle, path: "/chat", dot: true },
+                { label: "Psychics", icon: Sparkles, path: "/advisors" },
+                { label: "Horoscope", icon: Sparkles, path: "/horoscope" },
+                { label: "Settings", icon: Settings, path: "/settings" },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => navigate(item.path)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-colors"
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                  {item.dot && (
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 ml-auto" />
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Balance Card */}
+          <div className="bg-card border border-border rounded-2xl p-4 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Balance: <span className="text-foreground font-semibold">{credits} credits</span>
+            </p>
             <Button
               variant="default"
+              size="sm"
               className="w-full"
               onClick={() => navigate("/add-credit")}
             >
-              Refill Credits
+              Refill credits
             </Button>
           </div>
         </aside>
 
         {/* Right Content */}
-        <section className="w-full md:w-2/3 lg:w-3/4 space-y-8">
-          {/* Bio */}
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-foreground font-heading mb-3">About Me</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Spiritual seeker and tech enthusiast. I love connecting with advisors to gain clarity on my path.
-            </p>
+        <section className="flex-1 min-w-0 space-y-6">
+          {/* Affirmation of the Day */}
+          <div className="bg-card border border-border rounded-2xl p-5 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-base font-bold text-foreground font-heading mb-1">
+                Affirmation of the day ✨
+              </h2>
+              <p className="text-sm text-muted-foreground">{affirmation}</p>
+            </div>
+            <div className="text-right shrink-0 space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Balance: <span className="text-foreground font-semibold">{credits} credits</span>
+              </p>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => navigate("/add-credit")}
+              >
+                Refill credits
+              </Button>
+            </div>
           </div>
 
-          {/* Vitals */}
+          {/* Your Zodiac Profile */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-foreground font-heading mb-4">Vitals</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: "Date of Birth", value: formattedDob, icon: Calendar },
-                { label: "Location", value: "New York, USA", icon: MapPin },
-                { label: "Gender", value: "Not specified" },
-                { label: "Time of Birth", value: user?.timeOfBirth || "Not set" },
-              ].map((item) => (
-                <div key={item.label} className="space-y-1">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">{item.label}</p>
-                  <p className="text-sm font-medium text-foreground">{item.value}</p>
+            <h2 className="text-lg font-bold text-foreground font-heading mb-5">Your zodiac profile</h2>
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Left stats */}
+              <div className="space-y-3 text-sm flex-1">
+                {[
+                  { label: "Sun sign", value: zodiacProfile.sunSign, symbol: zodiacSign?.symbol },
+                  { label: "Moon sign", value: zodiacProfile.moonSign, symbol: "♒" },
+                  { label: "Ascendant", value: zodiacProfile.ascendant, symbol: "♎" },
+                  { label: "Planet", value: zodiacProfile.planet, symbol: "♄" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-4">
+                    <span className="text-muted-foreground w-24">{item.label}</span>
+                    <span className="font-semibold text-foreground">{item.value}</span>
+                    <span className="text-primary text-lg">{item.symbol}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Zodiac Image */}
+              {zodiacSign && (
+                <div className="w-32 h-32 md:w-40 md:h-40 shrink-0">
+                  <img
+                    src={zodiacSign.image}
+                    alt={zodiacSign.name}
+                    className="w-full h-full object-contain drop-shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
+                  />
                 </div>
-              ))}
+              )}
+
+              {/* Right stats */}
+              <div className="space-y-3 text-sm flex-1">
+                {[
+                  { label: "Element", value: zodiacProfile.element, symbol: "▽" },
+                  { label: "Modality", value: zodiacProfile.modality, symbol: "∧" },
+                  { label: "Lucky Numbers", value: zodiacProfile.luckyNumbers, symbol: "#" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-4">
+                    <span className="text-muted-foreground w-28">{item.label}</span>
+                    <span className="font-semibold text-foreground">{item.value}</span>
+                    <span className="text-primary text-lg">{item.symbol}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Photos */}
+          {/* Your Horoscope */}
           <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-foreground font-heading mb-4">Photos</h2>
-            <div className="grid grid-cols-3 gap-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="aspect-square rounded-xl bg-secondary/30 border border-border flex items-center justify-center"
-                >
-                  <ImageIcon className="w-8 h-8 text-muted-foreground/40" />
+            <h2 className="text-lg font-bold text-foreground font-heading mb-4">Your horoscope</h2>
+            <Tabs value={horoscopeTab} onValueChange={setHoroscopeTab}>
+              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0">
+                {["today", "tomorrow", "week", "month", "year"].map((tab) => (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    className="capitalize rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2 text-sm"
+                  >
+                    {tab}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              <div className="mt-5 flex flex-col md:flex-row gap-6">
+                {/* Zodiac image */}
+                {zodiacSign && (
+                  <div className="w-40 h-40 shrink-0 mx-auto md:mx-0">
+                    <img
+                      src={zodiacSign.image}
+                      alt={zodiacSign.name}
+                      className="w-full h-full object-contain opacity-80"
+                    />
+                  </div>
+                )}
+
+                <div className="flex-1 space-y-3">
+                  <p className="text-sm font-semibold text-foreground">{currentReading.dateRange}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {currentReading.text}
+                  </p>
+                  <button
+                    onClick={() => navigate("/horoscope")}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:text-primary transition-colors"
+                  >
+                    Learn more <ArrowRight className="w-4 h-4" />
+                  </button>
                 </div>
+              </div>
+            </Tabs>
+          </div>
+
+          {/* Psychics You Match With */}
+          <div>
+            <h2 className="text-lg font-bold text-foreground font-heading mb-5">
+              Psychics you match with
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {matchedAdvisors.map((advisor) => (
+                <AdvisorCard key={advisor.id} advisor={advisor} />
               ))}
             </div>
-          </div>
-
-          {/* Passions */}
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-foreground font-heading mb-4">Passions</h2>
-            <div className="flex flex-wrap gap-2">
-              {passions.map((passion) => (
-                <Badge key={passion} variant="secondary" className="text-sm px-3 py-1">
-                  {passion}
-                </Badge>
-              ))}
+            <div className="text-center mt-6">
+              <Button
+                variant="outline"
+                onClick={() => navigate("/advisors")}
+              >
+                See all psychics <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             </div>
-          </div>
-
-          {/* Prompts */}
-          <div className="bg-secondary/20 border border-border rounded-2xl p-6 space-y-2">
-            <h3 className="font-bold text-foreground">A non-negotiable for me is...</h3>
-            <p className="text-muted-foreground">
-              Authenticity. I value honest and genuine connections above everything else.
-            </p>
-          </div>
-
-          <div className="bg-secondary/20 border border-border rounded-2xl p-6 space-y-2">
-            <h3 className="font-bold text-foreground">I'm looking for guidance on...</h3>
-            <p className="text-muted-foreground">
-              Career transitions and finding my true purpose in life.
-            </p>
           </div>
         </section>
       </main>
