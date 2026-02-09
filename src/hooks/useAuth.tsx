@@ -70,6 +70,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
 
   useEffect(() => {
+    // Check for custom stored user (for n8n/Airtable flow)
+    const storedUser = localStorage.getItem("optinet_user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+      setSession({ user: { id: "airtable-user" } } as any);
+    }
+
     // Set up auth state listener FIRST
     const {
       data: { subscription },
@@ -88,15 +95,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           timeOfBirth: metadata?.timeOfBirth,
         });
       } else {
-        setUser(null);
+        // ONLY clear user if we don't have a custom one in local storage
+        if (!localStorage.getItem("optinet_user")) {
+          setUser(null);
+        }
       }
       setIsLoading(false);
     });
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+      // Only override if Supabase actually has a session
       if (session?.user) {
+        setSession(session);
         const supabaseUser = session.user;
         const metadata = supabaseUser.user_metadata;
         setUser({
@@ -124,28 +135,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  /*const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || "Login failed" };
-    }
-  };*/
-
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       // Direct POST to n8n webhook for Airtable authentication
       const response = await fetch(
-        "https://automateoptinet.app.n8n.cloud/webhook/99d434f6-0822-435e-8c9d-cb225500f2c2", // Replace with your actual Sign-In webhook URL
+        "https://automateoptinet.app.n8n.cloud/webhook/99d434f6-0822-435e-8c9d-cb225500f2c2",
         {
           method: "POST",
           headers: {
@@ -159,14 +153,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Check for the success flag and username returned from Airtable/n8n
       if (result.success === true) {
-        setUser({
-          id: crypto.randomUUID(), // Temporary ID for Airtable-based session
+        const newUser: User = {
+          id: result.id || crypto.randomUUID(), // Use ID from webhook if available, else random
           email: email,
-          username: result.username, // Username retrieved from Airtable
-        });
+          username: result.username,
+          firstName: result.firstName, // If your webhook returns these, good to map them
+          lastName: result.lastName,
+        };
+
+        setUser(newUser);
 
         // Set a mock session to satisfy isAuthenticated checks elsewhere in the app
         setSession({ user: { id: "airtable-user" } } as any);
+
+        // PERSIST CUSTOM USER
+        localStorage.setItem("optinet_user", JSON.stringify(newUser));
 
         return { success: true };
       } else {
@@ -200,10 +201,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       );
 
-      // Parse the JSON response from n8n
       const result = await response.json();
 
-      // Check if the webhook returned success (based on your previous JSON structure)
       if (result.success === true) {
         return { success: true };
       } else {
@@ -222,9 +221,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setCredits(0);
     setSavedCards([]);
     setSessionLogs([]);
+
+    // Clear all storage including custom user
     localStorage.removeItem("credits");
     localStorage.removeItem("savedCards");
     localStorage.removeItem("sessionLogs");
+    localStorage.removeItem("optinet_user");
   };
 
   const addCredits = (amount: number) => {
