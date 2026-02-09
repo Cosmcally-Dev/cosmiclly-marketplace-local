@@ -38,7 +38,6 @@ const App = () => (
             <Route path="/support" element={<Support />} />
             <Route path="/add-credit" element={<AddCredit />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/profile" element={<Settings />} />
             <Route path="/advisor-portal" element={<AdvisorPortal />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
