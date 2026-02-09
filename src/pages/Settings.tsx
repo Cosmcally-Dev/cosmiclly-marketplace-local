@@ -1,60 +1,74 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, CreditCard, History, LogOut } from 'lucide-react';
+import { ArrowLeft, User, CreditCard, Bell, Shield, ChevronRight, Pencil, Trash2, Plus, Star, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useAuth } from '@/hooks/useAuth';
-import ProfileSettings from '@/components/settings/ProfileSettings';
-import PaymentSettings from '@/components/settings/PaymentSettings';
+import { useToast } from '@/hooks/use-toast';
 import { SessionHistory } from '@/components/settings/SessionHistory';
-import NotificationSettings from '@/components/settings/NotificationSettings';
-import SecuritySettings from '@/components/settings/SecuritySettings';
-
-type TabId = 'readings' | 'payment' | 'profile' | 'notifications' | 'security';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, logout, credits } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabId>('profile');
-
+  const { user, savedCards, credits, deleteCard, setDefaultCard } = useAuth();
+  const { toast } = useToast();
+  
+  const [activeTab, setActiveTab] = useState<'profile' | 'payment' | 'history' | 'notifications' | 'security'>('profile');
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  
+  // Profile form state
   const getFullName = () => {
     if (user?.firstName && user?.lastName) {
       return `${user.firstName} ${user.lastName}`;
     }
-    return user?.firstName || user?.username || 'User';
+    return user?.firstName || '';
   };
 
-  const getInitials = () => {
-    const name = getFullName();
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
+  const [profileData, setProfileData] = useState({
+    name: getFullName(),
+    email: user?.email || '',
+    phone: '',
+    dateOfBirth: '',
+  });
 
-  const navItems = [
-    { id: 'readings' as TabId, label: 'My Readings', icon: History },
-    { id: 'payment' as TabId, label: 'Payment Methods', icon: CreditCard },
-    { id: 'profile' as TabId, label: 'My Profile', icon: User },
+  // Notification preferences
+  const [notifications, setNotifications] = useState({
+    emailPromotions: true,
+    emailAdvisorUpdates: true,
+    pushNotifications: false,
+    smsAlerts: false,
+  });
+
+  const tabs = [
+    { id: 'profile' as const, label: 'Profile', icon: User },
+    { id: 'payment' as const, label: 'Payment Methods', icon: CreditCard },
+    { id: 'history' as const, label: 'Session History', icon: History },
+    { id: 'notifications' as const, label: 'Notifications', icon: Bell },
+    { id: 'security' as const, label: 'Security', icon: Shield },
   ];
 
-  const tabTitles: Record<TabId, string> = {
-    readings: 'My Readings',
-    payment: 'Payment Methods',
-    profile: 'My Profile',
-    notifications: 'Notifications',
-    security: 'Security',
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/');
+  const handleSaveProfile = () => {
+    setIsEditProfileOpen(false);
+    toast({
+      title: "Profile Updated",
+      description: "Your profile information has been saved.",
+    });
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-
+      
       <main className="flex-1 pt-20">
         <div className="container mx-auto px-4 py-8">
           {/* Back Button */}
@@ -67,81 +81,377 @@ const Settings = () => {
             Back
           </Button>
 
-          {/* Two-column layout */}
-          <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8 items-start">
-            {/* Left Sidebar - Sticky */}
-            <aside className="sticky top-24 h-fit">
-              <Card className="overflow-hidden">
-                {/* Profile Header */}
-                <div className="p-6 pb-4 flex flex-col items-center text-center border-b border-border">
-                  <Avatar className="w-20 h-20 mb-3">
-                    <AvatarFallback className="bg-primary/20 text-primary text-xl font-semibold">
-                      {getInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h2 className="text-lg font-semibold text-foreground">{getFullName()}</h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">Member since 2025</p>
-                  <div className="mt-3 px-4 py-2 rounded-lg bg-primary/10 w-full">
-                    <p className="text-xs text-muted-foreground">Credit Balance</p>
-                    <p className="text-lg font-bold text-primary">${credits}</p>
-                  </div>
-                </div>
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+            <p className="text-muted-foreground">Manage your account preferences and settings</p>
+          </div>
 
-                {/* Navigation */}
-                <CardContent className="p-2">
-                  <nav className="space-y-1">
-                    {navItems.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setActiveTab(item.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left text-sm transition-colors ${
-                          activeTab === item.id
-                            ? 'bg-primary/10 text-primary font-medium'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
-                        }`}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Sidebar Navigation */}
+            <div className="lg:col-span-1">
+              <nav className="space-y-1 bg-card rounded-xl border border-border p-2">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                      activeTab === tab.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <tab.icon className="w-5 h-5" />
+                    <span className="font-medium">{tab.label}</span>
+                  </button>
+                ))}
+              </nav>
 
-                    {/* Separator before logout */}
-                    <div className="border-t border-border my-2" />
+              {/* Credit Balance Card */}
+              <div className="mt-4 p-4 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border border-primary/20">
+                <p className="text-sm text-muted-foreground mb-1">Your Balance</p>
+                <p className="text-2xl font-bold text-primary">${credits}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full"
+                  onClick={() => navigate('/add-credit')}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Credits
+                </Button>
+              </div>
+            </div>
 
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left text-sm text-red-500 hover:text-red-600 hover:bg-red-500/10 transition-colors"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Log Out</span>
-                    </button>
-                  </nav>
-                </CardContent>
-              </Card>
-            </aside>
-
-            {/* Right Content Area */}
-            <div>
-              <Card>
-                <CardContent className="p-6">
-                  {activeTab === 'readings' && (
-                    <div className="space-y-6">
-                      <h2 className="text-xl font-semibold text-foreground">My Readings</h2>
-                      <SessionHistory />
+            {/* Content Area */}
+            <div className="lg:col-span-3">
+              <div className="bg-card rounded-xl border border-border p-6">
+                {/* Profile Tab */}
+                {activeTab === 'profile' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-foreground">Profile Information</h2>
+                      <Button variant="outline" size="sm" onClick={() => setIsEditProfileOpen(true)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
                     </div>
-                  )}
-                  {activeTab === 'payment' && <PaymentSettings />}
-                  {activeTab === 'profile' && <ProfileSettings />}
-                  {activeTab === 'notifications' && <NotificationSettings />}
-                  {activeTab === 'security' && <SecuritySettings />}
-                </CardContent>
-              </Card>
+                    
+                    <Separator />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label className="text-muted-foreground text-sm">Full Name</Label>
+                        <p className="text-foreground font-medium mt-1">{getFullName() || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground text-sm">Email Address</Label>
+                        <p className="text-foreground font-medium mt-1">{user?.email || 'Not set'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground text-sm">Phone Number</Label>
+                        <p className="text-foreground font-medium mt-1">Not set</p>
+                      </div>
+                      <div>
+                        <Label className="text-muted-foreground text-sm">Date of Birth</Label>
+                        <p className="text-foreground font-medium mt-1">Not set</p>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h3 className="font-medium text-foreground mb-4">Zodiac Sign</h3>
+                      <p className="text-muted-foreground text-sm">Add your date of birth to see your zodiac sign and get personalized horoscopes.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Payment Methods Tab */}
+                {activeTab === 'payment' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-foreground">Payment Methods</h2>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/add-credit')}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add New
+                      </Button>
+                    </div>
+                    
+                    <Separator />
+
+                    {savedCards.length > 0 ? (
+                      <div className="space-y-4">
+                        {savedCards.map((card) => (
+                          <div
+                            key={card.id}
+                            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-colors ${
+                              card.isDefault 
+                                ? 'bg-primary/5 border-primary' 
+                                : 'bg-muted/50 border-border'
+                            }`}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded flex items-center justify-center">
+                                <CreditCard className="w-5 h-5 text-white" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-foreground">•••• •••• •••• {card.lastFourDigits}</p>
+                                  {card.isDefault && (
+                                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                                      Default
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground">{card.cardholderName} · Expires {card.expirationDate}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {!card.isDefault && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-muted-foreground hover:text-primary"
+                                  onClick={() => {
+                                    setDefaultCard(card.id);
+                                    toast({
+                                      title: "Default card updated",
+                                      description: `Card ending in ${card.lastFourDigits} is now your default payment method.`,
+                                    });
+                                  }}
+                                >
+                                  <Star className="w-4 h-4 mr-1" />
+                                  Set Default
+                                </Button>
+                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-muted-foreground hover:text-destructive"
+                                onClick={() => {
+                                  deleteCard(card.id);
+                                  toast({
+                                    title: "Card removed",
+                                    description: `Card ending in ${card.lastFourDigits} has been removed.`,
+                                  });
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <CreditCard className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="font-medium text-foreground mb-2">No payment methods</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Add a payment method to purchase credits</p>
+                        <Button onClick={() => navigate('/add-credit')}>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Payment Method
+                        </Button>
+                      </div>
+                    )}
+
+                    <Separator />
+
+                    <div>
+                      <h3 className="font-medium text-foreground mb-4">Transaction History</h3>
+                      <p className="text-muted-foreground text-sm">View your recent transactions and purchase history.</p>
+                      <Button variant="link" className="px-0 mt-2">
+                        View Transaction History
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Session History Tab */}
+                {activeTab === 'history' && (
+                  <div className="space-y-6">
+                    <h2 className="text-xl font-semibold text-foreground">Session History</h2>
+                    <Separator />
+                    <SessionHistory />
+                  </div>
+                )}
+
+                {/* Notifications Tab */}
+                {activeTab === 'notifications' && (
+                  <div className="space-y-6">
+                    <h2 className="text-xl font-semibold text-foreground">Notification Preferences</h2>
+                    
+                    <Separator />
+
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-foreground">Promotional Emails</p>
+                          <p className="text-sm text-muted-foreground">Receive emails about special offers and discounts</p>
+                        </div>
+                        <Switch
+                          checked={notifications.emailPromotions}
+                          onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, emailPromotions: checked }))}
+                        />
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-foreground">Advisor Updates</p>
+                          <p className="text-sm text-muted-foreground">Get notified when your favorite advisors are online</p>
+                        </div>
+                        <Switch
+                          checked={notifications.emailAdvisorUpdates}
+                          onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, emailAdvisorUpdates: checked }))}
+                        />
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-foreground">Push Notifications</p>
+                          <p className="text-sm text-muted-foreground">Receive push notifications on your device</p>
+                        </div>
+                        <Switch
+                          checked={notifications.pushNotifications}
+                          onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, pushNotifications: checked }))}
+                        />
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-foreground">SMS Alerts</p>
+                          <p className="text-sm text-muted-foreground">Get text messages for important updates</p>
+                        </div>
+                        <Switch
+                          checked={notifications.smsAlerts}
+                          onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, smsAlerts: checked }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Security Tab */}
+                {activeTab === 'security' && (
+                  <div className="space-y-6">
+                    <h2 className="text-xl font-semibold text-foreground">Security Settings</h2>
+                    
+                    <Separator />
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-foreground">Password</p>
+                          <p className="text-sm text-muted-foreground">Last changed: Never</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Change Password
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-foreground">Two-Factor Authentication</p>
+                          <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Enable
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-foreground">Active Sessions</p>
+                          <p className="text-sm text-muted-foreground">Manage your active login sessions</p>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          View Sessions
+                        </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="pt-4">
+                      <h3 className="font-medium text-foreground mb-4">Danger Zone</h3>
+                      <Button variant="outline" className="text-destructive border-destructive hover:bg-destructive/10">
+                        Delete Account
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Once you delete your account, there is no going back. Please be certain.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </main>
 
       <Footer />
+
+      {/* Edit Profile Modal */}
+      <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                value={profileData.name}
+                onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                value={profileData.email}
+                onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1 (555) 000-0000"
+                value={profileData.phone}
+                onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dob">Date of Birth</Label>
+              <Input
+                id="dob"
+                type="date"
+                value={profileData.dateOfBirth}
+                onChange={(e) => setProfileData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button variant="outline" className="flex-1" onClick={() => setIsEditProfileOpen(false)}>
+                Cancel
+              </Button>
+              <Button className="flex-1" onClick={handleSaveProfile}>
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
