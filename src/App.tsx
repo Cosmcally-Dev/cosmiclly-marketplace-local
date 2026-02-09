@@ -16,6 +16,7 @@ import VoiceCall from "./pages/VoiceCall";
 import AddCredit from "./pages/AddCredit";
 import Settings from "./pages/Settings";
 import AdvisorPortal from "./pages/AdvisorPortal";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -38,7 +39,7 @@ const App = () => (
             <Route path="/support" element={<Support />} />
             <Route path="/add-credit" element={<AddCredit />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/profile" element={<Settings />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/advisor-portal" element={<AdvisorPortal />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
