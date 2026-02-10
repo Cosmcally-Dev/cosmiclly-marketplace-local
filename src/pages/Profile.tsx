@@ -6,17 +6,44 @@ import { Footer } from "@/components/layout/Footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, MessageCircle, Users, Sparkles, ArrowRight } from "lucide-react";
 import { advisors } from "@/data/advisors";
 import { AdvisorCard } from "@/components/advisors/AdvisorCard";
 import { zodiacSigns } from "@/data/zodiacSigns";
+import AdvisorPrivateProfile from "@/components/profile/AdvisorPrivateProfile";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, credits } = useAuth();
   const [horoscopeTab, setHoroscopeTab] = useState("today");
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-6xl mx-auto pt-24 pb-12 px-4 text-center">
+          <p className="text-muted-foreground text-lg">Please log in to view your profile.</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Advisor view
+  if (user?.isAdvisor) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container max-w-7xl mx-auto pt-24 pb-12 px-4">
+          <AdvisorPrivateProfile />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Regular user view
   const getInitials = () => {
     if (user?.firstName && user?.lastName) {
       return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
@@ -25,7 +52,6 @@ const Profile = () => {
     return "?";
   };
 
-  // Static zodiac profile data
   const zodiacProfile = {
     sunSign: "Capricorn",
     moonSign: "Aquarius",
@@ -40,7 +66,6 @@ const Profile = () => {
     (s) => s.name.toLowerCase() === zodiacProfile.sunSign.toLowerCase()
   );
 
-  // Static horoscope readings
   const horoscopeReadings: Record<string, { dateRange: string; text: string }> = {
     today: {
       dateRange: "February 9, 2026",
@@ -64,24 +89,8 @@ const Profile = () => {
     },
   };
 
-  // Get 6 random advisors for "Psychics you match with"
   const matchedAdvisors = advisors.slice(0, 6);
-
-  // Affirmation
   const affirmation = "I am constantly growing and evolving into a better person.";
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container max-w-6xl mx-auto pt-24 pb-12 px-4 text-center">
-          <p className="text-muted-foreground text-lg">Please log in to view your profile.</p>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   const currentReading = horoscopeReadings[horoscopeTab];
 
   return (
@@ -103,7 +112,6 @@ const Profile = () => {
               </h1>
             </div>
 
-            {/* Navigation Links */}
             <nav className="space-y-1 text-left">
               {[
                 { label: "Profile", icon: Users, path: "/profile" },
@@ -127,7 +135,6 @@ const Profile = () => {
             </nav>
           </div>
 
-          {/* Balance Card */}
           <div className="bg-card border border-border rounded-2xl p-4 text-center space-y-3">
             <p className="text-sm text-muted-foreground">
               Balance: <span className="text-foreground font-semibold">{credits} credits</span>
@@ -145,7 +152,7 @@ const Profile = () => {
 
         {/* Right Content */}
         <section className="flex-1 min-w-0 space-y-6">
-          {/* Affirmation of the Day */}
+          {/* Affirmation */}
           <div className="bg-card border border-border rounded-2xl p-5 flex items-start justify-between gap-4">
             <div>
               <h2 className="text-base font-bold text-foreground font-heading mb-1">
@@ -157,21 +164,16 @@ const Profile = () => {
               <p className="text-xs text-muted-foreground">
                 Balance: <span className="text-foreground font-semibold">{credits} credits</span>
               </p>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => navigate("/add-credit")}
-              >
+              <Button variant="default" size="sm" onClick={() => navigate("/add-credit")}>
                 Refill credits
               </Button>
             </div>
           </div>
 
-          {/* Your Zodiac Profile */}
+          {/* Zodiac Profile */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <h2 className="text-lg font-bold text-foreground font-heading mb-5">Your zodiac profile</h2>
             <div className="flex flex-col md:flex-row items-center gap-6">
-              {/* Left stats */}
               <div className="space-y-3 text-sm flex-1">
                 {[
                   { label: "Sun sign", value: zodiacProfile.sunSign, symbol: zodiacSign?.symbol },
@@ -186,8 +188,6 @@ const Profile = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Zodiac Image */}
               {zodiacSign && (
                 <div className="w-32 h-32 md:w-40 md:h-40 shrink-0">
                   <img
@@ -197,8 +197,6 @@ const Profile = () => {
                   />
                 </div>
               )}
-
-              {/* Right stats */}
               <div className="space-y-3 text-sm flex-1">
                 {[
                   { label: "Element", value: zodiacProfile.element, symbol: "▽" },
@@ -215,7 +213,7 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Your Horoscope */}
+          {/* Horoscope */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <h2 className="text-lg font-bold text-foreground font-heading mb-4">Your horoscope</h2>
             <Tabs value={horoscopeTab} onValueChange={setHoroscopeTab}>
@@ -232,7 +230,6 @@ const Profile = () => {
               </TabsList>
 
               <div className="mt-5 flex flex-col md:flex-row gap-6">
-                {/* Zodiac image */}
                 {zodiacSign && (
                   <div className="w-40 h-40 shrink-0 mx-auto md:mx-0">
                     <img
@@ -242,7 +239,6 @@ const Profile = () => {
                     />
                   </div>
                 )}
-
                 <div className="flex-1 space-y-3">
                   <p className="text-sm font-semibold text-foreground">{currentReading.dateRange}</p>
                   <p className="text-sm text-muted-foreground leading-relaxed">
@@ -259,7 +255,7 @@ const Profile = () => {
             </Tabs>
           </div>
 
-          {/* Psychics You Match With */}
+          {/* Matched Psychics */}
           <div>
             <h2 className="text-lg font-bold text-foreground font-heading mb-5">
               Psychics you match with
@@ -270,10 +266,7 @@ const Profile = () => {
               ))}
             </div>
             <div className="text-center mt-6">
-              <Button
-                variant="outline"
-                onClick={() => navigate("/advisors")}
-              >
+              <Button variant="outline" onClick={() => navigate("/advisors")}>
                 See all psychics <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
