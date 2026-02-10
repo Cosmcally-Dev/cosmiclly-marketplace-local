@@ -10,6 +10,7 @@ interface User {
   username?: string;
   dateOfBirth?: string;
   timeOfBirth?: string;
+  isAdvisor?: boolean;
 }
 
 interface SavedCard {
@@ -93,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           username: metadata?.username,
           dateOfBirth: metadata?.dateOfBirth,
           timeOfBirth: metadata?.timeOfBirth,
+          isAdvisor: metadata?.isAdvisor || false,
         });
       } else {
         // ONLY clear user if we don't have a custom one in local storage
@@ -118,6 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           username: metadata?.username,
           dateOfBirth: metadata?.dateOfBirth,
           timeOfBirth: metadata?.timeOfBirth,
+          isAdvisor: metadata?.isAdvisor || false,
         });
       }
       setIsLoading(false);
