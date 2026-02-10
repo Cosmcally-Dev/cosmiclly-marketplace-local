@@ -162,6 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           username: result.username,
           firstName: result.firstName, // If your webhook returns these, good to map them
           lastName: result.lastName,
+          isAdvisor: result.isAdvisor === true || result.isAdvisor === "true",
         };
 
         setUser(newUser);
