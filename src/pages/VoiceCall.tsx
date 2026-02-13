@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX,
-  Clock, Star, ArrowLeft, MessageCircle
+  Clock, Star, ArrowLeft, MessageCircle, Wifi, WifiOff
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { ReviewModal } from '@/components/modals/ReviewModal';
 import { LowCreditWarning } from '@/components/session/LowCreditWarning';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useWebRTC } from '@/hooks/useWebRTC';
 import type { ConnectionQuality } from '@/types/session';
 
 const VoiceCall = () => {
@@ -34,9 +35,27 @@ const VoiceCall = () => {
   const [hasShownWarning, setHasShownWarning] = useState(false);
   const [continueUntilEnd, setContinueUntilEnd] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [webrtcEnabled, setWebrtcEnabled] = useState(false);
+  const [webrtcError, setWebrtcError] = useState<string | null>(null);
 
   const sessionStartRef = useRef<Date | null>(null);
   const lastDeductionRef = useRef(0);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
+
+  // LiveKit WebRTC hook - initializes when webrtcEnabled is true
+  const {
+    state: webrtcState,
+    remoteStream,
+    connectionQuality: webrtcQuality,
+    error: webrtcHookError,
+    toggleAudio,
+    isMuted: webrtcMuted,
+  } = useWebRTC({
+    sessionId: sessionId || '',
+    userId: user?.id || '',
+    sessionType: 'audio',
+    enabled: webrtcEnabled,
+  });
 
   // Check if user has enough credits to start session
   const hasMinimumCredits = credits >= pricePerMinute || (advisor.freeMinutes && advisor.freeMinutes > 0);
@@ -74,6 +93,7 @@ const VoiceCall = () => {
           setSessionId(newSessionId);
           setCallStatus('connected');
           sessionStartRef.current = new Date();
+          setWebrtcEnabled(true); // Start WebRTC after DB session created
 
           toast({
             title: "Call Connected",
@@ -153,6 +173,32 @@ const VoiceCall = () => {
     return () => clearInterval(interval);
   }, [callStatus, showInsufficientCredits, advisor, credits, creditsUsed, hasShownWarning, continueUntilEnd, pricePerMinute, toast]);
 
+  // Attach remote audio stream to audio element
+  useEffect(() => {
+    if (remoteStream && remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
+
+  // Sync WebRTC mute state
+  useEffect(() => {
+    setIsMuted(webrtcMuted);
+  }, [webrtcMuted]);
+
+  // Handle WebRTC errors
+  useEffect(() => {
+    if (webrtcHookError) {
+      setWebrtcError(webrtcHookError);
+      if (webrtcHookError.startsWith('PERMISSION_DENIED')) {
+        toast({
+          variant: "destructive",
+          title: "Microphone Access Denied",
+          description: "Please allow microphone access in your browser settings to make calls.",
+        });
+      }
+    }
+  }, [webrtcHookError, toast]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -173,8 +219,11 @@ const VoiceCall = () => {
       const billableSeconds = Math.max(0, totalSeconds - freeSeconds);
       const billableMinutes = Math.ceil(billableSeconds / 60); // Round up
 
-      // Determine connection quality (can be enhanced with actual tracking)
-      const quality: ConnectionQuality = 'good';
+      // Use real WebRTC connection quality
+      const quality: ConnectionQuality = webrtcQuality || 'good';
+
+      // Stop WebRTC
+      setWebrtcEnabled(false);
 
       // End session in database
       const { error } = await supabase.rpc('end_rtc_session', {
@@ -278,13 +327,38 @@ const VoiceCall = () => {
               {callStatus === 'connecting' && (
                 <span className="text-amber-500 animate-pulse">Connecting...</span>
               )}
-              {callStatus === 'connected' && (
+              {callStatus === 'connected' && webrtcState === 'connecting' && (
+                <span className="text-amber-500 animate-pulse">Establishing audio...</span>
+              )}
+              {callStatus === 'connected' && webrtcState === 'connected' && (
+                <span className="text-green-500">Connected</span>
+              )}
+              {callStatus === 'connected' && webrtcState === 'reconnecting' && (
+                <span className="text-amber-500 animate-pulse">Reconnecting...</span>
+              )}
+              {callStatus === 'connected' && webrtcState === 'failed' && (
+                <span className="text-red-500">Connection Lost</span>
+              )}
+              {callStatus === 'connected' && !['connecting', 'connected', 'reconnecting', 'failed'].includes(webrtcState) && (
                 <span className="text-green-500">Connected</span>
               )}
               {callStatus === 'ended' && (
                 <span className="text-muted-foreground">Call Ended</span>
               )}
             </div>
+
+            {/* Connection Quality Indicator */}
+            {callStatus === 'connected' && webrtcState === 'connected' && (
+              <div className={`flex items-center justify-center gap-1 text-sm mt-1 ${
+                webrtcQuality === 'excellent' ? 'text-green-500' :
+                webrtcQuality === 'good' ? 'text-green-400' :
+                webrtcQuality === 'poor' ? 'text-amber-500' :
+                'text-red-500'
+              }`}>
+                {webrtcQuality === 'lost' ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
+                <span className="capitalize">{webrtcQuality}</span>
+              </div>
+            )}
           </div>
 
           {/* Timer & Cost */}
@@ -314,10 +388,16 @@ const VoiceCall = () => {
           {callStatus !== 'ended' && (
             <div className="flex items-center justify-center gap-6 mb-8">
               <button
-                onClick={() => setIsMuted(!isMuted)}
+                onClick={async () => {
+                  if (webrtcEnabled) {
+                    await toggleAudio();
+                  } else {
+                    setIsMuted(!isMuted);
+                  }
+                }}
                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
-                  isMuted 
-                    ? 'bg-red-500/20 text-red-500' 
+                  isMuted
+                    ? 'bg-red-500/20 text-red-500'
                     : 'bg-secondary text-foreground hover:bg-secondary/80'
                 }`}
               >
@@ -332,10 +412,16 @@ const VoiceCall = () => {
               </button>
               
               <button
-                onClick={() => setIsSpeakerOn(!isSpeakerOn)}
+                onClick={() => {
+                  const newState = !isSpeakerOn;
+                  setIsSpeakerOn(newState);
+                  if (remoteAudioRef.current) {
+                    remoteAudioRef.current.muted = !newState;
+                  }
+                }}
                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
-                  !isSpeakerOn 
-                    ? 'bg-red-500/20 text-red-500' 
+                  !isSpeakerOn
+                    ? 'bg-red-500/20 text-red-500'
                     : 'bg-secondary text-foreground hover:bg-secondary/80'
                 }`}
               >
@@ -406,6 +492,23 @@ const VoiceCall = () => {
         onEndSession={() => navigate(`/advisor/${advisor.id}`)}
         isInsufficientCredits
       />
+
+      {/* Hidden audio element for remote stream */}
+      <audio ref={remoteAudioRef} autoPlay playsInline />
+
+      {/* WebRTC Error Display */}
+      {webrtcError && callStatus === 'connected' && (
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-sm text-destructive">
+          <p className="font-medium">Audio Connection Issue</p>
+          <p className="mt-1 text-xs opacity-80">
+            {webrtcError.startsWith('PERMISSION_DENIED')
+              ? 'Microphone access was denied. Please enable it in browser settings.'
+              : webrtcError.startsWith('NO_DEVICE')
+              ? 'No microphone found. Please connect one and try again.'
+              : 'Audio connection could not be established. The session will continue but audio may not work.'}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
