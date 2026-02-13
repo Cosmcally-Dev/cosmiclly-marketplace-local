@@ -71,3 +71,31 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Python Execution Layer
+
+This project uses a 3-layer architecture with Python scripts for deterministic operations (see AGENTS.md).
+
+### Setup Python Environment
+
+```bash
+# Create virtual environment
+python -m venv .venv
+
+# Activate (Windows)
+.venv\Scripts\activate
+
+# Activate (Unix/Mac)
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Running Execution Scripts
+
+```bash
+python execution/your_script.py
+```
+
+See `directives/` for SOPs that describe when and how to use execution scripts.

@@ -9,6 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { ReviewModal } from '@/components/modals/ReviewModal';
 import { LowCreditWarning } from '@/components/session/LowCreditWarning';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import type { ConnectionQuality } from '@/types/session';
 
 interface Message {
   id: string;
@@ -20,7 +22,7 @@ interface Message {
 const Chat = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, credits, addCredits, addSessionLog } = useAuth();
+  const { user, isAuthenticated, credits } = useAuth();
   const { toast } = useToast();
   
   const advisor = advisors.find(a => a.id === id) || advisors[0];
@@ -44,7 +46,8 @@ const Chat = () => {
   const [hasShownWarning, setHasShownWarning] = useState(false);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
   const [continueUntilEnd, setContinueUntilEnd] = useState(false);
-  
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef<Date>(new Date());
   const lastDeductionRef = useRef(0);
@@ -58,12 +61,48 @@ const Chat = () => {
       navigate(`/advisor/${id}`);
       return;
     }
-    
+
     // Check if user has enough credits (unless there are free minutes)
     if (!hasMinimumCredits) {
       setShowInsufficientCredits(true);
     }
   }, [isAuthenticated, navigate, id, hasMinimumCredits]);
+
+  // Start database session when component mounts
+  useEffect(() => {
+    if (isAuthenticated && user?.id && !sessionId && !showInsufficientCredits) {
+      const startSession = async () => {
+        try {
+          // Start session in database
+          const { data: newSessionId, error } = await supabase.rpc('start_rtc_session', {
+            p_client_id: user.id,
+            p_advisor_id: advisor.id,
+            p_type: 'chat',
+            p_rate_per_minute: pricePerMinute,
+            p_free_minutes: advisor.freeMinutes || 0
+          });
+
+          if (error) throw error;
+
+          setSessionId(newSessionId);
+          toast({
+            title: "Chat Started",
+            description: `You're now chatting with ${advisor.name}`,
+          });
+        } catch (error) {
+          console.error('Failed to start session:', error);
+          toast({
+            variant: "destructive",
+            title: "Connection Failed",
+            description: "Failed to start the chat session. Please try again.",
+          });
+          navigate(`/advisor/${id}`);
+        }
+      };
+
+      startSession();
+    }
+  }, [isAuthenticated, user?.id, sessionId, showInsufficientCredits, advisor, pricePerMinute, toast, navigate, id]);
 
   // Session timer and credit deduction
   useEffect(() => {
@@ -136,27 +175,60 @@ const Chat = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleEndChat = () => {
-    setIsSessionEnded(true);
-    
-    // Log the session
-    if (addSessionLog) {
-      addSessionLog({
-        type: 'chat',
-        advisorId: advisor.id,
-        advisorName: advisor.name,
-        duration: sessionTime,
-        creditsUsed: creditsUsed,
-        timestamp: sessionStartRef.current,
+  const handleEndChat = async () => {
+    if (!sessionId) {
+      setIsSessionEnded(true);
+      setShowReview(true);
+      return;
+    }
+
+    try {
+      setIsSessionEnded(true);
+
+      // Calculate billable minutes
+      const totalSeconds = sessionTime;
+      const freeSeconds = (advisor.freeMinutes || 0) * 60;
+      const billableSeconds = Math.max(0, totalSeconds - freeSeconds);
+      const billableMinutes = Math.ceil(billableSeconds / 60); // Round up
+
+      // Determine connection quality
+      const quality: ConnectionQuality = 'good';
+
+      // End session in database
+      const { error } = await supabase.rpc('end_rtc_session', {
+        p_session_id: sessionId,
+        p_billable_minutes: billableMinutes,
+        p_connection_quality: quality
       });
+
+      if (error) throw error;
+
+      // Refresh user credits from database
+      if (user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          // Credits will be updated via useAuth context on next render
+          // Force a refresh by triggering auth state change
+          window.location.reload();
+        }
+      }
+
+      setShowReview(true);
+    } catch (error) {
+      console.error('Failed to end session:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to end session properly. Please contact support.",
+      });
+      setIsSessionEnded(true);
+      setShowReview(true);
     }
-    
-    // Deduct credits
-    if (creditsUsed > 0) {
-      addCredits(-creditsUsed);
-    }
-    
-    setShowReview(true);
   };
 
   const handleSend = () => {

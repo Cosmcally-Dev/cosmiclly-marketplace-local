@@ -22,3 +22,45 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python Environment & Dependencies
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist-py/
+build/
+*.egg
+
+# Python Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+.hypothesis/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Environment & Credentials
+.env.local
+credentials.json
+token.json
+
+# 3-Layer Architecture: Intermediate files only
+.tmp/
+
+# IDE Python settings
+.vscode/settings.json
+*.code-workspace
+
+#AGENT Directive
+AGENTS.md
+nul

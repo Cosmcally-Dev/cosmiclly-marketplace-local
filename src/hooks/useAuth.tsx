@@ -50,7 +50,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   credits: number;
-  addCredits: (amount: number) => void;
+  addCredits: (amount: number) => Promise<void>;
   savedCards: SavedCard[];
   addCard: (card: Omit<SavedCard, "id">) => void;
   deleteCard: (cardId: string) => void;
@@ -71,67 +71,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
 
   useEffect(() => {
-    // Check for custom stored user (for n8n/Airtable flow)
-    const storedUser = localStorage.getItem("optinet_user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      setSession({ user: { id: "airtable-user" } } as any);
-    }
-
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       if (session?.user) {
         const supabaseUser = session.user;
         const metadata = supabaseUser.user_metadata;
+
+        // Fetch profile from database to get credits and role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .single();
+
         setUser({
           id: supabaseUser.id,
           email: supabaseUser.email || "",
           firstName: metadata?.firstName,
           lastName: metadata?.lastName,
-          username: metadata?.username,
+          username: profile?.username || metadata?.username,
           dateOfBirth: metadata?.dateOfBirth,
           timeOfBirth: metadata?.timeOfBirth,
-          isAdvisor: metadata?.isAdvisor || false,
+          isAdvisor: profile?.role === 'advisor',
         });
+
+        // Set credits from database
+        if (profile) {
+          setCredits(profile.credits || 0);
+        }
       } else {
-        // ONLY clear user if we don't have a custom one in local storage
-        if (!localStorage.getItem("optinet_user")) {
-          setUser(null);
+        setUser(null);
+        setCredits(0);
+      }
+      setIsLoading(false);
+    });
+
+    // Check for existing session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        setSession(session);
+        const supabaseUser = session.user;
+        const metadata = supabaseUser.user_metadata;
+
+        // Fetch profile from database
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', supabaseUser.id)
+          .single();
+
+        setUser({
+          id: supabaseUser.id,
+          email: supabaseUser.email || "",
+          firstName: metadata?.firstName,
+          lastName: metadata?.lastName,
+          username: profile?.username || metadata?.username,
+          dateOfBirth: metadata?.dateOfBirth,
+          timeOfBirth: metadata?.timeOfBirth,
+          isAdvisor: profile?.role === 'advisor',
+        });
+
+        // Set credits from database
+        if (profile) {
+          setCredits(profile.credits || 0);
         }
       }
       setIsLoading(false);
     });
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      // Only override if Supabase actually has a session
-      if (session?.user) {
-        setSession(session);
-        const supabaseUser = session.user;
-        const metadata = supabaseUser.user_metadata;
-        setUser({
-          id: supabaseUser.id,
-          email: supabaseUser.email || "",
-          firstName: metadata?.firstName,
-          lastName: metadata?.lastName,
-          username: metadata?.username,
-          dateOfBirth: metadata?.dateOfBirth,
-          timeOfBirth: metadata?.timeOfBirth,
-          isAdvisor: metadata?.isAdvisor || false,
-        });
-      }
-      setIsLoading(false);
-    });
-
-    // Load credits and cards from localStorage
-    const storedCredits = localStorage.getItem("credits");
+    // Load saved cards and session logs from localStorage (these remain local)
     const storedCards = localStorage.getItem("savedCards");
     const storedLogs = localStorage.getItem("sessionLogs");
 
-    if (storedCredits) setCredits(JSON.parse(storedCredits));
     if (storedCards) setSavedCards(JSON.parse(storedCards));
     if (storedLogs) setSessionLogs(JSON.parse(storedLogs));
 
@@ -140,81 +154,66 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Direct POST to n8n webhook for Airtable authentication
-      const response = await fetch(
-        "https://automateoptinet.app.n8n.cloud/webhook/99d434f6-0822-435e-8c9d-cb225500f2c2",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        },
-      );
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      const result = await response.json();
+      if (error) throw error;
 
-      // Check for the success flag and username returned from Airtable/n8n
-      if (result.success === true) {
-        const newUser: User = {
-          id: result.id || crypto.randomUUID(), // Use ID from webhook if available, else random
-          email: email,
-          username: result.username,
-          firstName: result.firstName, // If your webhook returns these, good to map them
-          lastName: result.lastName,
-          isAdvisor: result.isAdvisor === true || result.isAdvisor === "true",
-        };
+      // Fetch profile from database
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
 
-        setUser(newUser);
+      if (profileError) throw profileError;
 
-        // Set a mock session to satisfy isAuthenticated checks elsewhere in the app
-        setSession({ user: { id: "airtable-user" } } as any);
+      setUser({
+        id: data.user.id,
+        email: data.user.email!,
+        firstName: data.user.user_metadata?.firstName,
+        lastName: data.user.user_metadata?.lastName,
+        username: profile.username,
+        dateOfBirth: data.user.user_metadata?.dateOfBirth,
+        timeOfBirth: data.user.user_metadata?.timeOfBirth,
+        isAdvisor: profile.role === 'advisor',
+      });
 
-        // PERSIST CUSTOM USER
-        localStorage.setItem("optinet_user", JSON.stringify(newUser));
+      setCredits(profile.credits || 0);
 
-        return { success: true };
-      } else {
-        return { success: false, error: result.message || "Invalid email or password." };
-      }
+      return { success: true };
     } catch (err: any) {
-      console.error("Airtable Login Error:", err);
-      return { success: false, error: err.message || "Login failed" };
+      console.error('Login Error:', err);
+      return { success: false, error: err.message };
     }
   };
 
   const signup = async (data: SignUpData): Promise<{ success: boolean; error?: string }> => {
     try {
-      // TESTING: Trigger N8N Webhook instead of Supabase
-      const response = await fetch(
-        "https://automateoptinet.app.n8n.cloud/webhook/505e70cb-a6ff-4ffa-a0f8-96b626e30fb7",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: data.email,
-            password: data.password,
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
             firstName: data.firstName,
             lastName: data.lastName,
             username: data.username,
             dateOfBirth: data.dateOfBirth,
             timeOfBirth: data.timeOfBirth || null,
-          }),
+            isAdvisor: false,
+          },
         },
-      );
+      });
 
-      const result = await response.json();
+      if (error) throw error;
 
-      if (result.success === true) {
-        return { success: true };
-      } else {
-        return { success: false, error: result.message || "Signup failed" };
-      }
+      // Profile is auto-created by database trigger
+      return { success: true };
     } catch (err: any) {
-      console.error("Signup Error:", err);
-      return { success: false, error: err.message || "Signup failed" };
+      console.error('Signup Error:', err);
+      return { success: false, error: err.message };
     }
   };
 
@@ -226,17 +225,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSavedCards([]);
     setSessionLogs([]);
 
-    // Clear all storage including custom user
-    localStorage.removeItem("credits");
+    // Clear localStorage
     localStorage.removeItem("savedCards");
     localStorage.removeItem("sessionLogs");
-    localStorage.removeItem("optinet_user");
   };
 
-  const addCredits = (amount: number) => {
-    const newCredits = Math.max(0, credits + amount);
-    setCredits(newCredits);
-    localStorage.setItem("credits", JSON.stringify(newCredits));
+  const addCredits = async (amount: number) => {
+    if (!user?.id) return;
+
+    // Add credits via Supabase RPC
+    const { error } = await supabase.rpc('add_credits', {
+      user_id: user.id,
+      amount: amount,
+    });
+
+    if (error) {
+      console.error('Error adding credits:', error);
+      return;
+    }
+
+    // Refresh profile to get updated credits
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', user.id)
+      .single();
+
+    if (profile) {
+      setCredits(profile.credits);
+    }
   };
 
   const addSessionLog = (log: Omit<SessionLog, "id">) => {

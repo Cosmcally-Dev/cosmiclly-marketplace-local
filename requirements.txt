@@ -1,0 +1,6 @@
+# Supabase client
+supabase==2.28.0
+
+# Common utilities
+python-dotenv==1.0.1
+requests==2.31.0

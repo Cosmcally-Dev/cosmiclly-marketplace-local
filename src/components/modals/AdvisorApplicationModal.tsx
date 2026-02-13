@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const applicationSchema = z.object({
   fullName: z.string().trim().min(1, 'Full name is required').max(100, 'Name must be less than 100 characters'),
@@ -70,48 +71,37 @@ export const AdvisorApplicationModal = ({ isOpen, onClose }: AdvisorApplicationM
     setErrors({});
 
     try {
-      const response = await fetch(
-        'https://automateoptinet.app.n8n.cloud/webhook/505e70cb-a6ff-4ffa-a0f8-96b626e30fb7',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            fullName: formData.fullName,
-            email: formData.email,
-            specialty: formData.specialty,
-            socialLink: formData.socialLink || null,
-            extraInfo: formData.extraInfo || null,
-            submittedAt: new Date().toISOString(),
-          }),
-        }
-      );
+      const { error } = await supabase
+        .from('advisor_applications')
+        .insert({
+          full_name: formData.fullName,
+          email: formData.email,
+          specialty: formData.specialty,
+          social_link: formData.socialLink || null,
+          extra_info: formData.extraInfo || null,
+          status: 'pending',
+          submitted_at: new Date().toISOString(),
+        });
 
-      const data = await response.json();
+      if (error) throw error;
 
-      if (data.success === true) {
-        toast({
-          title: 'Success!',
-          description: data.message || 'Application Received!',
-        });
-        onClose();
-        // Reset form
-        setFormData({
-          fullName: '',
-          email: '',
-          specialty: '',
-          socialLink: '',
-          extraInfo: '',
-        });
-        navigate('/advisor-portal');
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Application failed. Please try again.',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Success!',
+        description: 'Application received! We will review it shortly.',
+      });
+
+      onClose();
+
+      // Reset form
+      setFormData({
+        fullName: '',
+        email: '',
+        specialty: '',
+        socialLink: '',
+        extraInfo: '',
+      });
+
+      navigate('/advisor-portal');
     } catch (error) {
       console.error('Application submission error:', error);
       toast({

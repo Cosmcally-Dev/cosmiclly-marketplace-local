@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, 
-  Clock, Star, ArrowLeft, MessageCircle 
+import {
+  Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX,
+  Clock, Star, ArrowLeft, MessageCircle
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
@@ -11,16 +11,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { ReviewModal } from '@/components/modals/ReviewModal';
 import { LowCreditWarning } from '@/components/session/LowCreditWarning';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import type { ConnectionQuality } from '@/types/session';
 
 const VoiceCall = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, credits, addCredits, addSessionLog } = useAuth();
+  const { user, isAuthenticated, credits } = useAuth();
   const { toast } = useToast();
-  
+
   const advisor = advisors.find(a => a.id === id) || advisors[0];
   const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
-  
+
   const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
   const [sessionTime, setSessionTime] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -31,7 +33,8 @@ const VoiceCall = () => {
   const [creditsUsed, setCreditsUsed] = useState(0);
   const [hasShownWarning, setHasShownWarning] = useState(false);
   const [continueUntilEnd, setContinueUntilEnd] = useState(false);
-  
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
   const sessionStartRef = useRef<Date | null>(null);
   const lastDeductionRef = useRef(0);
 
@@ -52,20 +55,43 @@ const VoiceCall = () => {
     }
   }, [isAuthenticated, navigate, id, hasMinimumCredits]);
 
-  // Simulate connection
+  // Start database session on connection
   useEffect(() => {
-    if (callStatus === 'connecting') {
-      const timer = setTimeout(() => {
-        setCallStatus('connected');
-        sessionStartRef.current = new Date();
-        toast({
-          title: "Call Connected",
-          description: `You're now connected with ${advisor.name}`,
-        });
+    if (callStatus === 'connecting' && user?.id) {
+      const timer = setTimeout(async () => {
+        try {
+          // Start session in database
+          const { data: newSessionId, error } = await supabase.rpc('start_rtc_session', {
+            p_client_id: user.id,
+            p_advisor_id: advisor.id,
+            p_type: 'audio',
+            p_rate_per_minute: pricePerMinute,
+            p_free_minutes: advisor.freeMinutes || 0
+          });
+
+          if (error) throw error;
+
+          setSessionId(newSessionId);
+          setCallStatus('connected');
+          sessionStartRef.current = new Date();
+
+          toast({
+            title: "Call Connected",
+            description: `You're now connected with ${advisor.name}`,
+          });
+        } catch (error) {
+          console.error('Failed to start session:', error);
+          toast({
+            variant: "destructive",
+            title: "Connection Failed",
+            description: "Failed to start the session. Please try again.",
+          });
+          navigate(`/advisor/${id}`);
+        }
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [callStatus, advisor.name, toast]);
+  }, [callStatus, advisor, pricePerMinute, user?.id, toast, navigate, id]);
 
   // Session timer and credit deduction
   useEffect(() => {
@@ -133,27 +159,60 @@ const VoiceCall = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleEndCall = () => {
-    setCallStatus('ended');
-    
-    // Log the session
-    if (addSessionLog) {
-      addSessionLog({
-        type: 'call',
-        advisorId: advisor.id,
-        advisorName: advisor.name,
-        duration: sessionTime,
-        creditsUsed: creditsUsed,
-        timestamp: sessionStartRef.current || new Date(),
+  const handleEndCall = async () => {
+    if (!sessionId) {
+      setCallStatus('ended');
+      setShowReview(true);
+      return;
+    }
+
+    try {
+      // Calculate billable minutes
+      const totalSeconds = sessionTime;
+      const freeSeconds = (advisor.freeMinutes || 0) * 60;
+      const billableSeconds = Math.max(0, totalSeconds - freeSeconds);
+      const billableMinutes = Math.ceil(billableSeconds / 60); // Round up
+
+      // Determine connection quality (can be enhanced with actual tracking)
+      const quality: ConnectionQuality = 'good';
+
+      // End session in database
+      const { error } = await supabase.rpc('end_rtc_session', {
+        p_session_id: sessionId,
+        p_billable_minutes: billableMinutes,
+        p_connection_quality: quality
       });
+
+      if (error) throw error;
+
+      setCallStatus('ended');
+
+      // Refresh user credits from database
+      if (user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          // Credits will be updated via useAuth context on next render
+          // Force a refresh by triggering auth state change
+          window.location.reload();
+        }
+      }
+
+      setShowReview(true);
+    } catch (error) {
+      console.error('Failed to end session:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to end session properly. Please contact support.",
+      });
+      setCallStatus('ended');
+      setShowReview(true);
     }
-    
-    // Deduct credits
-    if (creditsUsed > 0) {
-      addCredits(-creditsUsed);
-    }
-    
-    setShowReview(true);
   };
 
   const handleAddCredits = () => {
