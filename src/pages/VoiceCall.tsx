@@ -80,9 +80,10 @@ const VoiceCall = () => {
       const timer = setTimeout(async () => {
         try {
           // Start session in database
+          const advisorDbId = advisor.dbId || advisor.id;
           const { data: newSessionId, error } = await supabase.rpc('start_rtc_session', {
             p_client_id: user.id,
-            p_advisor_id: advisor.id,
+            p_advisor_id: advisorDbId,
             p_type: 'audio',
             p_rate_per_minute: pricePerMinute,
             p_free_minutes: advisor.freeMinutes || 0

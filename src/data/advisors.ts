@@ -1,5 +1,6 @@
 export interface Advisor {
   id: string;
+  dbId?: string; // Real database UUID for RPC calls (profiles table id)
   name: string;
   title: string;
   avatar: string;
@@ -20,6 +21,7 @@ export interface Advisor {
 export const advisors: Advisor[] = [
   {
     id: '1',
+    dbId: '45dd82c1-c457-480b-af66-4c07bd0a9d01',
     name: 'Psychic Luna',
     title: '5 Star Love Expert',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
