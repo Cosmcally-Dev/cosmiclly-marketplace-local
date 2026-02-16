@@ -9,7 +9,7 @@ import {
   LocalTrackPublication,
   ConnectionQuality as LKConnectionQuality,
 } from 'livekit-client';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client'; // Ensure this import is correct
 import type {
   WebRTCState,
   WebRTCStats,
@@ -39,9 +39,6 @@ export class WebRTCService {
 
   /**
    * Initialize LiveKit connection
-   * 1. Fetch LiveKit token from Edge Function
-   * 2. Create Room and connect
-   * 3. Publish local audio track
    */
   async initialize(): Promise<void> {
     if (this.isDestroyed) return;
@@ -98,67 +95,46 @@ export class WebRTCService {
     }
   }
 
-  /**
-   * Toggle local audio mute
-   */
+  // ... [keep toggleAudio, toggleVideo, isCameraOff, isMuted, getState, destroy methods as they were] ...
+
   async toggleAudio(): Promise<boolean> {
     if (!this.room) return false;
-
     const currentlyEnabled = this.room.localParticipant.isMicrophoneEnabled;
     await this.room.localParticipant.setMicrophoneEnabled(!currentlyEnabled);
-    return !currentlyEnabled; // Returns new enabled state
+    return !currentlyEnabled;
   }
 
-  /**
-   * Toggle local video (camera)
-   */
   async toggleVideo(): Promise<boolean> {
     if (!this.room) return false;
-
     const currentlyEnabled = this.room.localParticipant.isCameraEnabled;
     await this.room.localParticipant.setCameraEnabled(!currentlyEnabled);
-    return !currentlyEnabled; // Returns new enabled state
+    return !currentlyEnabled;
   }
 
-  /**
-   * Check if camera is off
-   */
   isCameraOff(): boolean {
     if (!this.room) return true;
     return !this.room.localParticipant.isCameraEnabled;
   }
 
-  /**
-   * Get current mute state
-   */
   isMuted(): boolean {
     if (!this.room) return true;
     return !this.room.localParticipant.isMicrophoneEnabled;
   }
 
-  /**
-   * Get current connection state
-   */
   getState(): WebRTCState {
     return this.state;
   }
 
-  /**
-   * Cleanup all resources
-   */
   async destroy(): Promise<void> {
     this.isDestroyed = true;
-
     if (this.statsInterval) {
       clearInterval(this.statsInterval);
       this.statsInterval = null;
     }
-
     if (this.room) {
       await this.room.disconnect();
       this.room = null;
     }
-
     this.setState('closed');
     console.log('[LiveKit] Destroyed');
   }
@@ -174,10 +150,8 @@ export class WebRTCService {
   private setupRoomEvents(): void {
     if (!this.room) return;
 
-    // Connection state changes
     this.room.on(RoomEvent.ConnectionStateChanged, (state: ConnectionState) => {
       if (this.isDestroyed) return;
-
       switch (state) {
         case ConnectionState.Connected:
           this.setState('connected');
@@ -188,19 +162,15 @@ export class WebRTCService {
           break;
         case ConnectionState.Disconnected:
           this.stopStatsCollection();
-          if (!this.isDestroyed) {
-            this.setState('closed');
-          }
+          if (!this.isDestroyed) this.setState('closed');
           break;
       }
     });
 
-    // Remote track subscribed (when advisor's audio arrives)
     this.room.on(
       RoomEvent.TrackSubscribed,
       (track: RemoteTrack, _publication: RemoteTrackPublication, _participant: RemoteParticipant) => {
         if (this.isDestroyed) return;
-
         if (track.kind === Track.Kind.Audio || track.kind === Track.Kind.Video) {
           const mediaStream = new MediaStream([track.mediaStreamTrack]);
           this.config.onRemoteTrack(track.mediaStreamTrack, mediaStream);
@@ -209,7 +179,6 @@ export class WebRTCService {
       }
     );
 
-    // Handle disconnection
     this.room.on(RoomEvent.Disconnected, (reason?: string) => {
       if (this.isDestroyed) return;
       console.log('[LiveKit] Disconnected:', reason);
@@ -217,10 +186,8 @@ export class WebRTCService {
       this.setState('closed');
     });
 
-    // Connection quality changes
     this.room.on(RoomEvent.ConnectionQualityChanged, (quality: LKConnectionQuality, participant) => {
       if (this.isDestroyed) return;
-      // Log quality changes for remote participants
       if (participant !== this.room?.localParticipant) {
         console.log(`[LiveKit] Remote participant quality: ${LKConnectionQuality[quality]}`);
       }
@@ -228,31 +195,23 @@ export class WebRTCService {
   }
 
   private async fetchLiveKitToken(): Promise<LiveKitTokenResponse> {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('No active auth session');
+    // UPDATED: Use supabase.functions.invoke instead of manual fetch
+    // This handles the Authorization header automatically and refreshes the token if needed
+    const { data, error } = await supabase.functions.invoke('generate-livekit-token', {
+      body: { sessionId: this.config.sessionId },
+    });
+
+    if (error) {
+      console.error('[WebRTC] Token generation error details:', error);
+      // Fallback: If it's a specific auth error, try to logout/login or prompt user
+      throw new Error(`LiveKit token failed: ${error.message || 'Unknown error'}`);
     }
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-
-    const response = await fetch(
-      `${supabaseUrl}/functions/v1/generate-livekit-token`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sessionId: this.config.sessionId }),
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(`LiveKit token failed: ${error.error || response.statusText}`);
+    if (!data || !data.token || !data.url) {
+       throw new Error('Invalid response from token service');
     }
 
-    return await response.json();
+    return data as LiveKitTokenResponse;
   }
 
   private startStatsCollection(): void {
@@ -272,11 +231,9 @@ export class WebRTCService {
     if (!this.room || this.isDestroyed) return;
 
     try {
-      // Get local participant's connection quality from LiveKit
       const localQuality = this.room.localParticipant.connectionQuality;
       const connectionQuality = this.mapLiveKitQuality(localQuality);
 
-      // Collect stats from local audio track
       let bytesReceived = 0;
       let bytesSent = 0;
       let packetsLost = 0;
@@ -284,7 +241,6 @@ export class WebRTCService {
       let jitter = 0;
       let roundTripTime = 0;
 
-      // Get sender stats from local publications
       const localPubs = this.room.localParticipant.audioTrackPublications;
       for (const [, pub] of localPubs) {
         if (pub.track) {
@@ -297,7 +253,6 @@ export class WebRTCService {
         }
       }
 
-      // Get receiver stats from remote participants
       for (const [, participant] of this.room.remoteParticipants) {
         for (const [, pub] of participant.audioTrackPublications) {
           if (pub.track) {
@@ -306,9 +261,7 @@ export class WebRTCService {
               bytesReceived = receiverStats.bytesReceived ?? 0;
               packetsLost = receiverStats.packetsLost ?? 0;
               packetsReceived = receiverStats.packetsReceived ?? 0;
-              jitter = receiverStats.jitter
-                ? receiverStats.jitter * 1000
-                : jitter;
+              jitter = receiverStats.jitter ? receiverStats.jitter * 1000 : jitter;
             }
           }
         }
@@ -333,16 +286,11 @@ export class WebRTCService {
 
   private mapLiveKitQuality(quality: LKConnectionQuality): ConnectionQuality {
     switch (quality) {
-      case LKConnectionQuality.Excellent:
-        return 'excellent';
-      case LKConnectionQuality.Good:
-        return 'good';
-      case LKConnectionQuality.Poor:
-        return 'poor';
-      case LKConnectionQuality.Lost:
-        return 'lost';
-      default:
-        return 'good';
+      case LKConnectionQuality.Excellent: return 'excellent';
+      case LKConnectionQuality.Good: return 'good';
+      case LKConnectionQuality.Poor: return 'poor';
+      case LKConnectionQuality.Lost: return 'lost';
+      default: return 'good';
     }
   }
 }
