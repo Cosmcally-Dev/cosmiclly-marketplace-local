@@ -48,8 +48,8 @@ const Chat = () => {
   );
 
   // Handle session status changes via Supabase Realtime
-  const handleStatusChange = useCallback((newStatus: string, oldStatus: string) => {
-    if (newStatus === 'active' && oldStatus === 'pending') {
+  const handleStatusChange = useCallback((newStatus: string) => {
+    if (newStatus === 'active') {
       // Advisor accepted the chat
       if (ringingTimeoutRef.current) {
         clearTimeout(ringingTimeoutRef.current);
@@ -61,7 +61,7 @@ const Chat = () => {
         title: "Chat Connected",
         description: `You're now chatting with ${advisor.name}`,
       });
-    } else if (newStatus === 'cancelled' && oldStatus === 'pending') {
+    } else if (newStatus === 'cancelled') {
       // Advisor declined
       if (ringingTimeoutRef.current) {
         clearTimeout(ringingTimeoutRef.current);
@@ -75,7 +75,7 @@ const Chat = () => {
         description: `${advisor.name} is not available right now.`,
       });
       setTimeout(() => navigate(`/advisor/${id}`), 2000);
-    } else if (newStatus === 'completed' && oldStatus === 'active') {
+    } else if (newStatus === 'completed') {
       // Advisor ended the session
       setChatStatus('ended');
       setIsSessionEnded(true);

@@ -63,8 +63,8 @@ const VideoCall = () => {
   });
 
   // Handle session status changes via Supabase Realtime
-  const handleStatusChange = useCallback((newStatus: string, oldStatus: string) => {
-    if (newStatus === 'active' && oldStatus === 'pending') {
+  const handleStatusChange = useCallback((newStatus: string) => {
+    if (newStatus === 'active') {
       // Advisor accepted the call
       if (ringingTimeoutRef.current) {
         clearTimeout(ringingTimeoutRef.current);
@@ -77,7 +77,7 @@ const VideoCall = () => {
         title: "Video Call Connected",
         description: `You're now connected with ${advisor.name}`,
       });
-    } else if (newStatus === 'cancelled' && oldStatus === 'pending') {
+    } else if (newStatus === 'cancelled') {
       // Advisor declined the call
       if (ringingTimeoutRef.current) {
         clearTimeout(ringingTimeoutRef.current);
