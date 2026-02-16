@@ -13,11 +13,13 @@ import Articles from "./pages/Articles";
 import Support from "./pages/Support";
 import Chat from "./pages/Chat";
 import VoiceCall from "./pages/VoiceCall";
+import VideoCall from "./pages/VideoCall";
 import AddCredit from "./pages/AddCredit";
 import Settings from "./pages/Settings";
 import AdvisorPortal from "./pages/AdvisorPortal";
 import AdvisorCall from "./pages/AdvisorCall";
 import Profile from "./pages/Profile";
+import TestGuide from "./pages/TestGuide";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -34,6 +36,7 @@ const App = () => (
             <Route path="/advisor/:id" element={<AdvisorProfile />} />
             <Route path="/chat/:id" element={<Chat />} />
             <Route path="/call/:id" element={<VoiceCall />} />
+            <Route path="/video/:id" element={<VideoCall />} />
             <Route path="/horoscope" element={<Horoscope />} />
             <Route path="/daily-oracle" element={<DailyOracle />} />
             <Route path="/articles" element={<Articles />} />
@@ -44,6 +47,7 @@ const App = () => (
             <Route path="/advisor-portal" element={<AdvisorPortal />} />
             <Route path="/advisor-call" element={<AdvisorCall />} />
             <Route path="/advisor-call/:sessionId" element={<AdvisorCall />} />
+            <Route path="/test-guide" element={<TestGuide />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

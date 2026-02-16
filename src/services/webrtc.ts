@@ -110,6 +110,25 @@ export class WebRTCService {
   }
 
   /**
+   * Toggle local video (camera)
+   */
+  async toggleVideo(): Promise<boolean> {
+    if (!this.room) return false;
+
+    const currentlyEnabled = this.room.localParticipant.isCameraEnabled;
+    await this.room.localParticipant.setCameraEnabled(!currentlyEnabled);
+    return !currentlyEnabled; // Returns new enabled state
+  }
+
+  /**
+   * Check if camera is off
+   */
+  isCameraOff(): boolean {
+    if (!this.room) return true;
+    return !this.room.localParticipant.isCameraEnabled;
+  }
+
+  /**
    * Get current mute state
    */
   isMuted(): boolean {

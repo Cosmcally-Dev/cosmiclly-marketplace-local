@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX,
-  Clock, Star, ArrowLeft, MessageCircle, Wifi, WifiOff, X
+  Phone, PhoneOff, Mic, MicOff, Video, VideoOff,
+  Clock, Star, ArrowLeft, Wifi, WifiOff, X
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
-import { advisors, type Advisor } from '@/data/advisors';
+import { advisors } from '@/data/advisors';
 import { useAuth } from '@/hooks/useAuth';
 import { ReviewModal } from '@/components/modals/ReviewModal';
 import { LowCreditWarning } from '@/components/session/LowCreditWarning';
@@ -18,7 +18,7 @@ import type { ConnectionQuality } from '@/types/session';
 
 const RINGING_TIMEOUT_MS = 60000; // 60 seconds
 
-const VoiceCall = () => {
+const VideoCall = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading, credits } = useAuth();
@@ -30,7 +30,6 @@ const VoiceCall = () => {
   const [callStatus, setCallStatus] = useState<'connecting' | 'ringing' | 'connected' | 'ended'>('connecting');
   const [sessionTime, setSessionTime] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
-  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [showReview, setShowReview] = useState(false);
   const [showLowCreditWarning, setShowLowCreditWarning] = useState(false);
   const [showInsufficientCredits, setShowInsufficientCredits] = useState(false);
@@ -43,21 +42,23 @@ const VoiceCall = () => {
 
   const sessionStartRef = useRef<Date | null>(null);
   const lastDeductionRef = useRef(0);
-  const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const ringingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // LiveKit WebRTC hook - initializes when webrtcEnabled is true
+  // LiveKit WebRTC hook - video mode
   const {
     state: webrtcState,
     remoteStream,
     connectionQuality: webrtcQuality,
     error: webrtcHookError,
     toggleAudio,
+    toggleVideo,
     isMuted: webrtcMuted,
+    isCameraOff,
   } = useWebRTC({
     sessionId: sessionId || '',
     userId: user?.id || '',
-    sessionType: 'audio',
+    sessionType: 'video',
     enabled: webrtcEnabled,
   });
 
@@ -73,7 +74,7 @@ const VoiceCall = () => {
       sessionStartRef.current = new Date();
       setWebrtcEnabled(true);
       toast({
-        title: "Call Connected",
+        title: "Video Call Connected",
         description: `You're now connected with ${advisor.name}`,
       });
     } else if (newStatus === 'cancelled' && oldStatus === 'pending') {
@@ -124,7 +125,7 @@ const VoiceCall = () => {
         const { data: newSessionId, error } = await supabase.rpc('start_rtc_session', {
           p_client_id: user.id,
           p_advisor_id: advisorDbId,
-          p_type: 'audio' as const,
+          p_type: 'video' as const,
           p_rate_per_minute: pricePerMinute,
           p_free_minutes: advisor.freeMinutes || 0
         });
@@ -136,7 +137,6 @@ const VoiceCall = () => {
 
         // Start ringing timeout
         ringingTimeoutRef.current = setTimeout(async () => {
-          // Advisor didn't respond in time
           try {
             await supabase.rpc('decline_session', { p_session_id: newSessionId });
           } catch (e) {
@@ -223,10 +223,10 @@ const VoiceCall = () => {
     return () => clearInterval(interval);
   }, [callStatus, showInsufficientCredits, advisor, credits, creditsUsed, hasShownWarning, continueUntilEnd, pricePerMinute, toast]);
 
-  // Attach remote audio stream to audio element
+  // Attach remote video stream to video element
   useEffect(() => {
-    if (remoteStream && remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = remoteStream;
+    if (remoteStream && remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream;
     }
   }, [remoteStream]);
 
@@ -242,8 +242,8 @@ const VoiceCall = () => {
       if (webrtcHookError.startsWith('PERMISSION_DENIED')) {
         toast({
           variant: "destructive",
-          title: "Microphone Access Denied",
-          description: "Please allow microphone access in your browser settings to make calls.",
+          title: "Camera/Microphone Access Denied",
+          description: "Please allow camera and microphone access in your browser settings.",
         });
       }
     }
@@ -338,204 +338,184 @@ const VoiceCall = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="flex-1 pt-16 md:pt-20 flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          {/* Advisor Info */}
-          <div className="text-center mb-8">
-            <div className="relative inline-block mb-4">
-              <img
-                src={advisor.avatar}
-                alt={advisor.name}
-                className={`w-32 h-32 rounded-full object-cover border-4 ${
-                  callStatus === 'connected'
-                    ? 'border-green-500 animate-pulse'
-                    : callStatus === 'ringing'
-                    ? 'border-amber-500 animate-pulse'
-                    : callStatus === 'connecting'
-                    ? 'border-amber-500'
-                    : 'border-muted'
-                }`}
-              />
-              {callStatus === 'connected' && (
-                <span className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-green-500 border-2 border-background" />
-              )}
-            </div>
+      <main className="flex-1 pt-16 md:pt-20 flex flex-col relative">
+        {/* Video Container */}
+        {callStatus === 'connected' && (
+          <div className="flex-1 relative bg-black">
+            {/* Remote video (full size) */}
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
 
-            <h2 className="text-2xl font-bold text-foreground mb-1">{advisor.name}</h2>
-            <div className="flex items-center justify-center gap-1 text-muted-foreground mb-2">
-              <Star className="w-4 h-4 text-accent fill-accent" />
-              <span>{advisor.rating}</span>
-              <span className="mx-1">•</span>
-              <span>{advisor.title}</span>
-            </div>
-
-            {/* Call Status */}
-            <div className="text-lg font-medium">
-              {callStatus === 'connecting' && (
-                <span className="text-amber-500 animate-pulse">Connecting...</span>
-              )}
-              {callStatus === 'ringing' && (
-                <span className="text-amber-500 animate-pulse">
-                  <Phone className="w-5 h-5 inline-block mr-2 animate-bounce" />
-                  Ringing... Waiting for {advisor.name}
-                </span>
-              )}
-              {callStatus === 'connected' && webrtcState === 'connecting' && (
-                <span className="text-amber-500 animate-pulse">Establishing audio...</span>
-              )}
-              {callStatus === 'connected' && webrtcState === 'connected' && (
-                <span className="text-green-500">Connected</span>
-              )}
-              {callStatus === 'connected' && webrtcState === 'reconnecting' && (
-                <span className="text-amber-500 animate-pulse">Reconnecting...</span>
-              )}
-              {callStatus === 'connected' && webrtcState === 'failed' && (
-                <span className="text-red-500">Connection Lost</span>
-              )}
-              {callStatus === 'connected' && !['connecting', 'connected', 'reconnecting', 'failed'].includes(webrtcState) && (
-                <span className="text-green-500">Connected</span>
-              )}
-              {callStatus === 'ended' && (
-                <span className="text-muted-foreground">Call Ended</span>
-              )}
-            </div>
-
-            {/* Connection Quality Indicator */}
-            {callStatus === 'connected' && webrtcState === 'connected' && (
-              <div className={`flex items-center justify-center gap-1 text-sm mt-1 ${
-                webrtcQuality === 'excellent' ? 'text-green-500' :
-                webrtcQuality === 'good' ? 'text-green-400' :
-                webrtcQuality === 'poor' ? 'text-amber-500' :
-                'text-red-500'
-              }`}>
-                {webrtcQuality === 'lost' ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
-                <span className="capitalize">{webrtcQuality}</span>
+            {/* No remote video fallback */}
+            {!remoteStream && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center text-white">
+                  <img
+                    src={advisor.avatar}
+                    alt={advisor.name}
+                    className="w-24 h-24 rounded-full object-cover mx-auto mb-4 border-2 border-white/30"
+                  />
+                  <p className="text-white/70">
+                    {webrtcState === 'connecting' ? 'Establishing video...' : 'Waiting for video...'}
+                  </p>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* Timer & Cost - only show when connected */}
-          {callStatus === 'connected' && (
-            <div className="bg-card border border-border rounded-xl p-6 mb-8">
-              <div className="flex items-center justify-center gap-2 text-3xl font-mono mb-4">
-                <Clock className="w-6 h-6 text-primary" />
-                <span className="text-foreground">{formatTime(sessionTime)}</span>
-              </div>
+            {/* Overlay: top bar with timer and info */}
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-white font-semibold">{advisor.name}</h3>
+                  {webrtcState === 'connected' && webrtcQuality && (
+                    <span className={`flex items-center gap-1 text-xs ${
+                      webrtcQuality === 'excellent' ? 'text-green-400' :
+                      webrtcQuality === 'good' ? 'text-green-300' :
+                      webrtcQuality === 'poor' ? 'text-amber-400' :
+                      'text-red-400'
+                    }`}>
+                      {webrtcQuality === 'lost' ? <WifiOff className="w-3 h-3" /> : <Wifi className="w-3 h-3" />}
+                      <span className="capitalize">{webrtcQuality}</span>
+                    </span>
+                  )}
+                </div>
 
-              <div className="text-center space-y-1">
-                {freeSecondsRemaining > 0 ? (
-                  <div className="text-accent font-medium">
-                    {formatTime(freeSecondsRemaining)} free remaining
+                <div className="flex items-center gap-3 text-white">
+                  <div className="flex items-center gap-1 text-sm font-mono">
+                    <Clock className="w-4 h-4" />
+                    <span>{formatTime(sessionTime)}</span>
                   </div>
-                ) : (
-                  <div className="text-muted-foreground">
-                    Cost: <span className="text-foreground font-semibold">${creditsUsed.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="text-sm text-muted-foreground">
-                  Rate: ${pricePerMinute}/min - Balance: ${remainingCredits.toFixed(2)}
+                  {freeSecondsRemaining > 0 ? (
+                    <span className="text-xs text-green-400">{formatTime(freeSecondsRemaining)} free</span>
+                  ) : (
+                    <span className="text-xs text-white/70">${creditsUsed.toFixed(2)}</span>
+                  )}
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Ringing info card */}
-          {callStatus === 'ringing' && (
-            <div className="bg-card border border-amber-500/30 rounded-xl p-6 mb-8 text-center">
-              <p className="text-muted-foreground">
-                Waiting for {advisor.name} to accept your call...
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Rate: ${pricePerMinute}/min
-                {advisor.freeMinutes ? ` - First ${advisor.freeMinutes} min free` : ''}
-              </p>
+            {/* Bottom controls */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+              <div className="flex items-center justify-center gap-6">
+                {/* Mute */}
+                <button
+                  onClick={async () => {
+                    if (webrtcEnabled) {
+                      await toggleAudio();
+                    } else {
+                      setIsMuted(!isMuted);
+                    }
+                  }}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+                    isMuted
+                      ? 'bg-red-500 text-white'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+                </button>
+
+                {/* Camera toggle */}
+                <button
+                  onClick={async () => {
+                    if (webrtcEnabled) {
+                      await toggleVideo();
+                    }
+                  }}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+                    isCameraOff
+                      ? 'bg-red-500 text-white'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                >
+                  {isCameraOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
+                </button>
+
+                {/* End call */}
+                <button
+                  onClick={handleEndCall}
+                  className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                >
+                  <PhoneOff className="w-7 h-7" />
+                </button>
+              </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Cancel button during ringing */}
-          {callStatus === 'ringing' && (
-            <div className="flex justify-center mb-8">
-              <button
-                onClick={handleCancelCall}
-                className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
-              >
-                <X className="w-7 h-7" />
-              </button>
+        {/* Ringing state (full screen) */}
+        {(callStatus === 'connecting' || callStatus === 'ringing') && (
+          <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <div className="w-full max-w-md text-center">
+              <div className="relative inline-block mb-6">
+                <img
+                  src={advisor.avatar}
+                  alt={advisor.name}
+                  className="w-32 h-32 rounded-full object-cover border-4 border-amber-500 animate-pulse"
+                />
+              </div>
+
+              <h2 className="text-2xl font-bold text-foreground mb-1">{advisor.name}</h2>
+              <div className="flex items-center justify-center gap-1 text-muted-foreground mb-4">
+                <Star className="w-4 h-4 text-accent fill-accent" />
+                <span>{advisor.rating}</span>
+                <span className="mx-1">•</span>
+                <span>{advisor.title}</span>
+              </div>
+
+              <div className="text-lg font-medium mb-6">
+                {callStatus === 'connecting' && (
+                  <span className="text-amber-500 animate-pulse">Connecting...</span>
+                )}
+                {callStatus === 'ringing' && (
+                  <span className="text-amber-500 animate-pulse">
+                    <Video className="w-5 h-5 inline-block mr-2 animate-bounce" />
+                    Video call ringing... Waiting for {advisor.name}
+                  </span>
+                )}
+              </div>
+
+              <div className="bg-card border border-amber-500/30 rounded-xl p-4 mb-6">
+                <p className="text-muted-foreground text-sm">
+                  Rate: ${pricePerMinute}/min
+                  {advisor.freeMinutes ? ` • First ${advisor.freeMinutes} min free` : ''}
+                </p>
+              </div>
+
+              {callStatus === 'ringing' && (
+                <button
+                  onClick={handleCancelCall}
+                  className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors mx-auto"
+                >
+                  <X className="w-7 h-7" />
+                </button>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Call Controls - only when connected */}
-          {callStatus === 'connected' && (
-            <div className="flex items-center justify-center gap-6 mb-8">
-              <button
-                onClick={async () => {
-                  if (webrtcEnabled) {
-                    await toggleAudio();
-                  } else {
-                    setIsMuted(!isMuted);
-                  }
-                }}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
-                  isMuted
-                    ? 'bg-red-500/20 text-red-500'
-                    : 'bg-secondary text-foreground hover:bg-secondary/80'
-                }`}
-              >
-                {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-              </button>
-
-              <button
-                onClick={handleEndCall}
-                className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
-              >
-                <PhoneOff className="w-7 h-7" />
-              </button>
-
-              <button
-                onClick={() => {
-                  const newState = !isSpeakerOn;
-                  setIsSpeakerOn(newState);
-                  if (remoteAudioRef.current) {
-                    remoteAudioRef.current.muted = !newState;
-                  }
-                }}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
-                  !isSpeakerOn
-                    ? 'bg-red-500/20 text-red-500'
-                    : 'bg-secondary text-foreground hover:bg-secondary/80'
-                }`}
-              >
-                {isSpeakerOn ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
-              </button>
-            </div>
-          )}
-
-          {/* Back Button (when ended) */}
-          {callStatus === 'ended' && !showReview && (
+        {/* Ended state */}
+        {callStatus === 'ended' && !showReview && (
+          <div className="flex-1 flex items-center justify-center p-4">
             <div className="text-center">
+              <img
+                src={advisor.avatar}
+                alt={advisor.name}
+                className="w-24 h-24 rounded-full object-cover mx-auto mb-4 border-4 border-muted"
+              />
+              <h2 className="text-xl font-bold text-foreground mb-2">{advisor.name}</h2>
+              <p className="text-muted-foreground mb-4">Video call ended</p>
               <Button onClick={() => navigate(`/advisor/${advisor.id}`)}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Profile
               </Button>
             </div>
-          )}
-
-          {/* Switch to Chat Option */}
-          {callStatus === 'connected' && (
-            <div className="text-center">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  handleEndCall();
-                  navigate(`/chat/${advisor.id}`);
-                }}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Switch to Chat
-              </Button>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
 
       {/* Review Modal */}
@@ -573,19 +553,16 @@ const VoiceCall = () => {
         isInsufficientCredits
       />
 
-      {/* Hidden audio element for remote stream */}
-      <audio ref={remoteAudioRef} autoPlay playsInline />
-
       {/* WebRTC Error Display */}
       {webrtcError && callStatus === 'connected' && (
-        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-sm text-destructive">
-          <p className="font-medium">Audio Connection Issue</p>
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-sm text-destructive z-50">
+          <p className="font-medium">Video Connection Issue</p>
           <p className="mt-1 text-xs opacity-80">
             {webrtcError.startsWith('PERMISSION_DENIED')
-              ? 'Microphone access was denied. Please enable it in browser settings.'
+              ? 'Camera/microphone access was denied. Please enable it in browser settings.'
               : webrtcError.startsWith('NO_DEVICE')
-              ? 'No microphone found. Please connect one and try again.'
-              : 'Audio connection could not be established. The session will continue but audio may not work.'}
+              ? 'No camera or microphone found. Please connect them and try again.'
+              : 'Video connection could not be established. The session will continue but video may not work.'}
           </p>
         </div>
       )}
@@ -593,4 +570,4 @@ const VoiceCall = () => {
   );
 };
 
-export default VoiceCall;
+export default VideoCall;

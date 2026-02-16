@@ -7,11 +7,14 @@ import type { ConnectionQuality } from '@/types/session';
 interface UseWebRTCReturn {
   state: WebRTCState;
   remoteStream: MediaStream | null;
+  localStream: MediaStream | null;
   connectionQuality: ConnectionQuality;
   stats: WebRTCStats | null;
   error: string | null;
   toggleAudio: () => Promise<boolean>;
+  toggleVideo: () => Promise<boolean>;
   isMuted: boolean;
+  isCameraOff: boolean;
 }
 
 const STATS_FLUSH_COUNT = 6; // Flush to DB every 6 samples (30s at 5s intervals)
@@ -19,10 +22,12 @@ const STATS_FLUSH_COUNT = 6; // Flush to DB every 6 samples (30s at 5s intervals
 export function useWebRTC(config: WebRTCConfig): UseWebRTCReturn {
   const [state, setState] = useState<WebRTCState>('idle');
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [connectionQuality, setConnectionQuality] = useState<ConnectionQuality>('good');
   const [stats, setStats] = useState<WebRTCStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [isCameraOff, setIsCameraOff] = useState(false);
 
   const webrtcRef = useRef<WebRTCService | null>(null);
   const statsBufferRef = useRef<WebRTCStats[]>([]);
@@ -67,6 +72,14 @@ export function useWebRTC(config: WebRTCConfig): UseWebRTCReturn {
     if (!webrtcRef.current) return false;
     const enabled = await webrtcRef.current.toggleAudio();
     setIsMuted(!enabled);
+    return enabled;
+  }, []);
+
+  // Toggle video (camera)
+  const toggleVideo = useCallback(async (): Promise<boolean> => {
+    if (!webrtcRef.current) return false;
+    const enabled = await webrtcRef.current.toggleVideo();
+    setIsCameraOff(!enabled);
     return enabled;
   }, []);
 
@@ -130,10 +143,13 @@ export function useWebRTC(config: WebRTCConfig): UseWebRTCReturn {
   return {
     state,
     remoteStream,
+    localStream,
     connectionQuality,
     stats,
     error,
     toggleAudio,
+    toggleVideo,
     isMuted,
+    isCameraOff,
   };
 }

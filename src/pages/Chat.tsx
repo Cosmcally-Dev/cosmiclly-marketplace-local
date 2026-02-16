@@ -1,43 +1,32 @@
-import { useState, useRef, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Send, Clock, Star, ArrowLeft, Phone, MoreVertical } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Send, Clock, Star, ArrowLeft, X } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { advisors, type Advisor } from '@/data/advisors';
+import { advisors } from '@/data/advisors';
 import { useAuth } from '@/hooks/useAuth';
 import { ReviewModal } from '@/components/modals/ReviewModal';
 import { LowCreditWarning } from '@/components/session/LowCreditWarning';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSessionRealtime } from '@/hooks/useSessionRealtime';
+import { useChatMessages } from '@/hooks/useChatMessages';
 import type { ConnectionQuality } from '@/types/session';
 
-interface Message {
-  id: string;
-  text: string;
-  sender: 'user' | 'advisor';
-  timestamp: Date;
-}
+const RINGING_TIMEOUT_MS = 60000; // 60 seconds
 
 const Chat = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, credits } = useAuth();
+  const { user, isAuthenticated, isLoading, credits } = useAuth();
   const { toast } = useToast();
-  
+
   const advisor = advisors.find(a => a.id === id) || advisors[0];
   const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
-  
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: `Hello! Welcome to your reading with ${advisor.name}. I'm here to help guide you on your journey. What brings you here today?`,
-      sender: 'advisor',
-      timestamp: new Date(),
-    },
-  ]);
+
+  const [chatStatus, setChatStatus] = useState<'connecting' | 'ringing' | 'connected' | 'ended'>('connecting');
   const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [sessionTime, setSessionTime] = useState(0);
   const [showReview, setShowReview] = useState(false);
   const [showLowCreditWarning, setShowLowCreditWarning] = useState(false);
@@ -49,82 +38,151 @@ const Chat = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const sessionStartRef = useRef<Date>(new Date());
+  const sessionStartRef = useRef<Date | null>(null);
   const lastDeductionRef = useRef(0);
+  const ringingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Real-time chat messages hook
+  const { messages, sendMessage } = useChatMessages(
+    chatStatus === 'connected' ? sessionId : null
+  );
+
+  // Handle session status changes via Supabase Realtime
+  const handleStatusChange = useCallback((newStatus: string, oldStatus: string) => {
+    if (newStatus === 'active' && oldStatus === 'pending') {
+      // Advisor accepted the chat
+      if (ringingTimeoutRef.current) {
+        clearTimeout(ringingTimeoutRef.current);
+        ringingTimeoutRef.current = null;
+      }
+      setChatStatus('connected');
+      sessionStartRef.current = new Date();
+      toast({
+        title: "Chat Connected",
+        description: `You're now chatting with ${advisor.name}`,
+      });
+    } else if (newStatus === 'cancelled' && oldStatus === 'pending') {
+      // Advisor declined
+      if (ringingTimeoutRef.current) {
+        clearTimeout(ringingTimeoutRef.current);
+        ringingTimeoutRef.current = null;
+      }
+      setChatStatus('ended');
+      setIsSessionEnded(true);
+      toast({
+        variant: "destructive",
+        title: "Chat Declined",
+        description: `${advisor.name} is not available right now.`,
+      });
+      setTimeout(() => navigate(`/advisor/${id}`), 2000);
+    } else if (newStatus === 'completed' && oldStatus === 'active') {
+      // Advisor ended the session
+      setChatStatus('ended');
+      setIsSessionEnded(true);
+      setShowReview(true);
+      toast({
+        title: "Chat Ended",
+        description: `${advisor.name} has ended the session.`,
+      });
+    }
+  }, [advisor.name, id, navigate, toast]);
+
+  useSessionRealtime({
+    sessionId,
+    onStatusChange: handleStatusChange,
+    enabled: chatStatus === 'ringing' || chatStatus === 'connected',
+  });
 
   // Check if user has enough credits to start session
   const hasMinimumCredits = credits >= pricePerMinute || (advisor.freeMinutes && advisor.freeMinutes > 0);
 
   // Redirect to login if not authenticated or show insufficient credits
   useEffect(() => {
+    if (isLoading) return;
     if (!isAuthenticated) {
       navigate(`/advisor/${id}`);
       return;
     }
-
-    // Check if user has enough credits (unless there are free minutes)
     if (!hasMinimumCredits) {
       setShowInsufficientCredits(true);
+      setChatStatus('ended');
+      setIsSessionEnded(true);
     }
-  }, [isAuthenticated, navigate, id, hasMinimumCredits]);
+  }, [isAuthenticated, isLoading, navigate, id, hasMinimumCredits]);
 
-  // Start database session when component mounts
+  // Create session immediately (pending status) and start ringing
   useEffect(() => {
-    if (isAuthenticated && user?.id && !sessionId && !showInsufficientCredits) {
-      const startSession = async () => {
-        try {
-          // Start session in database
-          const advisorDbId = advisor.dbId || advisor.id;
-          const { data: newSessionId, error } = await supabase.rpc('start_rtc_session', {
-            p_client_id: user.id,
-            p_advisor_id: advisorDbId,
-            p_type: 'chat',
-            p_rate_per_minute: pricePerMinute,
-            p_free_minutes: advisor.freeMinutes || 0
-          });
+    if (chatStatus !== 'connecting' || !user?.id || !hasMinimumCredits) return;
 
-          if (error) throw error;
+    const createSession = async () => {
+      try {
+        const advisorDbId = advisor.dbId || advisor.id;
+        const { data: newSessionId, error } = await supabase.rpc('start_rtc_session', {
+          p_client_id: user.id,
+          p_advisor_id: advisorDbId,
+          p_type: 'chat',
+          p_rate_per_minute: pricePerMinute,
+          p_free_minutes: advisor.freeMinutes || 0
+        });
 
-          setSessionId(newSessionId);
-          toast({
-            title: "Chat Started",
-            description: `You're now chatting with ${advisor.name}`,
-          });
-        } catch (error) {
-          console.error('Failed to start session:', error);
+        if (error) throw error;
+
+        setSessionId(newSessionId);
+        setChatStatus('ringing');
+
+        // Start ringing timeout
+        ringingTimeoutRef.current = setTimeout(async () => {
+          try {
+            await supabase.rpc('decline_session', { p_session_id: newSessionId });
+          } catch (e) {
+            console.warn('Failed to cancel timed-out session:', e);
+          }
+          setChatStatus('ended');
+          setIsSessionEnded(true);
           toast({
             variant: "destructive",
-            title: "Connection Failed",
-            description: "Failed to start the chat session. Please try again.",
+            title: "No Response",
+            description: `${advisor.name} is not available right now. Please try again later.`,
           });
-          navigate(`/advisor/${id}`);
-        }
-      };
+          setTimeout(() => navigate(`/advisor/${id}`), 2000);
+        }, RINGING_TIMEOUT_MS);
+      } catch (error) {
+        console.error('Failed to start session:', error);
+        toast({
+          variant: "destructive",
+          title: "Connection Failed",
+          description: "Failed to start the chat session. Please try again.",
+        });
+        navigate(`/advisor/${id}`);
+      }
+    };
 
-      startSession();
-    }
-  }, [isAuthenticated, user?.id, sessionId, showInsufficientCredits, advisor, pricePerMinute, toast, navigate, id]);
+    createSession();
 
-  // Session timer and credit deduction
+    return () => {
+      if (ringingTimeoutRef.current) {
+        clearTimeout(ringingTimeoutRef.current);
+      }
+    };
+  }, [chatStatus, advisor, pricePerMinute, user?.id, hasMinimumCredits, toast, navigate, id]);
+
+  // Session timer and credit deduction (only when connected)
   useEffect(() => {
-    if (isSessionEnded || showInsufficientCredits) return;
-    
+    if (chatStatus !== 'connected' || isSessionEnded || showInsufficientCredits) return;
+
     const interval = setInterval(() => {
       setSessionTime((prev) => {
         const newTime = prev + 1;
-        
-        // Check for credit deduction every 60 seconds after free minutes
+
         const freeSeconds = (advisor.freeMinutes || 0) * 60;
         const billableSeconds = Math.max(0, newTime - freeSeconds);
         const minutesBilled = Math.floor(billableSeconds / 60);
-        
+
         if (minutesBilled > lastDeductionRef.current && billableSeconds > 0) {
           const deduction = pricePerMinute;
           const remainingAfterDeduction = credits - creditsUsed - deduction;
-          
-          // Check if enough credits
+
           if (remainingAfterDeduction < 0) {
-            // End session due to insufficient credits
             handleEndChat();
             toast({
               variant: "destructive",
@@ -134,38 +192,34 @@ const Chat = () => {
           } else {
             setCreditsUsed(prev => prev + deduction);
             lastDeductionRef.current = minutesBilled;
-            
-            // Check remaining credits after this deduction
+
             const newRemainingCredits = credits - creditsUsed - deduction;
             const minutesLeft = newRemainingCredits / pricePerMinute;
-            
-            // Show low credit warning at 2 minutes remaining (if not already shown and not continuing until end)
+
             if (minutesLeft <= 2 && minutesLeft > 0 && !hasShownWarning && !continueUntilEnd) {
               setShowLowCreditWarning(true);
               setHasShownWarning(true);
             }
           }
         } else if (billableSeconds === 0) {
-          // Still in free minutes - check upcoming credit requirement
           const remainingCredits = credits - creditsUsed;
           const minutesRemaining = remainingCredits / pricePerMinute;
           const secondsUntilBilling = freeSeconds - newTime;
-          
-          // Warn 30 seconds before free minutes end if credits are low
+
           if (secondsUntilBilling <= 30 && secondsUntilBilling > 0 && minutesRemaining < 2 && !hasShownWarning && !continueUntilEnd) {
             setShowLowCreditWarning(true);
             setHasShownWarning(true);
           }
         }
-        
+
         return newTime;
       });
     }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [isSessionEnded, showInsufficientCredits, advisor, credits, creditsUsed, hasShownWarning, continueUntilEnd, pricePerMinute, toast]);
 
-  // Auto scroll to bottom
+    return () => clearInterval(interval);
+  }, [chatStatus, isSessionEnded, showInsufficientCredits, advisor, credits, creditsUsed, hasShownWarning, continueUntilEnd, pricePerMinute, toast]);
+
+  // Auto scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -174,6 +228,23 @@ const Chat = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleCancelChat = async () => {
+    if (ringingTimeoutRef.current) {
+      clearTimeout(ringingTimeoutRef.current);
+      ringingTimeoutRef.current = null;
+    }
+    if (sessionId) {
+      try {
+        await supabase.rpc('decline_session', { p_session_id: sessionId });
+      } catch (e) {
+        console.warn('Failed to cancel session:', e);
+      }
+    }
+    setChatStatus('ended');
+    setIsSessionEnded(true);
+    navigate(`/advisor/${id}`);
   };
 
   const handleEndChat = async () => {
@@ -186,16 +257,13 @@ const Chat = () => {
     try {
       setIsSessionEnded(true);
 
-      // Calculate billable minutes
       const totalSeconds = sessionTime;
       const freeSeconds = (advisor.freeMinutes || 0) * 60;
       const billableSeconds = Math.max(0, totalSeconds - freeSeconds);
-      const billableMinutes = Math.ceil(billableSeconds / 60); // Round up
+      const billableMinutes = Math.ceil(billableSeconds / 60);
 
-      // Determine connection quality
       const quality: ConnectionQuality = 'good';
 
-      // End session in database
       const { error } = await supabase.rpc('end_rtc_session', {
         p_session_id: sessionId,
         p_billable_minutes: billableMinutes,
@@ -204,21 +272,7 @@ const Chat = () => {
 
       if (error) throw error;
 
-      // Refresh user credits from database
-      if (user?.id) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('credits')
-          .eq('id', user.id)
-          .single();
-
-        if (profile) {
-          // Credits will be updated via useAuth context on next render
-          // Force a refresh by triggering auth state change
-          window.location.reload();
-        }
-      }
-
+      setChatStatus('ended');
       setShowReview(true);
     } catch (error) {
       console.error('Failed to end session:', error);
@@ -228,42 +282,28 @@ const Chat = () => {
         description: "Failed to end session properly. Please contact support.",
       });
       setIsSessionEnded(true);
+      setChatStatus('ended');
       setShowReview(true);
     }
   };
 
-  const handleSend = () => {
-    if (!inputValue.trim() || isSessionEnded) return;
+  const handleSend = async () => {
+    if (!inputValue.trim() || isSessionEnded || !user?.id) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputValue,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const content = inputValue.trim();
     setInputValue('');
-    setIsTyping(true);
 
-    // Simulate advisor response
-    setTimeout(() => {
-      setIsTyping(false);
-      const responses = [
-        "I sense there's something weighing on your heart. Let me tune into your energy...",
-        "The cards are revealing an interesting pattern. There's a significant change coming your way.",
-        "I'm picking up on strong emotions around this situation. Trust your intuition here.",
-        "The universe is aligning to bring you what you need. Stay patient and open.",
-        "I see a connection forming that will bring you great joy. Keep your heart open.",
-      ];
-      const advisorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: responses[Math.floor(Math.random() * responses.length)],
-        sender: 'advisor',
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, advisorMessage]);
-    }, 2000 + Math.random() * 2000);
+    try {
+      await sendMessage(content, user.id);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      toast({
+        variant: "destructive",
+        title: "Send Failed",
+        description: "Failed to send message. Please try again.",
+      });
+      setInputValue(content); // Restore the message
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -300,24 +340,37 @@ const Chat = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      
+
       <main className="flex-1 pt-16 md:pt-20 flex flex-col">
         {/* Chat Header */}
         <div className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => navigate(`/advisor/${advisor.id}`)}
+            <button
+              onClick={() => {
+                if (chatStatus === 'ringing') {
+                  handleCancelChat();
+                } else if (chatStatus === 'connected') {
+                  handleEndChat();
+                } else {
+                  navigate(`/advisor/${advisor.id}`);
+                }
+              }}
               className="p-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="relative">
-              <img 
-                src={advisor.avatar} 
+              <img
+                src={advisor.avatar}
                 alt={advisor.name}
                 className="w-12 h-12 rounded-full object-cover border-2 border-primary/30"
               />
-              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
+              {chatStatus === 'connected' && (
+                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
+              )}
+              {chatStatus === 'ringing' && (
+                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-amber-500 border-2 border-card animate-pulse" />
+              )}
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{advisor.name}</h3>
@@ -325,96 +378,144 @@ const Chat = () => {
                 <Star className="w-3 h-3 text-accent fill-accent" />
                 <span>{advisor.rating}</span>
                 <span className="mx-1">•</span>
-                <span>{advisor.title}</span>
+                {chatStatus === 'ringing' && (
+                  <span className="text-amber-500 animate-pulse">Waiting for advisor...</span>
+                )}
+                {chatStatus === 'connected' && (
+                  <span className="text-green-500">Online</span>
+                )}
+                {chatStatus === 'connecting' && (
+                  <span className="text-amber-500">Connecting...</span>
+                )}
+                {chatStatus === 'ended' && (
+                  <span className="text-muted-foreground">Session ended</span>
+                )}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Timer */}
-            <div className="text-right">
-              <div className="flex items-center gap-1 text-sm font-mono">
-                <Clock className="w-4 h-4 text-primary" />
-                <span className="text-foreground">{formatTime(sessionTime)}</span>
+            {/* Timer - only when connected */}
+            {chatStatus === 'connected' && (
+              <div className="text-right">
+                <div className="flex items-center gap-1 text-sm font-mono">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span className="text-foreground">{formatTime(sessionTime)}</span>
+                </div>
+                {freeMinutesRemaining > 0 ? (
+                  <div className="text-xs text-accent">
+                    {formatTime(freeMinutesRemaining)} free remaining
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground">
+                    ${creditsUsed.toFixed(2)} • Balance: ${remainingCredits.toFixed(2)}
+                  </div>
+                )}
               </div>
-              {freeMinutesRemaining > 0 ? (
-                <div className="text-xs text-accent">
-                  {formatTime(freeMinutesRemaining)} free remaining
-                </div>
-              ) : (
-                <div className="text-xs text-muted-foreground">
-                  ${creditsUsed.toFixed(2)} • Balance: ${remainingCredits.toFixed(2)}
-                </div>
-              )}
-            </div>
+            )}
 
-            <Button 
-              variant="destructive"
-              size="sm"
-              onClick={handleEndChat}
-              disabled={isSessionEnded}
-            >
-              End Chat
-            </Button>
+            {chatStatus === 'connected' && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleEndChat}
+                disabled={isSessionEnded}
+              >
+                End Chat
+              </Button>
+            )}
+
+            {chatStatus === 'ringing' && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleCancelChat}
+              >
+                <X className="w-4 h-4 mr-1" />
+                Cancel
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Free Minutes Banner */}
-        {freeMinutesRemaining > 0 && (
+        {chatStatus === 'connected' && freeMinutesRemaining > 0 && (
           <div className="px-4 py-2 bg-accent/10 border-b border-accent/20 text-center">
             <span className="text-sm text-accent font-medium">
-              🎁 You have {formatTime(freeMinutesRemaining)} of free chat remaining!
+              You have {formatTime(freeMinutesRemaining)} of free chat remaining!
             </span>
           </div>
         )}
 
-        {/* Messages */}
+        {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              {message.sender === 'advisor' && (
-                <img 
-                  src={advisor.avatar} 
+          {/* Ringing state */}
+          {(chatStatus === 'connecting' || chatStatus === 'ringing') && (
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-12">
+              <div className="relative">
+                <img
+                  src={advisor.avatar}
                   alt={advisor.name}
-                  className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
+                  className="w-24 h-24 rounded-full object-cover border-4 border-amber-500 animate-pulse"
                 />
-              )}
-              <div
-                className={`max-w-[70%] p-4 rounded-2xl ${
-                  message.sender === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-br-md'
-                    : 'bg-secondary text-foreground rounded-bl-md'
-                }`}
-              >
-                <p className="text-sm leading-relaxed">{message.text}</p>
-                <span className={`text-xs mt-1 block ${
-                  message.sender === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                }`}>
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">{advisor.name}</h3>
+                <p className="text-muted-foreground mt-1">
+                  {chatStatus === 'connecting'
+                    ? 'Connecting...'
+                    : `Waiting for ${advisor.name} to accept your chat request...`}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Rate: ${pricePerMinute}/min
+                  {advisor.freeMinutes ? ` • First ${advisor.freeMinutes} min free` : ''}
+                </p>
               </div>
             </div>
-          ))}
+          )}
 
-          {/* Typing Indicator */}
-          {isTyping && (
-            <div className="flex justify-start">
-              <img 
-                src={advisor.avatar} 
-                alt={advisor.name}
-                className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
-              />
-              <div className="bg-secondary text-foreground p-4 rounded-2xl rounded-bl-md">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: '300ms' }} />
+          {/* Chat messages - only when connected or ended */}
+          {(chatStatus === 'connected' || chatStatus === 'ended') && (
+            <>
+              {messages.length === 0 && chatStatus === 'connected' && (
+                <div className="text-center text-muted-foreground text-sm py-8">
+                  Chat session started. Say hello to {advisor.name}!
                 </div>
-              </div>
-            </div>
+              )}
+
+              {messages.map((message) => {
+                const isUser = message.sender_id === user?.id;
+                const timestamp = new Date(message.created_at);
+                return (
+                  <div
+                    key={message.id}
+                    className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
+                  >
+                    {!isUser && (
+                      <img
+                        src={advisor.avatar}
+                        alt={advisor.name}
+                        className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
+                      />
+                    )}
+                    <div
+                      className={`max-w-[70%] p-4 rounded-2xl ${
+                        isUser
+                          ? 'bg-primary text-primary-foreground rounded-br-md'
+                          : 'bg-secondary text-foreground rounded-bl-md'
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed">{message.content}</p>
+                      <span className={`text-xs mt-1 block ${
+                        isUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                      }`}>
+                        {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
           )}
 
           <div ref={messagesEndRef} />
@@ -426,19 +527,25 @@ const Chat = () => {
             <div className="flex items-center gap-3">
               <Input
                 type="text"
-                placeholder={isSessionEnded ? "Session ended" : "Type your message..."}
+                placeholder={
+                  isSessionEnded || chatStatus === 'ended'
+                    ? "Session ended"
+                    : chatStatus !== 'connected'
+                    ? "Waiting for advisor to accept..."
+                    : "Type your message..."
+                }
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
                 className="flex-1 h-12 bg-background border-border"
-                disabled={isSessionEnded}
+                disabled={isSessionEnded || chatStatus !== 'connected'}
               />
               <Button
                 variant="hero"
                 size="icon"
                 className="h-12 w-12"
                 onClick={handleSend}
-                disabled={!inputValue.trim() || isSessionEnded}
+                disabled={!inputValue.trim() || isSessionEnded || chatStatus !== 'connected'}
               >
                 <Send className="w-5 h-5" />
               </Button>

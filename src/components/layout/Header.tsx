@@ -25,6 +25,7 @@ import {
   LayoutGrid,
   Wallet,
   Activity,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "./MobileMenu";
@@ -291,6 +292,18 @@ export const Header = () => {
                       <CreditCard className="w-4 h-4" />
                       Payment Methods
                     </DropdownMenuItem>
+                    {user?.isAdvisor && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => navigate("/advisor-call")}
+                          className="cursor-pointer flex items-center gap-2 p-2.5"
+                        >
+                          <Phone className="w-4 h-4" />
+                          Advisor Dashboard
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => navigate("/settings")}
