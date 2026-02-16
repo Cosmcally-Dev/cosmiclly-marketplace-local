@@ -70,77 +70,109 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
 
+  // Build a User object from Supabase auth user + optional profile data
+  const buildUserFromSession = (
+    supabaseUser: SupabaseUser,
+    profile: Record<string, any> | null
+  ): User => {
+    const metadata = supabaseUser.user_metadata;
+    return {
+      id: supabaseUser.id,
+      email: supabaseUser.email || "",
+      firstName: metadata?.firstName,
+      lastName: metadata?.lastName,
+      username: profile?.username || metadata?.username,
+      dateOfBirth: metadata?.dateOfBirth,
+      timeOfBirth: metadata?.timeOfBirth,
+      isAdvisor: profile?.role === 'advisor' || metadata?.isAdvisor === true,
+    };
+  };
+
+  // Safely fetch profile, returns null on any error
+  const fetchProfile = async (userId: string): Promise<Record<string, any> | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (error) {
+        console.warn('[useAuth] Profile fetch error:', error.message);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.warn('[useAuth] Profile fetch exception:', err);
+      return null;
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
+    // IMPORTANT: Do NOT use async callback — Supabase warns this can cause deadlocks.
+    // Set user immediately from JWT metadata, then defer profile fetch.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session?.user) {
-        const supabaseUser = session.user;
-        const metadata = supabaseUser.user_metadata;
+        // Set user immediately from JWT metadata (no await needed)
+        setUser(buildUserFromSession(session.user, null));
 
-        // Fetch profile from database to get credits and role
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', supabaseUser.id)
-          .single();
-
-        setUser({
-          id: supabaseUser.id,
-          email: supabaseUser.email || "",
-          firstName: metadata?.firstName,
-          lastName: metadata?.lastName,
-          username: profile?.username || metadata?.username,
-          dateOfBirth: metadata?.dateOfBirth,
-          timeOfBirth: metadata?.timeOfBirth,
-          isAdvisor: profile?.role === 'advisor',
-        });
-
-        // Set credits from database
-        if (profile) {
-          setCredits(profile.credits || 0);
-        }
+        // Defer profile fetch to avoid blocking the auth callback
+        const userId = session.user.id;
+        setTimeout(() => {
+          fetchProfile(userId)
+            .then((profile) => {
+              if (profile) {
+                setUser(buildUserFromSession(session.user, profile));
+                setCredits(profile.credits || 0);
+              }
+            })
+            .catch((err) => {
+              console.warn('[useAuth] Deferred profile fetch failed:', err);
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
+        }, 0);
       } else {
         setUser(null);
         setCredits(0);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        setSession(session);
-        const supabaseUser = session.user;
-        const metadata = supabaseUser.user_metadata;
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (session?.user) {
+          setSession(session);
+          // Set user immediately from metadata
+          setUser(buildUserFromSession(session.user, null));
 
-        // Fetch profile from database
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', supabaseUser.id)
-          .single();
-
-        setUser({
-          id: supabaseUser.id,
-          email: supabaseUser.email || "",
-          firstName: metadata?.firstName,
-          lastName: metadata?.lastName,
-          username: profile?.username || metadata?.username,
-          dateOfBirth: metadata?.dateOfBirth,
-          timeOfBirth: metadata?.timeOfBirth,
-          isAdvisor: profile?.role === 'advisor',
-        });
-
-        // Set credits from database
-        if (profile) {
-          setCredits(profile.credits || 0);
+          // Then fetch profile for credits/role
+          fetchProfile(session.user.id)
+            .then((profile) => {
+              if (profile) {
+                setUser(buildUserFromSession(session.user, profile));
+                setCredits(profile.credits || 0);
+              }
+            })
+            .catch((err) => {
+              console.warn('[useAuth] getSession profile fetch failed:', err);
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
+        } else {
+          setIsLoading(false);
         }
-      }
-      setIsLoading(false);
-    });
+      })
+      .catch((err) => {
+        console.error('[useAuth] getSession error:', err);
+        setIsLoading(false);
+      });
 
     // Load saved cards and session logs from localStorage (these remain local)
     const storedCards = localStorage.getItem("savedCards");
@@ -161,27 +193,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error;
 
-      // Fetch profile from database
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
+      // Set user immediately from auth metadata
+      setUser(buildUserFromSession(data.user, null));
 
-      if (profileError) throw profileError;
-
-      setUser({
-        id: data.user.id,
-        email: data.user.email!,
-        firstName: data.user.user_metadata?.firstName,
-        lastName: data.user.user_metadata?.lastName,
-        username: profile.username,
-        dateOfBirth: data.user.user_metadata?.dateOfBirth,
-        timeOfBirth: data.user.user_metadata?.timeOfBirth,
-        isAdvisor: profile.role === 'advisor',
-      });
-
-      setCredits(profile.credits || 0);
+      // Then fetch profile for credits and role (non-blocking for login success)
+      const profile = await fetchProfile(data.user.id);
+      if (profile) {
+        setUser(buildUserFromSession(data.user, profile));
+        setCredits(profile.credits || 0);
+      }
 
       return { success: true };
     } catch (err: any) {

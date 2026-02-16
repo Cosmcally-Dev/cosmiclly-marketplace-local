@@ -16,6 +16,7 @@ import VoiceCall from "./pages/VoiceCall";
 import AddCredit from "./pages/AddCredit";
 import Settings from "./pages/Settings";
 import AdvisorPortal from "./pages/AdvisorPortal";
+import AdvisorCall from "./pages/AdvisorCall";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
@@ -41,6 +42,8 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/advisor-portal" element={<AdvisorPortal />} />
+            <Route path="/advisor-call" element={<AdvisorCall />} />
+            <Route path="/advisor-call/:sessionId" element={<AdvisorCall />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
