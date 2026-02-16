@@ -8,7 +8,6 @@ export interface IncomingSession {
   type: string;
   client_name: string;
   rate_per_minute: number;
-  created_at: string;
 }
 
 const POLL_INTERVAL_MS = 5000; // Poll every 5 seconds as fallback
@@ -32,10 +31,9 @@ export function useAdvisorIncomingCalls(advisorId: string | undefined) {
 
     const { data, error } = await supabase
       .from('sessions')
-      .select('id, client_id, type, rate_per_minute, created_at, status, profiles!sessions_client_id_fkey(full_name)')
+      .select('id, client_id, type, rate_per_minute, status, profiles!sessions_client_id_fkey(full_name)')
       .eq('advisor_id', advisorId)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false });
+      .eq('status', 'pending');
 
     if (error) {
       console.warn('[useAdvisorIncomingCalls] Fetch error:', error.message);
@@ -51,7 +49,6 @@ export function useAdvisorIncomingCalls(advisorId: string | undefined) {
       type: s.type,
       client_name: s.profiles?.full_name || 'Unknown Client',
       rate_per_minute: s.rate_per_minute,
-      created_at: s.created_at,
     }));
 
     setIncomingSessions(mapped);
