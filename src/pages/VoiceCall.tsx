@@ -121,6 +121,13 @@ const VoiceCall = () => {
     const createSession = async () => {
       try {
         const advisorDbId = advisor.dbId || advisor.id;
+        console.log('[VoiceCall] Creating session:', {
+          client_id: user.id,
+          advisor_id: advisorDbId,
+          type: 'audio',
+          rate: pricePerMinute,
+        });
+
         const { data: newSessionId, error } = await supabase.rpc('start_rtc_session', {
           p_client_id: user.id,
           p_advisor_id: advisorDbId,
@@ -131,6 +138,7 @@ const VoiceCall = () => {
 
         if (error) throw error;
 
+        console.log('[VoiceCall] Session created with id:', newSessionId);
         setSessionId(newSessionId);
         setCallStatus('ringing');
 

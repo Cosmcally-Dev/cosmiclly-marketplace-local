@@ -11,22 +11,28 @@ export interface IncomingSession {
   created_at: string;
 }
 
+const POLL_INTERVAL_MS = 5000; // Poll every 5 seconds as fallback
+
 /**
- * Listens for incoming pending sessions for a specific advisor via Supabase Realtime.
- * Replaces the 5-second polling pattern. Does an initial fetch on mount to catch
- * sessions created before the subscription was active.
+ * Listens for incoming pending sessions for a specific advisor.
+ * Uses both Supabase Realtime AND polling fallback to ensure reliability.
+ * Realtime may not fire if the project hasn't enabled it or if there are
+ * RLS/publication issues, so polling ensures the advisor always sees sessions.
  */
 export function useAdvisorIncomingCalls(advisorId: string | undefined) {
   const [incomingSessions, setIncomingSessions] = useState<IncomingSession[]>([]);
   const [loading, setLoading] = useState(true);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchPending = useCallback(async () => {
     if (!advisorId) return;
 
+    console.log('[useAdvisorIncomingCalls] Fetching pending sessions for advisor:', advisorId);
+
     const { data, error } = await supabase
       .from('sessions')
-      .select('id, client_id, type, rate_per_minute, created_at, profiles!sessions_client_id_fkey(full_name)')
+      .select('id, client_id, type, rate_per_minute, created_at, status, profiles!sessions_client_id_fkey(full_name)')
       .eq('advisor_id', advisorId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
@@ -36,6 +42,8 @@ export function useAdvisorIncomingCalls(advisorId: string | undefined) {
       setLoading(false);
       return;
     }
+
+    console.log('[useAdvisorIncomingCalls] Found', data?.length || 0, 'pending sessions:', data);
 
     const mapped: IncomingSession[] = (data || []).map((s: any) => ({
       id: s.id,
@@ -56,7 +64,12 @@ export function useAdvisorIncomingCalls(advisorId: string | undefined) {
     // Initial fetch
     fetchPending();
 
-    // Subscribe to changes on sessions for this advisor
+    // Polling fallback — ensures sessions appear even if Realtime isn't working
+    pollRef.current = setInterval(() => {
+      fetchPending();
+    }, POLL_INTERVAL_MS);
+
+    // Subscribe to changes on sessions for this advisor (Realtime, best-effort)
     const channel = supabase
       .channel(`advisor-incoming-${advisorId}`)
       .on(
@@ -68,6 +81,7 @@ export function useAdvisorIncomingCalls(advisorId: string | undefined) {
           filter: `advisor_id=eq.${advisorId}`,
         },
         (payload) => {
+          console.log('[useAdvisorIncomingCalls] Realtime INSERT:', payload.new);
           const newSession = payload.new as Record<string, any>;
           if (newSession.status === 'pending') {
             // Re-fetch to get joined client name
@@ -84,6 +98,7 @@ export function useAdvisorIncomingCalls(advisorId: string | undefined) {
           filter: `advisor_id=eq.${advisorId}`,
         },
         (payload) => {
+          console.log('[useAdvisorIncomingCalls] Realtime UPDATE:', payload.new);
           const updated = payload.new as Record<string, any>;
           // Remove from incoming list if no longer pending
           if (updated.status !== 'pending') {
@@ -91,11 +106,17 @@ export function useAdvisorIncomingCalls(advisorId: string | undefined) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[useAdvisorIncomingCalls] Realtime subscription status:', status);
+      });
 
     channelRef.current = channel;
 
     return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
       channel.unsubscribe();
       channelRef.current = null;
     };
