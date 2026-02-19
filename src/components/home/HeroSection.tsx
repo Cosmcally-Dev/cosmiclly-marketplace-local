@@ -4,11 +4,11 @@ import { AdvisorSearchBar } from '@/components/search/AdvisorSearchBar';
 import { CategoriesStrip } from './CategoriesStrip';
 
 const quickFilters = [
-  { label: 'All advisors', icon: LayoutGrid, filter: 'all' },
-  { label: 'New advisors', icon: Leaf, filter: 'new' },
-  { label: 'Under $3', icon: DollarSign, filter: 'under-3' },
-  { label: '+50 reviews', icon: ThumbsUp, filter: 'reviews-50' },
-  { label: 'AI Chat', icon: MessageCircle, filter: 'ai-chat' },
+  { label: 'All advisors', icon: LayoutGrid, filter: 'all', iconColor: 'text-primary' },
+  { label: 'New advisors', icon: Leaf, filter: 'new', iconColor: 'text-primary' },
+  { label: 'Under $3', icon: DollarSign, filter: 'under-3', iconColor: 'text-primary' },
+  { label: '+50 reviews', icon: ThumbsUp, filter: 'reviews-50', iconColor: 'text-primary' },
+  { label: 'AI Chat', icon: MessageCircle, filter: 'ai-chat', iconColor: 'text-primary' },
 ];
 
 export const HeroSection = () => {
@@ -68,7 +68,7 @@ export const HeroSection = () => {
                   onClick={() => handleFilterClick(filter.filter)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/60 backdrop-blur-sm border border-border text-sm font-sans text-foreground/80 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all"
                 >
-                  <IconComponent className="w-3.5 h-3.5" />
+                  <IconComponent className={`w-3.5 h-3.5 ${filter.iconColor}`} />
                   <span>{filter.label}</span>
                 </button>
               );

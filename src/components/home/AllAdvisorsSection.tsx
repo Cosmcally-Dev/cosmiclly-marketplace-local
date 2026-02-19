@@ -8,18 +8,28 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 
-type SortOption = 'rating' | 'price-low' | 'price-high' | 'reviews';
+type SortOption = 'top-rated' | 'price-low' | 'price-high' | 'reviews';
+type CommType = 'any' | 'chat' | 'call' | 'video';
 
 export const AllAdvisorsSection = () => {
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<SortOption>('rating');
-  const [priceRange, setPriceRange] = useState([0, 10]);
-  const [showOffline, setShowOffline] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('top-rated');
+  const [priceRange, setPriceRange] = useState([0.99, 24.99]);
+  const [showOffline, setShowOffline] = useState(true);
+  const [commType, setCommType] = useState<CommType>('any');
+  const [minReviews, setMinReviews] = useState(0);
   const [visibleCount, setVisibleCount] = useState(12);
 
   // Filter and sort advisors
@@ -27,13 +37,18 @@ export const AllAdvisorsSection = () => {
     const effectivePrice = advisor.discountedPrice || advisor.pricePerMinute;
     const priceMatch = effectivePrice >= priceRange[0] && effectivePrice <= priceRange[1];
     const statusMatch = showOffline || advisor.status !== 'offline';
-    return priceMatch && statusMatch;
+    const reviewMatch = advisor.reviewCount >= minReviews;
+    return priceMatch && statusMatch && reviewMatch;
   });
 
   // Sort
   filteredAdvisors = [...filteredAdvisors].sort((a, b) => {
     switch (sortBy) {
-      case 'rating':
+      case 'top-rated':
+        if (a.isTopRated && !b.isTopRated) return -1;
+        if (!a.isTopRated && b.isTopRated) return 1;
+        if (a.status === 'online' && b.status !== 'online') return -1;
+        if (a.status !== 'online' && b.status === 'online') return 1;
         return b.rating - a.rating;
       case 'price-low':
         return (a.discountedPrice || a.pricePerMinute) - (b.discountedPrice || b.pricePerMinute);
@@ -82,57 +97,92 @@ export const AllAdvisorsSection = () => {
         <Collapsible open={showFilters} onOpenChange={setShowFilters}>
           <CollapsibleContent className="mb-6">
             <div className="bg-card rounded-xl border border-border p-4 md:p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Sort By */}
+              <div className="flex flex-wrap items-end gap-6">
+                {/* Sort By — dropdown */}
                 <div>
                   <Label className="text-sm font-sans font-medium text-foreground mb-3 block">
                     Sort By
                   </Label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { value: 'rating', label: 'Most Accurate' },
-                      { value: 'reviews', label: 'Most Reviews' },
-                      { value: 'price-low', label: 'Price: Low' },
-                      { value: 'price-high', label: 'Price: High' },
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => setSortBy(option.value as SortOption)}
-                        className={`px-3 py-1.5 rounded-full text-sm font-sans transition-colors ${
-                          sortBy === option.value
-                            ? 'bg-primary text-primary-foreground font-medium'
-                            : 'bg-card text-foreground border border-border hover:border-primary/50'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
+                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                    <SelectTrigger className="w-[160px] bg-card border-border font-sans">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="top-rated">Top Rated</SelectItem>
+                      <SelectItem value="reviews">Most Reviews</SelectItem>
+                      <SelectItem value="price-low">Price: Low</SelectItem>
+                      <SelectItem value="price-high">Price: High</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Price Range */}
+                {/* Show Only — dropdown */}
                 <div>
                   <Label className="text-sm font-sans font-medium text-foreground mb-3 block">
-                    Price per minute: ${priceRange[0]} - ${priceRange[1]}
+                    Show only
                   </Label>
-                  <Slider
-                    value={priceRange}
-                    onValueChange={setPriceRange}
-                    max={10}
-                    min={0}
-                    step={0.5}
-                    className="w-full"
-                  />
+                  <Select value={commType} onValueChange={(v) => setCommType(v as CommType)}>
+                    <SelectTrigger className="w-[160px] bg-card border-border font-sans">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Any</SelectItem>
+                      <SelectItem value="chat">Live chat</SelectItem>
+                      <SelectItem value="call">Voice call</SelectItem>
+                      <SelectItem value="video">Video call</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Number of Reviews — dropdown */}
+                <div>
+                  <Label className="text-sm font-sans font-medium text-foreground mb-3 block">
+                    Number of reviews
+                  </Label>
+                  <Select value={minReviews.toString()} onValueChange={(v) => setMinReviews(parseInt(v))}>
+                    <SelectTrigger className="w-[160px] bg-card border-border font-sans">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Over 0</SelectItem>
+                      <SelectItem value="10">Over 10</SelectItem>
+                      <SelectItem value="50">Over 50</SelectItem>
+                      <SelectItem value="100">Over 100</SelectItem>
+                      <SelectItem value="500">Over 500</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Price per minute — slider with amounts on each side */}
+                <div className="flex-1 min-w-[200px]">
+                  <Label className="text-sm font-sans font-medium text-foreground mb-3 block">
+                    Price per minute
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground shrink-0">${priceRange[0].toFixed(2)}</span>
+                    <Slider
+                      value={priceRange}
+                      onValueChange={setPriceRange}
+                      max={24.99}
+                      min={0.99}
+                      step={0.5}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-muted-foreground shrink-0">${priceRange[1].toFixed(2)}</span>
+                  </div>
+                  <p className="text-center text-xs text-muted-foreground mt-1">
+                    ${priceRange[0].toFixed(2)}–${priceRange[1].toFixed(2)}/min
+                  </p>
                 </div>
 
                 {/* Show Offline */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-secondary/20 self-end">
                   <Switch
                     id="show-offline"
                     checked={showOffline}
                     onCheckedChange={setShowOffline}
                   />
-                  <Label htmlFor="show-offline" className="text-sm text-foreground cursor-pointer">
+                  <Label htmlFor="show-offline" className="text-xs text-muted-foreground cursor-pointer whitespace-nowrap">
                     Show Offline Advisors
                   </Label>
                 </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  X, Sparkles, BookOpen, HelpCircle, UserCheck, ChevronRight, ChevronDown, 
+  X, BookOpen, HelpCircle, UserCheck, ChevronRight, ChevronDown,
   Star, Heart, CreditCard, History, Shield, Layers, Sun
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -91,8 +91,8 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
             <Link to="/" onClick={onClose} className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-primary" />
-              <span className="font-heading text-lg font-semibold text-gradient">Mystica</span>
+              <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-8 w-auto object-contain" />
+              <span className="font-heading text-lg font-semibold text-gradient">Cosmiclly</span>
             </Link>
             <button
               onClick={onClose}

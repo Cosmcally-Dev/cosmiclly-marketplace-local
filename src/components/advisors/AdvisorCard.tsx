@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, Clock, MessageCircle, Bell, Phone, Video, Award } from 'lucide-react';
+import { Star, MoonStar, MessageCircle, Phone, Video, Award } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -100,8 +100,8 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
         </div>
 
         {/* Avatar Section - Clickable Link with Status Ring */}
-        <Link 
-          to={profileUrl} 
+        <Link
+          to={profileUrl}
           onClick={handleProfileClick}
           className="block relative pt-8 px-5"
         >
@@ -136,8 +136,8 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           </div>
 
           {/* Name - Clickable Link */}
-          <Link 
-            to={profileUrl} 
+          <Link
+            to={profileUrl}
             onClick={handleProfileClick}
             className="block"
           >
@@ -160,7 +160,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
             {advisor.specialties.slice(0, 2).map((specialty) => (
               <span
                 key={specialty}
-                className="px-2 py-0.5 rounded-full text-[10px] font-sans bg-secondary/20 text-secondary border border-secondary/30"
+                className="px-2 py-0.5 rounded-full text-[10px] font-sans font-medium bg-secondary/20 text-secondary-foreground/70 border border-secondary/60"
               >
                 {specialty}
               </span>
@@ -207,7 +207,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                 </TooltipTrigger>
                 <TooltipContent>Chat</TooltipContent>
               </Tooltip>
-              
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -222,7 +222,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                 </TooltipTrigger>
                 <TooltipContent>Call</TooltipContent>
               </Tooltip>
-              
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -247,9 +247,9 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                     className="w-11 h-11 font-sans border-primary/30 hover:bg-primary/10"
                     aria-label="Chat with AI Twin"
                   >
-                    <img 
-                      src={aiTwinIcon} 
-                      alt="AI Twin" 
+                    <img
+                      src={aiTwinIcon}
+                      alt="AI Twin"
                       className="w-5 h-5 object-contain"
                     />
                   </Button>
@@ -257,22 +257,17 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                 <TooltipContent>AI Twin</TooltipContent>
               </Tooltip>
             </div>
-          ) : advisor.status === 'busy' ? (
-            <Button variant="outline" size="sm" className="w-full font-sans">
-              <Bell className="w-4 h-4 mr-2" />
-              Notify Me
-            </Button>
           ) : (
-            <Button variant="secondary" size="sm" className="w-full font-sans" disabled>
-              <Clock className="w-4 h-4 mr-2" />
-              Offline
-            </Button>
+            <div className="mt-4 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-muted/40 border border-border/50 text-muted-foreground/70 text-xs font-sans font-medium tracking-wide select-none">
+              <MoonStar className="w-3.5 h-3.5" />
+              <span>Unavailable</span>
+            </div>
           )}
         </div>
-        
-        <AuthModal 
-          isOpen={isAuthOpen} 
-          onClose={handleAuthClose} 
+
+        <AuthModal
+          isOpen={isAuthOpen}
+          onClose={handleAuthClose}
           mode="signin"
         />
       </article>
