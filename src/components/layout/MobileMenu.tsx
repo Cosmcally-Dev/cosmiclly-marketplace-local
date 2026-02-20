@@ -104,7 +104,7 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           </div>
 
           {/* Menu Items */}
-          <nav className="flex-1 overflow-y-auto py-2">
+          <nav className="flex-1 overflow-y-auto py-2 scrollbar-styled">
             <ul className="space-y-0.5">
               {menuItems.map((item) => (
                 <li key={item.label}>

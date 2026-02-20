@@ -38,7 +38,7 @@ export interface SignUpData {
   firstName: string;
   lastName: string;
   username: string;
-  dateOfBirth: string;
+  dateOfBirth?: string;
   timeOfBirth?: string;
 }
 
@@ -222,7 +222,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             firstName: data.firstName,
             lastName: data.lastName,
             username: data.username,
-            dateOfBirth: data.dateOfBirth,
+            dateOfBirth: data.dateOfBirth || null,
             timeOfBirth: data.timeOfBirth || null,
             isAdvisor: false,
           },

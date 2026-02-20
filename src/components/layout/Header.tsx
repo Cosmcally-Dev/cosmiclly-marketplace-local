@@ -185,7 +185,7 @@ export const Header = () => {
                         Specialties
                       </span>
                     </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="w-64 max-h-[60vh] overflow-y-auto bg-popover border-border shadow-2xl rounded-xl">
+                    <DropdownMenuSubContent className="w-64 max-h-[60vh] overflow-y-auto bg-popover border-border shadow-2xl rounded-xl scrollbar-styled">
                       {exploreMenuItems.map((item) => {
                         const IconComponent = item.icon;
                         return (

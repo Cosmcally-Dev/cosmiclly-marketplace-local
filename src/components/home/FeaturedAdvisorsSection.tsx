@@ -64,7 +64,7 @@ export const FeaturedAdvisorsSection = () => {
         <div className="relative">
           <div
             ref={scrollRef}
-            className="grid grid-flow-col auto-cols-[280px] md:auto-cols-[300px] gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
+            className="grid grid-flow-col auto-cols-[280px] md:auto-cols-[300px] gap-4 overflow-x-auto py-2 scrollbar-hide snap-x snap-mandatory"
           >
             {featuredAdvisors.map((advisor, index) => (
               <div

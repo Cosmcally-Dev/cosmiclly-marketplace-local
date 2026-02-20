@@ -394,7 +394,7 @@ const AdvisorsListing = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent 
                     align="start" 
-                    className="w-56 max-h-80 overflow-y-auto bg-card border-border z-50"
+                    className="w-56 max-h-80 overflow-y-auto bg-card border-border z-50 scrollbar-styled"
                   >
                     {categories
                       .filter(cat => cat.slug !== category?.slug)

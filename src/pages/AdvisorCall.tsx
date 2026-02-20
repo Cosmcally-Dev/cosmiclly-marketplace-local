@@ -367,7 +367,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-styled">
             {chatMessages.map((msg) => (
               <div
                 key={msg.id}
