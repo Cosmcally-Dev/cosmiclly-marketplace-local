@@ -11,6 +11,7 @@ interface User {
   dateOfBirth?: string;
   timeOfBirth?: string;
   isAdvisor?: boolean;
+  avatarUrl?: string;
 }
 
 interface SavedCard {
@@ -85,6 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       dateOfBirth: metadata?.dateOfBirth,
       timeOfBirth: metadata?.timeOfBirth,
       isAdvisor: profile?.role === 'advisor' || metadata?.isAdvisor === true,
+      avatarUrl: profile?.avatar_url || undefined,
     };
   };
 

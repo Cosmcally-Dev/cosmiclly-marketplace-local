@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 130" fill="none">
+  <defs>
+    <linearGradient id="moonGrad" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#c4b5fd"/>
+    </linearGradient>
+    <linearGradient id="cGrad" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#e0f2fe"/>
+      <stop offset="100%" stop-color="#c7d2fe"/>
+    </linearGradient>
+    <mask id="crescent">
+      <circle cx="50" cy="73" r="50" fill="white"/>
+      <circle cx="69" cy="65" r="38" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Crescent moon body -->
+  <circle cx="50" cy="73" r="50" fill="url(#moonGrad)" mask="url(#crescent)"/>
+
+  <!-- C Letter -->
+  <text
+    x="30"
+    y="91"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="46"
+    fill="url(#cGrad)"
+    font-weight="400"
+  >C</text>
+
+  <!-- Large 4-pointed sparkle star -->
+  <g transform="translate(78, 29)">
+    <path d="M0,-13 L3,-3 L13,0 L3,3 L0,13 L-3,3 L-13,0 L-3,-3 Z" fill="white" opacity="0.95"/>
+    <circle cx="0" cy="0" r="2.5" fill="white"/>
+  </g>
+
+  <!-- Smaller 4-pointed sparkle star -->
+  <g transform="translate(95, 14)">
+    <path d="M0,-7.5 L1.8,-1.8 L7.5,0 L1.8,1.8 L0,7.5 L-1.8,1.8 L-7.5,0 L-1.8,-1.8 Z" fill="white" opacity="0.85"/>
+    <circle cx="0" cy="0" r="1.5" fill="white"/>
+  </g>
+</svg>

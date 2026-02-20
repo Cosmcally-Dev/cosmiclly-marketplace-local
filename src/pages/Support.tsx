@@ -51,7 +51,7 @@ const supportCategories = [
     description: 'Find answers to common questions about our services',
     color: 'from-purple-500 to-violet-600',
     articles: [
-      'What is Mystica and how does it work?',
+      'What is Cosmiclly and how does it work?',
       'What types of readings are available?',
       'How are advisors verified?',
       'What is your privacy policy?',
@@ -72,7 +72,7 @@ const quickActions = [
   {
     icon: Users,
     title: 'Advisor Community',
-    description: 'Resources and support exclusively for Mystica advisors',
+    description: 'Resources and support exclusively for Cosmiclly advisors',
     color: 'from-amber-500 to-orange-600',
     action: 'Advisor Portal',
   },

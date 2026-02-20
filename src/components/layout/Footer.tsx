@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 
 const footerLinks = {
   services: [
@@ -45,8 +45,8 @@ export const Footer = () => {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-7 h-7 text-primary" />
-              <span className="font-heading text-lg font-semibold text-gradient">Mystica</span>
+              <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-9 w-auto object-contain" />
+              <span className="font-heading text-lg font-semibold text-gradient">Cosmiclly</span>
             </Link>
             <p className="text-muted-foreground text-sm mb-5">
               Connect with gifted psychic advisors for guidance on love, career, and life.
@@ -57,7 +57,7 @@ export const Footer = () => {
                   key={social.label}
                   href={social.href}
                   aria-label={social.label}
-                  className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
+                  className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:bg-secondary hover:text-muted-foreground transition-colors"
                 >
                   <social.icon className="w-4 h-4" />
                 </a>
@@ -126,7 +126,7 @@ export const Footer = () => {
         <div className="pt-6 border-t border-border">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
             <p className="text-muted-foreground text-xs text-center md:text-left">
-              © {new Date().getFullYear()} Mystica. All rights reserved. For entertainment purposes only.
+              © {new Date().getFullYear()} Cosmiclly. All rights reserved. For entertainment purposes only.
             </p>
             <p className="text-muted-foreground text-xs text-center">
               18+ only. Readings are for guidance and should not replace professional advice.

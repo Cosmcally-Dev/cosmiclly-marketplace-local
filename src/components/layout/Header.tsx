@@ -126,8 +126,8 @@ export const Header = () => {
 
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <Sparkles className="w-7 h-7 text-primary" />
-              <span className="font-heading text-lg md:text-xl font-semibold text-gradient">Mystica</span>
+              <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-9 w-auto object-contain" />
+              <span className="font-heading text-lg md:text-xl font-semibold text-gradient">Cosmiclly</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -262,7 +262,7 @@ export const Header = () => {
                       className="cursor-pointer flex items-center gap-2 p-2.5"
                     >
                       <User className="w-4 h-4" />
-                      My Profile
+                      My Dashboard
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/activity")}
