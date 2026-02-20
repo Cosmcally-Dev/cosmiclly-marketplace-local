@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { TimePicker } from "@/components/ui/time-picker";
 import {
   DollarSign,
   Users,
@@ -14,7 +16,7 @@ import {
   TrendingUp,
   Clock,
   Camera,
-  Edit,
+  Loader2,
 } from "lucide-react";
 import {
   LineChart,
@@ -102,6 +104,10 @@ const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const AdvisorPrivateProfile = () => {
   const { user } = useAuth();
 
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user?.avatarUrl);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [isOnline, setIsOnline] = useState(true);
   const [pricePerMinute, setPricePerMinute] = useState("3.50");
   const [bio, setBio] = useState(
@@ -123,7 +129,10 @@ const AdvisorPrivateProfile = () => {
     Sat: { enabled: false, start: "10:00", end: "14:00" },
     Sun: { enabled: false, start: "10:00", end: "14:00" },
   });
-  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [scheduleChanged, setScheduleChanged] = useState(false);
+  const savedScheduleRef = useRef(schedule);
+  const [serviceChanged, setServiceChanged] = useState(false);
+  const savedServiceRef = useRef({ pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties] });
 
   const getInitials = () => {
     if (user?.firstName && user?.lastName)
@@ -132,10 +141,47 @@ const AdvisorPrivateProfile = () => {
     return "?";
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.id) return;
+    setIsUploading(true);
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${user.id}/avatar.${fileExt}`;
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
+    if (uploadError) {
+      console.error('Avatar upload error:', uploadError);
+      setIsUploading(false);
+      return;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', user.id);
+    if (!updateError) setAvatarUrl(publicUrl);
+    setIsUploading(false);
+    e.target.value = '';
+  };
+
   const toggleSpecialty = (s: string) => {
     setSelectedSpecialties((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
     );
+    setServiceChanged(true);
+  };
+
+  const handleSaveService = () => {
+    savedServiceRef.current = { pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties] };
+    setServiceChanged(false);
+  };
+
+  const handleDiscardService = () => {
+    setPricePerMinute(savedServiceRef.current.pricePerMinute);
+    setBio(savedServiceRef.current.bio);
+    setSelectedSpecialties(savedServiceRef.current.selectedSpecialties);
+    setServiceChanged(false);
   };
 
   const toggleDay = (day: string) => {
@@ -143,6 +189,7 @@ const AdvisorPrivateProfile = () => {
       ...prev,
       [day]: { ...prev[day], enabled: !prev[day].enabled },
     }));
+    setScheduleChanged(true);
   };
 
   const updateTime = (day: string, field: "start" | "end", value: string) => {
@@ -150,6 +197,17 @@ const AdvisorPrivateProfile = () => {
       ...prev,
       [day]: { ...prev[day], [field]: value },
     }));
+    setScheduleChanged(true);
+  };
+
+  const handleSaveSchedule = () => {
+    savedScheduleRef.current = schedule;
+    setScheduleChanged(false);
+  };
+
+  const handleDiscardSchedule = () => {
+    setSchedule(savedScheduleRef.current);
+    setScheduleChanged(false);
   };
 
   return (
@@ -157,15 +215,38 @@ const AdvisorPrivateProfile = () => {
       {/* Header / Welcome */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="relative group">
+          <div className="relative group cursor-pointer" onClick={() => !isUploading && fileInputRef.current?.click()}>
             <Avatar className="w-20 h-20 ring-4 ring-primary/30">
+              <AvatarImage src={avatarUrl} alt={user?.firstName || user?.username || "Advisor"} className="object-cover" />
               <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
                 {getInitials()}
               </AvatarFallback>
             </Avatar>
-            <button className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-              <Camera className="w-5 h-5 text-white" />
-            </button>
+
+            {/* Hover overlay */}
+            <div className="absolute inset-0 rounded-full bg-black/50 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+              ) : (
+                <>
+                  <Camera className="w-4 h-4 text-white" />
+                  <span className="text-white text-[10px] font-medium font-sans leading-none">Change</span>
+                </>
+              )}
+            </div>
+
+            {/* Always-visible camera badge */}
+            <span className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary border-2 border-card flex items-center justify-center shadow-md">
+              <Camera className="w-3 h-3 text-primary-foreground" />
+            </span>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground font-heading">
@@ -221,7 +302,7 @@ const AdvisorPrivateProfile = () => {
           },
         ].map((stat) => (
           <Card key={stat.label} className="bg-card border-border">
-            <CardContent className="p-5 flex items-center justify-between">
+            <CardContent className="p-5 flex items-start justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
                 <p className="text-2xl font-bold text-foreground mt-1">
@@ -331,10 +412,16 @@ const AdvisorPrivateProfile = () => {
 
       {/* Service Management */}
       <Card className="bg-card border-border">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base font-heading">
             Service Management
           </CardTitle>
+          {serviceChanged && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Unsaved changes
+            </span>
+          )}
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Price */}
@@ -346,7 +433,7 @@ const AdvisorPrivateProfile = () => {
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={pricePerMinute}
-                onChange={(e) => setPricePerMinute(e.target.value)}
+                onChange={(e) => { setPricePerMinute(e.target.value); setServiceChanged(true); }}
                 className="pl-8"
               />
             </div>
@@ -354,26 +441,12 @@ const AdvisorPrivateProfile = () => {
 
           {/* Bio */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm text-muted-foreground">Bio</label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditingBio(!isEditingBio)}
-              >
-                <Edit className="w-3 h-3 mr-1" />
-                {isEditingBio ? "Done" : "Edit"}
-              </Button>
-            </div>
-            {isEditingBio ? (
-              <Textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={3}
-              />
-            ) : (
-              <p className="text-sm text-foreground leading-relaxed">{bio}</p>
-            )}
+            <label className="text-sm text-muted-foreground">Bio</label>
+            <Textarea
+              value={bio}
+              onChange={(e) => { setBio(e.target.value); setServiceChanged(true); }}
+              rows={3}
+            />
           </div>
 
           {/* Specialties */}
@@ -392,15 +465,41 @@ const AdvisorPrivateProfile = () => {
               ))}
             </div>
           </div>
+
+          {serviceChanged && (
+            <div className="flex items-center justify-end gap-2 pt-4 mt-1 border-t border-border/50">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs font-sans text-muted-foreground hover:text-foreground"
+                onClick={handleDiscardService}
+              >
+                Discard
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs font-sans"
+                onClick={handleSaveService}
+              >
+                Save Changes
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Schedule */}
       <Card className="bg-card border-border">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="text-base font-heading">
             Availability Schedule
           </CardTitle>
+          {scheduleChanged && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Unsaved changes
+            </span>
+          )}
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -426,18 +525,14 @@ const AdvisorPrivateProfile = () => {
                   </div>
                   {s.enabled ? (
                     <div className="flex items-center gap-2 text-sm">
-                      <Input
-                        type="time"
+                      <TimePicker
                         value={s.start}
-                        onChange={(e) => updateTime(day, "start", e.target.value)}
-                        className="w-32 h-8 text-xs"
+                        onChange={(v) => updateTime(day, "start", v)}
                       />
                       <span className="text-muted-foreground">to</span>
-                      <Input
-                        type="time"
+                      <TimePicker
                         value={s.end}
-                        onChange={(e) => updateTime(day, "end", e.target.value)}
-                        className="w-32 h-8 text-xs"
+                        onChange={(v) => updateTime(day, "end", v)}
                       />
                     </div>
                   ) : (
@@ -449,6 +544,26 @@ const AdvisorPrivateProfile = () => {
               );
             })}
           </div>
+
+          {scheduleChanged && (
+            <div className="flex items-center justify-end gap-2 pt-4 mt-3 border-t border-border/50">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs font-sans text-muted-foreground hover:text-foreground"
+                onClick={handleDiscardSchedule}
+              >
+                Discard
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs font-sans"
+                onClick={handleSaveSchedule}
+              >
+                Save Schedule
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -460,7 +575,7 @@ const AdvisorPrivateProfile = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-styled">
             {mockReviews.map((review) => (
               <div
                 key={review.id}

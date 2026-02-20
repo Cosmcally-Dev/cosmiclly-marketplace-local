@@ -50,16 +50,16 @@ export const HowItWorksSection = () => {
           {steps.map((step, index) => (
             <div
               key={step.title}
-              className="relative text-center animate-fade-in"
+              className="relative text-center animate-fade-in pt-4"
               style={{ animationDelay: `${index * 0.15}s` }}
             >
               {/* Connector Line (Desktop) */}
               {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-px bg-gradient-to-r from-border via-primary/30 to-border" />
+                <div className="hidden md:block absolute top-[3.5rem] left-[60%] w-[80%] h-px bg-gradient-to-r from-border via-primary/30 to-border" />
               )}
 
               {/* Step Number */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white text-black text-xs font-bold flex items-center justify-center">
                 {index + 1}
               </div>
 

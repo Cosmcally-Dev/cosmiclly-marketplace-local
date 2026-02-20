@@ -239,6 +239,30 @@
     display: none;
   }
 
+  /* Modern styled scrollbar — themed to Northern Lights palette */
+  .scrollbar-styled {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(187 94% 43% / 0.35) transparent;
+  }
+
+  .scrollbar-styled::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .scrollbar-styled::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 100px;
+  }
+
+  .scrollbar-styled::-webkit-scrollbar-thumb {
+    background: hsl(187 94% 43% / 0.35);
+    border-radius: 100px;
+  }
+
+  .scrollbar-styled::-webkit-scrollbar-thumb:hover {
+    background: hsl(187 94% 43% / 0.65);
+  }
+
   /* 3D Card Flip Styles */
   .perspective-1000 {
     perspective: 1000px;

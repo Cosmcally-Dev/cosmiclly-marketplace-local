@@ -508,6 +508,31 @@ const AdvisorsListing = () => {
                     </SelectContent>
                   </Select>
 
+                  {/* Price Range Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="bg-secondary border-border whitespace-nowrap">
+                        ${priceRange[0].toFixed(2)} – ${priceRange[1].toFixed(2)}/min
+                        <ChevronDown className="w-4 h-4 ml-2" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-64 p-4" align="start">
+                      <p className="text-sm font-medium text-foreground mb-3">Price per minute</p>
+                      <Slider
+                        value={priceRange}
+                        onValueChange={setPriceRange}
+                        min={1.99}
+                        max={39.99}
+                        step={0.5}
+                        className="mb-3"
+                      />
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>${priceRange[0].toFixed(2)}</span>
+                        <span>${priceRange[1].toFixed(2)}/min</span>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="showOfflineDesktop"

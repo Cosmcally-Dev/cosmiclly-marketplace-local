@@ -262,7 +262,7 @@ export const Header = () => {
                       className="cursor-pointer flex items-center gap-2 p-2.5"
                     >
                       <User className="w-4 h-4" />
-                      My Profile
+                      My Dashboard
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/activity")}
