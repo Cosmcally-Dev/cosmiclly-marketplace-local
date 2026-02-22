@@ -22,7 +22,6 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { advisors, type Advisor } from "@/data/advisors";
-import { AuthModal } from "@/components/modals/AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 import aiTwinIcon from "@/assets/ai-twin-icon.png";
 
@@ -85,10 +84,8 @@ const AdvisorProfile = () => {
   const navigate = useNavigate();
   const [isFavorite, setIsFavorite] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<"chat" | "call" | null>(null);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, openAuthModal } = useAuth();
 
   // Find advisor by id or use first one as default
   const advisor = advisors.find((a) => a.id === id) || advisors[0];
@@ -97,8 +94,7 @@ const AdvisorProfile = () => {
     if (isAuthenticated) {
       navigate(`/chat/${advisor.id}`);
     } else {
-      setPendingAction("chat");
-      setIsAuthOpen(true);
+      openAuthModal('signin');
     }
   };
 
@@ -106,8 +102,7 @@ const AdvisorProfile = () => {
     if (isAuthenticated) {
       navigate(`/call/${advisor.id}`);
     } else {
-      setPendingAction("call");
-      setIsAuthOpen(true);
+      openAuthModal('signin');
     }
   };
 
@@ -115,17 +110,12 @@ const AdvisorProfile = () => {
     if (isAuthenticated) {
       navigate(`/video/${advisor.id}`);
     } else {
-      setIsAuthOpen(true);
+      openAuthModal('signin');
     }
   };
 
   const handleTwinClick = () => {
     navigate(`/advisor/${advisor.id}/ai`);
-  };
-
-  const handleAuthClose = () => {
-    setIsAuthOpen(false);
-    setPendingAction(null);
   };
 
   return (
@@ -527,8 +517,6 @@ const AdvisorProfile = () => {
       </main>
 
       <Footer />
-
-      <AuthModal isOpen={isAuthOpen} onClose={handleAuthClose} mode="signin" />
     </div>
   );
 };

@@ -59,6 +59,10 @@ interface AuthContextType {
   getDefaultCard: () => SavedCard | undefined;
   sessionLogs: SessionLog[];
   addSessionLog: (log: Omit<SessionLog, "id">) => void;
+  authModalOpen: boolean;
+  authModalMode: 'signin' | 'signup';
+  openAuthModal: (mode?: 'signin' | 'signup') => void;
+  closeAuthModal: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -70,6 +74,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [credits, setCredits] = useState<number>(0);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+
+  const openAuthModal = (mode: 'signin' | 'signup' = 'signin') => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setAuthModalOpen(false);
+  };
 
   // Build a User object from Supabase auth user + optional profile data
   const buildUserFromSession = (
@@ -347,6 +362,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         getDefaultCard,
         sessionLogs,
         addSessionLog,
+        authModalOpen,
+        authModalMode,
+        openAuthModal,
+        closeAuthModal,
       }}
     >
       {children}

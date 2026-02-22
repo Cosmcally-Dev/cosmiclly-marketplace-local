@@ -1,9 +1,6 @@
-import { useState } from 'react';
-import { Star, MoonStar, MessageCircle, Phone, Video, Award } from 'lucide-react';
+import { Star, MoonStar, MessageCircle, Phone, Video, Sparkles } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { AuthModal } from '@/components/modals/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { addToRecentlyViewed } from '@/components/home/RecentlyViewedSection';
 import type { Advisor } from '@/data/advisors';
@@ -20,11 +17,11 @@ interface AdvisorCardProps {
 const getStatusRingClass = (status: Advisor['status']) => {
   switch (status) {
     case 'online':
-      return 'ring-4 ring-emerald-500/80 ring-offset-2 ring-offset-card';
+      return 'ring-2 ring-cyan-500/70 ring-offset-2 ring-offset-card';
     case 'busy':
-      return 'ring-4 ring-rose-500/50 ring-offset-2 ring-offset-card';
+      return 'ring-2 ring-rose-500/50 ring-offset-2 ring-offset-card';
     case 'offline':
-      return 'ring-4 ring-muted/50 ring-offset-2 ring-offset-card';
+      return 'ring-2 ring-muted/50 ring-offset-2 ring-offset-card';
     default:
       return '';
   }
@@ -32,9 +29,7 @@ const getStatusRingClass = (status: Advisor['status']) => {
 
 export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   const navigate = useNavigate();
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'chat' | 'call' | null>(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, openAuthModal } = useAuth();
 
   const profileUrl = `/advisor/${advisor.id}`;
 
@@ -44,8 +39,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
   const handleChatClick = () => {
     if (!isAuthenticated) {
-      setPendingAction('chat');
-      setIsAuthOpen(true);
+      openAuthModal('signin');
       return;
     }
     navigate(`/chat/${advisor.id}`);
@@ -53,8 +47,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
   const handleCallClick = () => {
     if (!isAuthenticated) {
-      setPendingAction('call');
-      setIsAuthOpen(true);
+      openAuthModal('signin');
       return;
     }
     navigate(`/call/${advisor.id}`);
@@ -62,7 +55,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
   const handleVideoClick = () => {
     if (!isAuthenticated) {
-      setIsAuthOpen(true);
+      openAuthModal('signin');
       return;
     }
     navigate(`/video/${advisor.id}`);
@@ -70,11 +63,6 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
   const handleAIClick = () => {
     navigate(`/advisor/${advisor.id}/ai`);
-  };
-
-  const handleAuthClose = () => {
-    setIsAuthOpen(false);
-    setPendingAction(null);
   };
 
   return (
@@ -86,15 +74,16 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           {/* Top-left badges */}
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
             {advisor.isTopRated && (
-              <Badge className="bg-secondary text-secondary-foreground font-sans font-bold text-xs shadow-lg">
-                <Award className="w-3 h-3 mr-1" />
-                Top Rated
-              </Badge>
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/25 to-yellow-400/15 border border-amber-400/50 shadow-[0_0_10px_hsl(38_95%_55%/0.25)] backdrop-blur-sm">
+                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
+                <span className="text-[10px] font-bold font-sans tracking-wide text-amber-300 leading-none">Top Rated</span>
+              </div>
             )}
             {advisor.isNew && (
-              <Badge className="bg-primary text-primary-foreground font-sans font-medium text-xs">
-                New
-              </Badge>
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/40 shadow-[0_0_8px_hsl(var(--primary)/0.2)] backdrop-blur-sm">
+                <Sparkles className="w-2.5 h-2.5 text-primary shrink-0" />
+                <span className="text-[10px] font-bold font-sans tracking-wide text-primary leading-none">New</span>
+              </div>
             )}
           </div>
 
@@ -107,7 +96,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                 className={`w-full h-full rounded-full object-cover transition-all ${getStatusRingClass(advisor.status)}`}
               />
               {advisor.status === 'online' && (
-                <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-card animate-pulse" />
+                <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-cyan-500 border-2 border-card animate-pulse" />
               )}
             </div>
           </Link>
@@ -153,6 +142,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
               <span
                 key={specialty}
                 className="flex-1 min-w-0 truncate px-2.5 py-1 rounded-full text-xs font-sans font-medium text-center bg-secondary/20 text-secondary-foreground/70 border border-secondary/60"
+                style={{ paddingLeft: '0.325rem', paddingRight: '0.325rem', fontSize: '0.7rem' }}
               >
                 {specialty}
               </span>
@@ -192,11 +182,11 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           </div>
 
           {/* Action buttons */}
-          <div className="mt-auto">
+          <div className="mt-auto space-y-2">
             {advisor.status === 'online' ? (
               <>
-                {/* Primary: Chat + Call */}
-                <div className="grid grid-cols-2 gap-2 mb-2">
+                {/* Primary CTAs */}
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     onClick={handleChatClick}
                     className="font-sans bg-primary hover:bg-primary/90 text-primary-foreground text-sm h-10"
@@ -213,24 +203,22 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                   </Button>
                 </div>
 
-                {/* Secondary: Video + AI Twin */}
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
+                {/* Secondary segmented bar */}
+                <div className="flex items-center rounded-lg border border-border/50 overflow-hidden bg-secondary/10">
+                  <button
                     onClick={handleVideoClick}
-                    className="font-sans border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs h-9"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-sans text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors border-r border-border/50"
                   >
-                    <Video className="w-3.5 h-3.5 mr-1.5" />
-                    Video
-                  </Button>
-                  <Button
-                    variant="outline"
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Video</span>
+                  </button>
+                  <button
                     onClick={handleAIClick}
-                    className="font-sans border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs h-9"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-sans text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
                   >
-                    <img src={aiTwinIcon} alt="" className="w-3.5 h-3.5 mr-1.5 object-contain" />
-                    AI Twin
-                  </Button>
+                    <img src={aiTwinIcon} alt="" className="w-3 h-3 object-contain" />
+                    <span>AI Twin</span>
+                  </button>
                 </div>
               </>
             ) : (
@@ -244,11 +232,6 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           </div>
         </div>
 
-        <AuthModal
-          isOpen={isAuthOpen}
-          onClose={handleAuthClose}
-          mode="signin"
-        />
       </article>
     </TooltipProvider>
   );

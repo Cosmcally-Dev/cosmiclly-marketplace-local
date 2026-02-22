@@ -9,20 +9,18 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth, SignUpData } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { WelcomeModal } from './WelcomeModal';
-
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: 'signin' | 'signup';
+  onSignupSuccess?: (firstName: string) => void;
 }
 
-export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps) => {
+export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess }: AuthModalProps) => {
   const [mode, setMode] = useState(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
 
   // Form fields
   const [email, setEmail] = useState('');
@@ -105,7 +103,7 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
         const result = await signup(signUpData);
         if (result.success) {
           onClose();
-          setShowWelcome(true);
+          onSignupSuccess?.(firstName.trim());
         } else {
           setError(result.error || 'Signup failed');
         }
@@ -135,10 +133,6 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
 
   const handleForgotPassword = () => {
     toast({ title: 'Coming soon', description: 'Password reset will be available soon.' });
-  };
-
-  const handleWelcomeClose = () => {
-    setShowWelcome(false);
   };
 
   const labelClass = "text-xs font-medium text-foreground/65 h-5 flex items-center";
@@ -459,11 +453,6 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
         </DialogContent>
       </Dialog>
 
-      <WelcomeModal
-        isOpen={showWelcome}
-        onClose={handleWelcomeClose}
-        userName={firstName}
-      />
     </>
   );
 };

@@ -30,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "./MobileMenu";
 import { AuthModal } from "@/components/modals/AuthModal";
+import { WelcomeModal } from "@/components/modals/WelcomeModal";
 import { AdvisorApplicationModal } from "@/components/modals/AdvisorApplicationModal";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -63,15 +64,14 @@ const exploreMenuItems = [
 export const Header = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [welcomeName, setWelcomeName] = useState('');
 
-  const { user, isAuthenticated, logout, credits } = useAuth();
+  const { user, isAuthenticated, logout, credits, authModalOpen, authModalMode, openAuthModal, closeAuthModal } = useAuth();
 
   const handleAuth = (mode: "signin" | "signup") => {
-    setAuthMode(mode);
-    setIsAuthOpen(true);
+    openAuthModal(mode);
   };
 
   const handleSignOut = () => {
@@ -347,8 +347,20 @@ export const Header = () => {
       </header>
 
       <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} mode={authMode} />
-      <AdvisorApplicationModal isOpen={isApplicationOpen} onClose={() => setIsApplicationOpen(false)} />
+      {authModalOpen && (
+        <AuthModal
+          isOpen={true}
+          onClose={closeAuthModal}
+          mode={authModalMode}
+          onSignupSuccess={(name) => { setWelcomeOpen(true); setWelcomeName(name); }}
+        />
+      )}
+      {welcomeOpen && (
+        <WelcomeModal isOpen={true} onClose={() => setWelcomeOpen(false)} userName={welcomeName} />
+      )}
+      {isApplicationOpen && (
+        <AdvisorApplicationModal isOpen={true} onClose={() => setIsApplicationOpen(false)} />
+      )}
     </>
   );
 };
