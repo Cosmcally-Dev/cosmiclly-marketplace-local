@@ -21,8 +21,14 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+<<<<<<< HEAD
 import { advisors, type Advisor } from "@/data/advisors";
+=======
+import { type Advisor } from "@/data/advisors";
+import { AuthModal } from "@/components/modals/AuthModal";
+>>>>>>> b27371a3cad04e9cf9f5b2780dbfb52d80a92337
 import { useAuth } from "@/hooks/useAuth";
+import { useAdvisors } from "@/hooks/useAdvisors";
 import aiTwinIcon from "@/assets/ai-twin-icon.png";
 
 const StatusBadge = ({ status }: { status: Advisor["status"] }) => {
@@ -85,10 +91,15 @@ const AdvisorProfile = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
 
+<<<<<<< HEAD
   const { isAuthenticated, openAuthModal } = useAuth();
+=======
+  const { isAuthenticated } = useAuth();
+  const { advisors, getAdvisorById } = useAdvisors();
+>>>>>>> b27371a3cad04e9cf9f5b2780dbfb52d80a92337
 
   // Find advisor by id or use first one as default
-  const advisor = advisors.find((a) => a.id === id) || advisors[0];
+  const advisor = getAdvisorById(id) || advisors[0];
 
   const handleChatClick = () => {
     if (isAuthenticated) {

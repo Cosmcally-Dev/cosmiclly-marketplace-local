@@ -13,8 +13,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { categories } from '@/data/categories';
 
 const applicationSchema = z.object({
   fullName: z.string().trim().min(1, 'Full name is required').max(100, 'Name must be less than 100 characters'),
@@ -35,6 +37,7 @@ export const AdvisorApplicationModal = ({ isOpen, onClose }: AdvisorApplicationM
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [formData, setFormData] = useState<ApplicationFormData>({
     fullName: '',
     email: '',
@@ -43,6 +46,18 @@ export const AdvisorApplicationModal = ({ isOpen, onClose }: AdvisorApplicationM
     extraInfo: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof ApplicationFormData, string>>>({});
+
+  const toggleSpecialty = (label: string) => {
+    setSelectedSpecialties(prev => {
+      const next = prev.includes(label) ? prev.filter(s => s !== label) : [...prev, label];
+      // Sync with formData for validation
+      setFormData(fd => ({ ...fd, specialty: next.join(', ') }));
+      if (errors.specialty && next.length > 0) {
+        setErrors(e => ({ ...e, specialty: undefined }));
+      }
+      return next;
+    });
+  };
 
   const handleChange = (field: keyof ApplicationFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -100,6 +115,7 @@ export const AdvisorApplicationModal = ({ isOpen, onClose }: AdvisorApplicationM
         socialLink: '',
         extraInfo: '',
       });
+      setSelectedSpecialties([]);
 
       navigate('/advisor-portal');
     } catch (error) {
@@ -164,18 +180,22 @@ export const AdvisorApplicationModal = ({ isOpen, onClose }: AdvisorApplicationM
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="specialty" className="text-foreground">
-              Specialty <span className="text-destructive">*</span>
+            <Label className="text-foreground">
+              Specialties <span className="text-destructive">*</span>
+              <span className="text-xs text-muted-foreground ml-1">(select all that apply)</span>
             </Label>
-            <Input
-              id="specialty"
-              type="text"
-              placeholder="e.g., Tarot Reading, Astrology, Medium"
-              value={formData.specialty}
-              onChange={(e) => handleChange('specialty', e.target.value)}
-              className={errors.specialty ? 'border-destructive' : ''}
-              disabled={isLoading}
-            />
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <Badge
+                  key={cat.slug}
+                  variant={selectedSpecialties.includes(cat.label) ? "default" : "outline"}
+                  className="cursor-pointer select-none text-xs"
+                  onClick={() => !isLoading && toggleSpecialty(cat.label)}
+                >
+                  {cat.label}
+                </Badge>
+              ))}
+            </div>
             {errors.specialty && (
               <p className="text-sm text-destructive">{errors.specialty}</p>
             )}

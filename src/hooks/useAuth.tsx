@@ -42,12 +42,24 @@ export interface SignUpData {
   timeOfBirth?: string;
 }
 
+export interface UpdateProfileData {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  dateOfBirth?: string;
+  timeOfBirth?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (data: SignUpData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (data: UpdateProfileData) => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   isAuthenticated: boolean;
   isLoading: boolean;
   credits: number;
@@ -293,6 +305,92 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const resetPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/settings`,
+      });
+      if (error) throw error;
+      return { success: true };
+    } catch (err: any) {
+      console.error('Reset password error:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const updatePassword = async (newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      return { success: true };
+    } catch (err: any) {
+      console.error('Update password error:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const updateProfile = async (data: UpdateProfileData): Promise<{ success: boolean; error?: string }> => {
+    if (!user?.id) return { success: false, error: 'Not authenticated' };
+
+    try {
+      // Update profiles table
+      const profileUpdate: Record<string, any> = {};
+      if (data.firstName !== undefined || data.lastName !== undefined) {
+        profileUpdate.full_name = `${data.firstName || user.firstName || ''} ${data.lastName || user.lastName || ''}`.trim();
+      }
+      if (data.username !== undefined) profileUpdate.username = data.username;
+
+      if (Object.keys(profileUpdate).length > 0) {
+        const { error: dbError } = await supabase
+          .from('profiles')
+          .update(profileUpdate)
+          .eq('id', user.id);
+        if (dbError) throw dbError;
+      }
+
+      // Update auth metadata
+      const metadataUpdate: Record<string, any> = {};
+      if (data.firstName !== undefined) metadataUpdate.firstName = data.firstName;
+      if (data.lastName !== undefined) metadataUpdate.lastName = data.lastName;
+      if (data.username !== undefined) metadataUpdate.username = data.username;
+      if (data.dateOfBirth !== undefined) metadataUpdate.dateOfBirth = data.dateOfBirth;
+      if (data.timeOfBirth !== undefined) metadataUpdate.timeOfBirth = data.timeOfBirth;
+
+      if (Object.keys(metadataUpdate).length > 0) {
+        const { error: authError } = await supabase.auth.updateUser({ data: metadataUpdate });
+        if (authError) throw authError;
+      }
+
+      // Refresh local user state
+      const profile = await fetchProfile(user.id);
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession?.user) {
+        setUser(buildUserFromSession(currentSession.user, profile));
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('Update profile error:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const signInWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+      return { success: true };
+    } catch (err: any) {
+      console.error('Google sign-in error:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
   const addSessionLog = (log: Omit<SessionLog, "id">) => {
     const newLog: SessionLog = {
       ...log,
@@ -351,6 +449,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         signup,
         logout,
+        resetPassword,
+        updatePassword,
+        updateProfile,
+        signInWithGoogle,
         isAuthenticated: !!user,
         isLoading,
         credits,
