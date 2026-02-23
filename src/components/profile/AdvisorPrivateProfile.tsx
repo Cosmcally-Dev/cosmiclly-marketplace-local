@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,8 +108,38 @@ const AdvisorPrivateProfile = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(false);
   const [pricePerMinute, setPricePerMinute] = useState("3.50");
+
+  // Fetch current status from DB on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchStatus = async () => {
+      const { data, error } = await supabase
+        .from('advisor_details')
+        .select('status')
+        .eq('id', user.id)
+        .single();
+      if (!error && data) {
+        setIsOnline(data.status === 'online');
+      }
+    };
+    fetchStatus();
+  }, [user?.id]);
+
+  // Persist status toggle to DB
+  const handleStatusToggle = async (checked: boolean) => {
+    setIsOnline(checked); // Optimistic update
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from('advisor_details')
+      .update({ status: checked ? 'online' : 'offline' })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Status update error:', error);
+      setIsOnline(!checked); // Revert on failure
+    }
+  };
   const [bio, setBio] = useState(
     "Intuitive tarot reader and astrologer with over 8 years of experience guiding seekers on their spiritual journey."
   );
@@ -259,7 +289,7 @@ const AdvisorPrivateProfile = () => {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">Status</span>
-          <Switch checked={isOnline} onCheckedChange={setIsOnline} />
+          <Switch checked={isOnline} onCheckedChange={handleStatusToggle} />
           <Badge
             variant={isOnline ? "default" : "secondary"}
             className={
