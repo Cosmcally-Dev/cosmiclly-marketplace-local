@@ -60,6 +60,8 @@ interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (data: UpdateProfileData) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  isPasswordRecovery: boolean;
+  clearPasswordRecovery: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   credits: number;
@@ -82,6 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [credits, setCredits] = useState<number>(0);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   // Build a User object from Supabase auth user + optional profile data
   const buildUserFromSession = (
@@ -128,6 +131,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      // Detect password recovery flow from email reset link
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+      }
+
       setSession(session);
       if (session?.user) {
         // Set user immediately from JWT metadata (no await needed)
@@ -376,6 +384,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const clearPasswordRecovery = () => {
+    setIsPasswordRecovery(false);
+  };
+
   const addSessionLog = (log: Omit<SessionLog, "id">) => {
     const newLog: SessionLog = {
       ...log,
@@ -438,6 +450,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updatePassword,
         updateProfile,
         signInWithGoogle,
+        isPasswordRecovery,
+        clearPasswordRecovery,
         isAuthenticated: !!user,
         isLoading,
         credits,

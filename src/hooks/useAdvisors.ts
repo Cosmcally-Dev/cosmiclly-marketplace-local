@@ -79,6 +79,35 @@ export function useAdvisors(): UseAdvisorsResult {
     fetchAdvisors();
   }, [fetchAdvisors]);
 
+  // Realtime subscription for advisor status changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('advisor-status-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'advisor_details',
+        },
+        (payload) => {
+          const updated = payload.new as { id: string; status: string };
+          setDbAdvisors((prev) =>
+            prev.map((a) =>
+              a.id === updated.id
+                ? { ...a, status: (updated.status as Advisor['status']) || 'offline' }
+                : a
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, []);
+
   // Merge: DB advisors take priority, then static advisors that aren't already in DB
   const mergedAdvisors = useMemo(() => {
     const dbIds = new Set(dbAdvisors.map(a => a.id));

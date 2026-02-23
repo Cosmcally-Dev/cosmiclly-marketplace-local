@@ -27,7 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, savedCards, credits, deleteCard, setDefaultCard, updateProfile, updatePassword } = useAuth();
+  const { user, savedCards, credits, deleteCard, setDefaultCard, updateProfile, updatePassword, isPasswordRecovery, clearPasswordRecovery } = useAuth();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState<"profile" | "payment" | "history" | "notifications" | "security">(
@@ -64,6 +64,14 @@ const Settings = () => {
       });
     }
   }, [user]);
+
+  // Auto-open password change dialog when arriving from a password reset email link
+  useEffect(() => {
+    if (isPasswordRecovery) {
+      setActiveTab('security');
+      setIsChangingPassword(true);
+    }
+  }, [isPasswordRecovery]);
 
   // Notification preferences
   const [notifications, setNotifications] = useState({
@@ -128,6 +136,7 @@ const Settings = () => {
       setIsChangingPassword(false);
       setNewPassword("");
       setConfirmNewPassword("");
+      clearPasswordRecovery();
       toast({ title: "Password Updated", description: "Your password has been changed successfully." });
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error || "Could not update password." });

@@ -33,6 +33,7 @@ import {
 import { categories, getCategoryBySlug } from '@/data/categories';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useAdvisors } from '@/hooks/useAdvisors';
+import { AdvisorCardSkeleton } from '@/components/advisors/AdvisorCardSkeleton';
 
 type SortOption = 'recommended' | 'rating' | 'reviews' | 'price-low' | 'price-high';
 type StatusFilter = 'all' | 'online' | 'available';
@@ -65,7 +66,7 @@ const AdvisorsListing = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categorySlug = searchParams.get('category') || '';
   const searchQuery = searchParams.get('search') || '';
-  const { advisors } = useAdvisors();
+  const { advisors, isLoading: isAdvisorsLoading } = useAdvisors();
   
   // Filter states
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -594,7 +595,17 @@ const AdvisorsListing = () => {
             </div>
 
             {/* Advisors Grid */}
-            {displayedItems.length > 0 ? (
+            {isAdvisorsLoading ? (
+              <div className={`grid gap-4 md:gap-6 ${
+                viewMode === 'grid'
+                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                  : 'grid-cols-1'
+              }`}>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <AdvisorCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : displayedItems.length > 0 ? (
               <>
                 <div className={`grid gap-4 md:gap-6 ${
                   viewMode === 'grid' 
