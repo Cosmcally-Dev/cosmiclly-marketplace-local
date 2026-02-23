@@ -30,9 +30,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { advisors } from '@/data/advisors';
 import { categories, getCategoryBySlug } from '@/data/categories';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useAdvisors } from '@/hooks/useAdvisors';
 
 type SortOption = 'recommended' | 'rating' | 'reviews' | 'price-low' | 'price-high';
 type StatusFilter = 'all' | 'online' | 'available';
@@ -65,6 +65,7 @@ const AdvisorsListing = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categorySlug = searchParams.get('category') || '';
   const searchQuery = searchParams.get('search') || '';
+  const { advisors } = useAdvisors();
   
   // Filter states
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -175,7 +176,7 @@ const AdvisorsListing = () => {
     }
 
     return result;
-  }, [searchQuery, category, statusFilter, showOffline, minReviews, priceRange, sortBy]);
+  }, [advisors, searchQuery, category, statusFilter, showOffline, minReviews, priceRange, sortBy]);
 
   // Infinite scroll
   const { displayedItems, hasMore, isLoading, loadMoreRef, totalItems } = useInfiniteScroll({

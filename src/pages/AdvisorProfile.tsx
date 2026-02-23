@@ -21,9 +21,10 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { advisors, type Advisor } from "@/data/advisors";
+import { type Advisor } from "@/data/advisors";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdvisors } from "@/hooks/useAdvisors";
 import aiTwinIcon from "@/assets/ai-twin-icon.png";
 
 const StatusBadge = ({ status }: { status: Advisor["status"] }) => {
@@ -89,9 +90,10 @@ const AdvisorProfile = () => {
   const [pendingAction, setPendingAction] = useState<"chat" | "call" | null>(null);
 
   const { isAuthenticated } = useAuth();
+  const { advisors, getAdvisorById } = useAdvisors();
 
   // Find advisor by id or use first one as default
-  const advisor = advisors.find((a) => a.id === id) || advisors[0];
+  const advisor = getAdvisorById(id) || advisors[0];
 
   const handleChatClick = () => {
     if (isAuthenticated) {

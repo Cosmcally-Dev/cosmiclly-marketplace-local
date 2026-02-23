@@ -27,13 +27,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, savedCards, credits, deleteCard, setDefaultCard } = useAuth();
+  const { user, savedCards, credits, deleteCard, setDefaultCard, updateProfile, updatePassword } = useAuth();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState<"profile" | "payment" | "history" | "notifications" | "security">(
     "profile",
   );
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   // Profile form state
   const getFullName = () => {
@@ -77,12 +81,57 @@ const Settings = () => {
     { id: "security" as const, label: "Security", icon: Shield },
   ];
 
-  const handleSaveProfile = () => {
-    setIsEditProfileOpen(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been saved.",
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    const nameParts = profileData.name.trim().split(/\s+/);
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
+
+    const result = await updateProfile({
+      firstName,
+      lastName,
+      dateOfBirth: profileData.dateOfBirth || undefined,
     });
+
+    setIsSaving(false);
+
+    if (result.success) {
+      setIsEditProfileOpen(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: result.error || "Could not save profile. Please try again.",
+      });
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast({ variant: "destructive", title: "Error", description: "Password must be at least 6 characters." });
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      toast({ variant: "destructive", title: "Error", description: "Passwords do not match." });
+      return;
+    }
+
+    setIsSaving(true);
+    const result = await updatePassword(newPassword);
+    setIsSaving(false);
+
+    if (result.success) {
+      setIsChangingPassword(false);
+      setNewPassword("");
+      setConfirmNewPassword("");
+      toast({ title: "Password Updated", description: "Your password has been changed successfully." });
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.error || "Could not update password." });
+    }
   };
 
   return (
@@ -167,7 +216,7 @@ const Settings = () => {
                       </div>
                       <div>
                         <Label className="text-muted-foreground text-sm">Date of Birth</Label>
-                        <p className="text-foreground font-medium mt-1">Not set</p>
+                        <p className="text-foreground font-medium mt-1">{user?.dateOfBirth || "Not set"}</p>
                       </div>
                     </div>
 
@@ -376,9 +425,9 @@ const Settings = () => {
                       <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                         <div>
                           <p className="font-medium text-foreground">Password</p>
-                          <p className="text-sm text-muted-foreground">Last changed: Never</p>
+                          <p className="text-sm text-muted-foreground">Change your account password</p>
                         </div>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => setIsChangingPassword(true)}>
                           Change Password
                         </Button>
                       </div>
@@ -471,11 +520,55 @@ const Settings = () => {
               />
             </div>
             <div className="flex gap-3 pt-4">
-              <Button variant="outline" className="flex-1" onClick={() => setIsEditProfileOpen(false)}>
+              <Button variant="outline" className="flex-1" onClick={() => setIsEditProfileOpen(false)} disabled={isSaving}>
                 Cancel
               </Button>
-              <Button className="flex-1" onClick={handleSaveProfile}>
-                Save Changes
+              <Button className="flex-1" onClick={handleSaveProfile} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Modal */}
+      <Dialog open={isChangingPassword} onOpenChange={setIsChangingPassword}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                placeholder="At least 6 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
+              <Input
+                id="confirmNewPassword"
+                type="password"
+                placeholder="Re-enter new password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setIsChangingPassword(false); setNewPassword(""); setConfirmNewPassword(""); }}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button className="flex-1" onClick={handleChangePassword} disabled={isSaving}>
+                {isSaving ? "Updating..." : "Update Password"}
               </Button>
             </div>
           </div>

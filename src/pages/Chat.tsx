@@ -4,8 +4,8 @@ import { Send, Clock, Star, ArrowLeft, X } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { advisors } from '@/data/advisors';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdvisors } from '@/hooks/useAdvisors';
 import { ReviewModal } from '@/components/modals/ReviewModal';
 import { LowCreditWarning } from '@/components/session/LowCreditWarning';
 import { useToast } from '@/hooks/use-toast';
@@ -21,8 +21,9 @@ const Chat = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading, credits } = useAuth();
   const { toast } = useToast();
+  const { advisors, getAdvisorById } = useAdvisors();
 
-  const advisor = advisors.find(a => a.id === id) || advisors[0];
+  const advisor = getAdvisorById(id) || advisors[0];
   const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
 
   const [chatStatus, setChatStatus] = useState<'connecting' | 'ringing' | 'connected' | 'ended'>('connecting');
