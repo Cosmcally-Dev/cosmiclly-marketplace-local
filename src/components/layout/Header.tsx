@@ -26,6 +26,7 @@ import {
   Wallet,
   Activity,
   Phone,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "./MobileMenu";
@@ -303,6 +304,15 @@ export const Header = () => {
                           Advisor Dashboard
                         </DropdownMenuItem>
                       </>
+                    )}
+                    {user?.isAdmin && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/admin")}
+                        className="cursor-pointer flex items-center gap-2 p-2.5"
+                      >
+                        <Shield className="w-4 h-4" />
+                        Admin Panel
+                      </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

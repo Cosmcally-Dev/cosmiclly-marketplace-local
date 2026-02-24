@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Clock, Star, ArrowLeft, X } from 'lucide-react';
+import { Send, Clock, Star, ArrowLeft, X, Check, CheckCheck } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useSessionRealtime } from '@/hooks/useSessionRealtime';
 import { useChatMessages } from '@/hooks/useChatMessages';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { useChatHistory } from '@/hooks/useChatHistory';
 import type { ConnectionQuality } from '@/types/session';
 
 const RINGING_TIMEOUT_MS = 60000; // 60 seconds
@@ -44,8 +46,22 @@ const Chat = () => {
   const ringingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Real-time chat messages hook
-  const { messages, sendMessage } = useChatMessages(
+  const { messages, sendMessage, markAsRead } = useChatMessages(
     chatStatus === 'connected' ? sessionId : null
+  );
+
+  // Typing indicator
+  const { isRemoteTyping, setLocalTyping } = useTypingIndicator(
+    chatStatus === 'connected' ? sessionId : null,
+    user?.id || null
+  );
+
+  // Past chat history between this client and advisor
+  const advisorDbId = advisor?.dbId || advisor?.id || null;
+  const { pastMessages } = useChatHistory(
+    chatStatus === 'connected' ? user?.id || null : null,
+    chatStatus === 'connected' ? advisorDbId : null,
+    sessionId
   );
 
   // Handle session status changes via Supabase Realtime
@@ -225,6 +241,15 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Mark incoming messages as read
+  useEffect(() => {
+    if (!user?.id || chatStatus !== 'connected') return;
+    const unread = messages.filter(m => m.sender_id !== user.id && !m.read_at);
+    if (unread.length > 0) {
+      markAsRead(unread.map(m => m.id));
+    }
+  }, [messages, user?.id, chatStatus, markAsRead]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -293,6 +318,7 @@ const Chat = () => {
 
     const content = inputValue.trim();
     setInputValue('');
+    setLocalTyping(false);
 
     try {
       await sendMessage(content, user.id);
@@ -478,7 +504,48 @@ const Chat = () => {
           {/* Chat messages - only when connected or ended */}
           {(chatStatus === 'connected' || chatStatus === 'ended') && (
             <>
-              {messages.length === 0 && chatStatus === 'connected' && (
+              {/* Previous conversations */}
+              {pastMessages.length > 0 && (
+                <>
+                  {pastMessages.map((message) => {
+                    const isUser = message.sender_id === user?.id;
+                    const timestamp = new Date(message.created_at);
+                    return (
+                      <div
+                        key={`past-${message.id}`}
+                        className={`flex ${isUser ? 'justify-end' : 'justify-start'} opacity-50`}
+                      >
+                        {!isUser && (
+                          <img
+                            src={advisor.avatar}
+                            alt={advisor.name}
+                            className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
+                          />
+                        )}
+                        <div
+                          className={`max-w-[70%] p-4 rounded-2xl ${
+                            isUser
+                              ? 'bg-primary/60 text-primary-foreground rounded-br-md'
+                              : 'bg-secondary/60 text-foreground rounded-bl-md'
+                          }`}
+                        >
+                          <p className="text-sm leading-relaxed">{message.content}</p>
+                          <span className="text-xs mt-1 block text-muted-foreground">
+                            {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="flex items-center gap-3 py-2">
+                    <div className="flex-1 border-t border-border" />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Previous conversations</span>
+                    <div className="flex-1 border-t border-border" />
+                  </div>
+                </>
+              )}
+
+              {messages.length === 0 && pastMessages.length === 0 && chatStatus === 'connected' && (
                 <div className="text-center text-muted-foreground text-sm py-8">
                   Chat session started. Say hello to {advisor.name}!
                 </div>
@@ -507,16 +574,39 @@ const Chat = () => {
                       }`}
                     >
                       <p className="text-sm leading-relaxed">{message.content}</p>
-                      <span className={`text-xs mt-1 block ${
-                        isUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                      <span className={`text-xs mt-1 flex items-center gap-1 ${
+                        isUser ? 'text-primary-foreground/70 justify-end' : 'text-muted-foreground'
                       }`}>
                         {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {isUser && (
+                          message.read_at
+                            ? <CheckCheck className="w-3.5 h-3.5 text-accent" />
+                            : <Check className="w-3.5 h-3.5" />
+                        )}
                       </span>
                     </div>
                   </div>
                 );
               })}
             </>
+          )}
+
+          {/* Typing indicator */}
+          {isRemoteTyping && chatStatus === 'connected' && (
+            <div className="flex justify-start">
+              <img
+                src={advisor.avatar}
+                alt={advisor.name}
+                className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
+              />
+              <div className="bg-secondary text-foreground rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
           )}
 
           <div ref={messagesEndRef} />
@@ -536,7 +626,7 @@ const Chat = () => {
                     : "Type your message..."
                 }
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => { setInputValue(e.target.value); if (e.target.value.trim()) setLocalTyping(true); }}
                 onKeyPress={handleKeyPress}
                 className="flex-1 h-12 bg-background border-border"
                 disabled={isSessionEnded || chatStatus !== 'connected'}

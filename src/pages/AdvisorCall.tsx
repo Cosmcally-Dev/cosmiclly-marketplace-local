@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX,
   Clock, ArrowLeft, Wifi, WifiOff, Users, MessageCircle, Video,
-  Check, X, Send
+  Check, CheckCheck, X, Send
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { useWebRTC } from '@/hooks/useWebRTC';
 import { useAdvisorIncomingCalls } from '@/hooks/useAdvisorIncomingCalls';
 import { useSessionRealtime } from '@/hooks/useSessionRealtime';
 import { useChatMessages } from '@/hooks/useChatMessages';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { useChatHistory } from '@/hooks/useChatHistory';
 import type { ConnectionQuality } from '@/types/session';
 
 // ============================================
@@ -171,6 +173,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
   const { toast } = useToast();
 
   const [clientName, setClientName] = useState('Client');
+  const [clientId, setClientId] = useState<string | null>(null);
   const [sessionType, setSessionType] = useState<'audio' | 'video' | 'chat'>('audio');
   const [elapsedTime, setElapsedTime] = useState(0);
   const [startedAt, setStartedAt] = useState<Date | null>(null);
@@ -185,8 +188,21 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Chat messages hook (for chat sessions)
-  const { messages: chatMessages, sendMessage } = useChatMessages(
+  const { messages: chatMessages, sendMessage, markAsRead } = useChatMessages(
     sessionType === 'chat' ? sessionId : null
+  );
+
+  // Typing indicator (for chat sessions)
+  const { isRemoteTyping, setLocalTyping } = useTypingIndicator(
+    sessionType === 'chat' ? sessionId : null,
+    user?.id || null
+  );
+
+  // Past chat history (for chat sessions)
+  const { pastMessages } = useChatHistory(
+    sessionType === 'chat' ? clientId : null,
+    sessionType === 'chat' ? user?.id || null : null,
+    sessionId
   );
 
   // LiveKit WebRTC — for audio/video sessions
@@ -257,6 +273,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
       }
 
       setClientName((session as any).profiles?.full_name || 'Client');
+      setClientId(session.client_id);
       const type = session.type as 'audio' | 'video' | 'chat';
       setSessionType(type);
       setStartedAt(session.started_at ? new Date(session.started_at) : new Date());
@@ -294,6 +311,15 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
+  // Mark client messages as read (advisor side)
+  useEffect(() => {
+    if (!user?.id || sessionType !== 'chat') return;
+    const unread = chatMessages.filter(m => m.sender_id !== user.id && !m.read_at);
+    if (unread.length > 0) {
+      markAsRead(unread.map(m => m.id));
+    }
+  }, [chatMessages, user?.id, sessionType, markAsRead]);
+
   // Handle WebRTC errors
   useEffect(() => {
     if (webrtcError?.startsWith('PERMISSION_DENIED')) {
@@ -319,6 +345,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
     if (!chatInput.trim() || !user?.id) return;
     const content = chatInput.trim();
     setChatInput('');
+    setLocalTyping(false);
     try {
       await sendMessage(content, user.id);
     } catch {
@@ -368,6 +395,33 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Previous conversations */}
+            {pastMessages.length > 0 && (
+              <>
+                {pastMessages.map((msg) => (
+                  <div
+                    key={`past-${msg.id}`}
+                    className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'} opacity-50`}
+                  >
+                    <div className={`max-w-[70%] p-4 rounded-2xl ${
+                      msg.sender_id === user?.id
+                        ? 'bg-primary/60 text-primary-foreground rounded-br-md'
+                        : 'bg-secondary/60 text-foreground rounded-bl-md'
+                    }`}>
+                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                      <span className="text-xs mt-1 block text-muted-foreground">
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex items-center gap-3 py-2">
+                  <div className="flex-1 border-t border-border" />
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Previous conversations</span>
+                  <div className="flex-1 border-t border-border" />
+                </div>
+              </>
+            )}
             {chatMessages.map((msg) => (
               <div
                 key={msg.id}
@@ -379,14 +433,31 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
                     : 'bg-secondary text-foreground rounded-bl-md'
                 }`}>
                   <p className="text-sm leading-relaxed">{msg.content}</p>
-                  <span className={`text-xs mt-1 block ${
-                    msg.sender_id === user?.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                  <span className={`text-xs mt-1 flex items-center gap-1 ${
+                    msg.sender_id === user?.id ? 'text-primary-foreground/70 justify-end' : 'text-muted-foreground'
                   }`}>
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {msg.sender_id === user?.id && (
+                      msg.read_at
+                        ? <CheckCheck className="w-3.5 h-3.5 text-accent" />
+                        : <Check className="w-3.5 h-3.5" />
+                    )}
                   </span>
                 </div>
               </div>
             ))}
+            {/* Typing indicator */}
+            {isRemoteTyping && !sessionEnded && (
+              <div className="flex justify-start">
+                <div className="bg-secondary text-foreground rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
@@ -396,7 +467,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
               <Input
                 placeholder={sessionEnded ? 'Session ended' : 'Type your message...'}
                 value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
+                onChange={(e) => { setChatInput(e.target.value); if (e.target.value.trim()) setLocalTyping(true); }}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendChat(); } }}
                 disabled={sessionEnded}
                 className="flex-1 h-12"

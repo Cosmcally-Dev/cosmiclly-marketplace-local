@@ -11,6 +11,7 @@ interface User {
   dateOfBirth?: string;
   timeOfBirth?: string;
   isAdvisor?: boolean;
+  isAdmin?: boolean;
   avatarUrl?: string;
 }
 
@@ -100,7 +101,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       username: profile?.username || metadata?.username,
       dateOfBirth: metadata?.dateOfBirth,
       timeOfBirth: metadata?.timeOfBirth,
-      isAdvisor: profile?.role === 'advisor' || metadata?.isAdvisor === true,
+      isAdvisor: profile?.role === 'advisor' || profile?.role === 'admin' || metadata?.isAdvisor === true,
+      isAdmin: profile?.role === 'admin',
       avatarUrl: profile?.avatar_url || undefined,
     };
   };
