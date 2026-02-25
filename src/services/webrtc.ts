@@ -195,15 +195,23 @@ export class WebRTCService {
   }
 
   private async fetchLiveKitToken(): Promise<LiveKitTokenResponse> {
-    // UPDATED: Use supabase.functions.invoke instead of manual fetch
-    // This handles the Authorization header automatically and refreshes the token if needed
+    // Explicitly get the current session's access token to ensure we send the
+    // user's JWT, not the anon key. The FunctionsClient can have a stale
+    // Authorization header if onAuthStateChange hasn't propagated yet.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Not authenticated — cannot fetch LiveKit token');
+    }
+
     const { data, error } = await supabase.functions.invoke('generate-livekit-token', {
       body: { sessionId: this.config.sessionId },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
 
     if (error) {
       console.error('[WebRTC] Token generation error details:', error);
-      // Fallback: If it's a specific auth error, try to logout/login or prompt user
       throw new Error(`LiveKit token failed: ${error.message || 'Unknown error'}`);
     }
 
