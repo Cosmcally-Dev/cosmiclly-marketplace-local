@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,6 +104,7 @@ const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const AdvisorPrivateProfile = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user?.avatarUrl);
   const [isUploading, setIsUploading] = useState(false);
@@ -111,20 +113,38 @@ const AdvisorPrivateProfile = () => {
   const [isOnline, setIsOnline] = useState(false);
   const [pricePerMinute, setPricePerMinute] = useState("3.50");
 
-  // Fetch current status from DB on mount
+  // Fetch all advisor details from DB on mount
   useEffect(() => {
     if (!user?.id) return;
-    const fetchStatus = async () => {
+    const lsKey = `advisor_schedule_${user.id}`;
+    const fetchDetails = async () => {
       const { data, error } = await supabase
         .from('advisor_details')
-        .select('status')
+        .select('status, price_per_minute, bio_long, specialties, schedule')
         .eq('id', user.id)
         .single();
       if (!error && data) {
         setIsOnline(data.status === 'online');
+        const dbPrice = data.price_per_minute != null ? String(data.price_per_minute) : "3.50";
+        const dbBio = data.bio_long ?? bio;
+        const dbSpecialties = data.specialties?.length ? data.specialties : selectedSpecialties;
+        // Prefer DB schedule, fall back to localStorage, then hardcoded defaults
+        let resolvedSchedule = (data.schedule as typeof schedule) ?? null;
+        if (!resolvedSchedule) {
+          const ls = localStorage.getItem(lsKey);
+          if (ls) resolvedSchedule = JSON.parse(ls) as typeof schedule;
+        }
+        resolvedSchedule ??= schedule;
+        setPricePerMinute(dbPrice);
+        setBio(dbBio);
+        setSelectedSpecialties(dbSpecialties);
+        setSchedule(resolvedSchedule);
+        savedServiceRef.current = { pricePerMinute: dbPrice, bio: dbBio, selectedSpecialties: [...dbSpecialties] };
+        savedScheduleRef.current = resolvedSchedule;
       }
     };
-    fetchStatus();
+    fetchDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Persist status toggle to DB
@@ -202,9 +222,24 @@ const AdvisorPrivateProfile = () => {
     setServiceChanged(true);
   };
 
-  const handleSaveService = () => {
+  const handleSaveService = async () => {
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from('advisor_details')
+      .update({
+        price_per_minute: parseFloat(pricePerMinute) || 0,
+        bio_long: bio,
+        specialties: selectedSpecialties,
+      })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Service save error:', error);
+      toast({ title: "Failed to save", description: error.message, variant: "destructive" });
+      return;
+    }
     savedServiceRef.current = { pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties] };
     setServiceChanged(false);
+    toast({ title: "Service settings saved" });
   };
 
   const handleDiscardService = () => {
@@ -230,9 +265,22 @@ const AdvisorPrivateProfile = () => {
     setScheduleChanged(true);
   };
 
-  const handleSaveSchedule = () => {
+  const handleSaveSchedule = async () => {
+    if (!user?.id) return;
+    // Always persist to localStorage so refresh works immediately
+    localStorage.setItem(`advisor_schedule_${user.id}`, JSON.stringify(schedule));
+    // Also attempt DB save (requires schedule column migration to be applied)
+    const { error } = await supabase
+      .from('advisor_details')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update({ schedule: schedule as any })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Schedule DB save error (localStorage used as fallback):', error);
+    }
     savedScheduleRef.current = schedule;
     setScheduleChanged(false);
+    toast({ title: "Schedule saved" });
   };
 
   const handleDiscardSchedule = () => {
