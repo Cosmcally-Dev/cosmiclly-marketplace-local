@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Gift, Zap } from 'lucide-react';
+import { ArrowLeft, Gift, Zap, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import PaymentMethodModal from '@/components/modals/PaymentMethodModal';
-import CardDetailsModal from '@/components/modals/CardDetailsModal';
+import { supabase } from '@/integrations/supabase/client';
 
 const creditPackages = [
   { amount: 10, bonus: 0, popular: false },
@@ -20,83 +19,57 @@ const creditPackages = [
 
 const AddCredit = () => {
   const navigate = useNavigate();
-  const { addCredits, addCard } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [loadingPackage, setLoadingPackage] = useState<number | null>(null);
 
-  const handlePackageClick = (amount: number) => {
-    setSelectedAmount(amount);
-    setIsPaymentModalOpen(true);
+  const handlePackageClick = async (amount: number) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Not Logged In",
+        description: "Please sign in to purchase credits.",
+      });
+      return;
+    }
+
+    setLoadingPackage(amount);
+
+    try {
+      const selectedPackage = creditPackages.find(p => p.amount === amount);
+      const bonus = selectedPackage?.bonus || 0;
+
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          amount,
+          bonus,
+          origin: window.location.origin,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        variant: "destructive",
+        title: "Payment Error",
+        description: error.message || "Failed to start checkout. Please try again.",
+      });
+      setLoadingPackage(null);
+    }
   };
-
-  const handleAddCard = () => {
-    setIsPaymentModalOpen(false);
-    setIsCardModalOpen(true);
-  };
-
-  const handleCardSubmit = (cardDetails: { cardholderName: string; cardNumber: string; expirationDate: string }) => {
-    const selectedPackage = creditPackages.find(p => p.amount === selectedAmount);
-    const totalCredits = (selectedAmount || 0) + (selectedPackage?.bonus || 0);
-    
-    // Save card (only last 4 digits)
-    addCard({
-      cardholderName: cardDetails.cardholderName,
-      lastFourDigits: cardDetails.cardNumber.replace(/\s/g, '').slice(-4),
-      expirationDate: cardDetails.expirationDate,
-    });
-    
-    // Add credits
-    addCredits(totalCredits);
-    
-    setIsCardModalOpen(false);
-    setSelectedAmount(null);
-    
-    toast({
-      title: "Payment Successful!",
-      description: `$${totalCredits} credits have been added to your account.`,
-    });
-  };
-
-  const handlePaymentMethod = (method: 'google' | 'paypal') => {
-    const selectedPackage = creditPackages.find(p => p.amount === selectedAmount);
-    const totalCredits = (selectedAmount || 0) + (selectedPackage?.bonus || 0);
-    
-    // Add credits
-    addCredits(totalCredits);
-    
-    setIsPaymentModalOpen(false);
-    setSelectedAmount(null);
-    
-    toast({
-      title: "Payment Successful!",
-      description: `$${totalCredits} credits have been added to your account via ${method === 'google' ? 'Google Pay' : 'PayPal'}.`,
-    });
-  };
-
-  const handleUseSavedCard = (cardId: string) => {
-    const selectedPackage = creditPackages.find(p => p.amount === selectedAmount);
-    const totalCredits = (selectedAmount || 0) + (selectedPackage?.bonus || 0);
-    
-    // Add credits
-    addCredits(totalCredits);
-    
-    setIsPaymentModalOpen(false);
-    setSelectedAmount(null);
-    
-    toast({
-      title: "Payment Successful!",
-      description: `$${totalCredits} credits have been added to your account.`,
-    });
-  };
-
-  const selectedPackage = creditPackages.find(p => p.amount === selectedAmount);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      
+
       <main className="flex-1 pt-20">
         <div className="container mx-auto px-4 py-8">
           {/* Back Button */}
@@ -125,7 +98,8 @@ const AddCredit = () => {
               <button
                 key={pkg.amount}
                 onClick={() => handlePackageClick(pkg.amount)}
-                className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg text-left ${
+                disabled={loadingPackage !== null}
+                className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg text-left disabled:opacity-60 disabled:hover:scale-100 ${
                   pkg.popular
                     ? 'border-primary bg-primary/5 shadow-md'
                     : 'border-border bg-card hover:border-primary/50'
@@ -139,24 +113,33 @@ const AddCredit = () => {
                 )}
 
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-foreground mb-2">
-                    ${pkg.amount}
-                  </div>
-                  
-                  {pkg.bonus > 0 && (
-                    <div className="flex items-center justify-center gap-1 text-green-600 dark:text-green-400 font-medium">
-                      <Gift className="w-4 h-4" />
-                      +${pkg.bonus} Bonus
+                  {loadingPackage === pkg.amount ? (
+                    <div className="flex flex-col items-center gap-2 py-2">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <span className="text-sm text-muted-foreground">Redirecting to checkout...</span>
                     </div>
-                  )}
+                  ) : (
+                    <>
+                      <div className="text-4xl font-bold text-foreground mb-2">
+                        ${pkg.amount}
+                      </div>
 
-                  <div className="mt-4 text-sm text-muted-foreground">
-                    {pkg.bonus > 0 ? (
-                      <span>Get <span className="font-semibold text-foreground">${pkg.amount + pkg.bonus}</span> in credits</span>
-                    ) : (
-                      <span>Get ${pkg.amount} in credits</span>
-                    )}
-                  </div>
+                      {pkg.bonus > 0 && (
+                        <div className="flex items-center justify-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                          <Gift className="w-4 h-4" />
+                          +${pkg.bonus} Bonus
+                        </div>
+                      )}
+
+                      <div className="mt-4 text-sm text-muted-foreground">
+                        {pkg.bonus > 0 ? (
+                          <span>Get <span className="font-semibold text-foreground">${pkg.amount + pkg.bonus}</span> in credits</span>
+                        ) : (
+                          <span>Get ${pkg.amount} in credits</span>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               </button>
             ))}
@@ -171,7 +154,7 @@ const AddCredit = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span>Secure Payment</span>
+                <span>Secure Payment via Stripe</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -195,24 +178,6 @@ const AddCredit = () => {
       </main>
 
       <Footer />
-
-      {/* Payment Method Modal */}
-      <PaymentMethodModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        amount={selectedAmount || 0}
-        bonus={selectedPackage?.bonus || 0}
-        onAddCard={handleAddCard}
-        onPaymentMethod={handlePaymentMethod}
-        onUseSavedCard={handleUseSavedCard}
-      />
-
-      {/* Card Details Modal */}
-      <CardDetailsModal
-        isOpen={isCardModalOpen}
-        onClose={() => setIsCardModalOpen(false)}
-        onSubmit={handleCardSubmit}
-      />
     </div>
   );
 };

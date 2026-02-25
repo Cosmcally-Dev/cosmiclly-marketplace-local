@@ -13,14 +13,7 @@ interface User {
   isAdvisor?: boolean;
   isAdmin?: boolean;
   avatarUrl?: string;
-}
-
-interface SavedCard {
-  id: string;
-  cardholderName: string;
-  lastFourDigits: string;
-  expirationDate: string;
-  isDefault?: boolean;
+  stripeCustomerId?: string;
 }
 
 export interface SessionLog {
@@ -67,11 +60,7 @@ interface AuthContextType {
   isLoading: boolean;
   credits: number;
   addCredits: (amount: number) => Promise<void>;
-  savedCards: SavedCard[];
-  addCard: (card: Omit<SavedCard, "id">) => void;
-  deleteCard: (cardId: string) => void;
-  setDefaultCard: (cardId: string) => void;
-  getDefaultCard: () => SavedCard | undefined;
+  refreshCredits: () => Promise<void>;
   sessionLogs: SessionLog[];
   addSessionLog: (log: Omit<SessionLog, "id">) => void;
   authModalOpen: boolean;
@@ -87,7 +76,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [credits, setCredits] = useState<number>(0);
-  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
@@ -119,6 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAdvisor: profile?.role === 'advisor' || profile?.role === 'admin' || metadata?.isAdvisor === true,
       isAdmin: profile?.role === 'admin',
       avatarUrl: profile?.avatar_url || undefined,
+      stripeCustomerId: profile?.stripe_customer_id || undefined,
     };
   };
 
@@ -213,11 +202,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
       });
 
-    // Load saved cards and session logs from localStorage (these remain local)
-    const storedCards = localStorage.getItem("savedCards");
+    // Load session logs from localStorage
     const storedLogs = localStorage.getItem("sessionLogs");
-
-    if (storedCards) setSavedCards(JSON.parse(storedCards));
     if (storedLogs) setSessionLogs(JSON.parse(storedLogs));
 
     return () => subscription.unsubscribe();
@@ -281,11 +267,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setSession(null);
     setCredits(0);
-    setSavedCards([]);
     setSessionLogs([]);
-
-    // Clear localStorage
-    localStorage.removeItem("savedCards");
     localStorage.removeItem("sessionLogs");
   };
 
@@ -312,6 +294,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (profile) {
       setCredits(profile.credits);
+    }
+  };
+
+  const refreshCredits = async () => {
+    if (!user?.id) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('credits, stripe_customer_id')
+      .eq('id', user.id)
+      .single();
+
+    if (profile) {
+      setCredits(profile.credits || 0);
+      if (profile.stripe_customer_id) {
+        setUser(prev => prev ? { ...prev, stripeCustomerId: profile.stripe_customer_id } : prev);
+      }
     }
   };
 
@@ -415,46 +414,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("sessionLogs", JSON.stringify(newLogs));
   };
 
-  const addCard = (card: Omit<SavedCard, "id">) => {
-    const isFirstCard = savedCards.length === 0;
-    const newCard: SavedCard = {
-      ...card,
-      id: crypto.randomUUID(),
-      isDefault: isFirstCard,
-    };
-    const newCards = [...savedCards, newCard];
-    setSavedCards(newCards);
-    localStorage.setItem("savedCards", JSON.stringify(newCards));
-  };
-
-  const deleteCard = (cardId: string) => {
-    const cardToDelete = savedCards.find((c) => c.id === cardId);
-    let newCards = savedCards.filter((c) => c.id !== cardId);
-
-    if (cardToDelete?.isDefault && newCards.length > 0) {
-      newCards = newCards.map((c, index) => ({
-        ...c,
-        isDefault: index === 0,
-      }));
-    }
-
-    setSavedCards(newCards);
-    localStorage.setItem("savedCards", JSON.stringify(newCards));
-  };
-
-  const setDefaultCard = (cardId: string) => {
-    const newCards = savedCards.map((card) => ({
-      ...card,
-      isDefault: card.id === cardId,
-    }));
-    setSavedCards(newCards);
-    localStorage.setItem("savedCards", JSON.stringify(newCards));
-  };
-
-  const getDefaultCard = () => {
-    return savedCards.find((card) => card.isDefault);
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -473,11 +432,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         credits,
         addCredits,
-        savedCards,
-        addCard,
-        deleteCard,
-        setDefaultCard,
-        getDefaultCard,
+        refreshCredits,
         sessionLogs,
         addSessionLog,
         authModalOpen,
