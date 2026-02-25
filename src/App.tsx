@@ -27,6 +27,8 @@ const Profile = React.lazy(() => import("./pages/Profile"));
 const TestGuide = React.lazy(() => import("./pages/TestGuide"));
 const Activity = React.lazy(() => import("./pages/Activity"));
 const AdminPanel = React.lazy(() => import("./pages/admin/AdminPanel"));
+const AdvisorClients = React.lazy(() => import("./pages/AdvisorClients"));
+const AdvisorInsights = React.lazy(() => import("./pages/AdvisorInsights"));
 
 const queryClient = new QueryClient();
 
@@ -68,6 +70,8 @@ const App = () => (
               <Route path="/activity" element={<Activity />} />
               <Route path="/test-guide" element={<TestGuide />} />
               <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/advisor-clients" element={<AdvisorClients />} />
+              <Route path="/advisor-insights" element={<AdvisorInsights />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

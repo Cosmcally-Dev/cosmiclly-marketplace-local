@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,123 +13,164 @@ import { Textarea } from "@/components/ui/textarea";
 import { TimePicker } from "@/components/ui/time-picker";
 import {
   DollarSign,
-  Users,
   Star,
-  TrendingUp,
-  Clock,
   Camera,
   Loader2,
+  MessageSquare,
+  Mic,
+  Video,
+  Users,
+  BarChart2,
+  ChevronRight,
+  Clock,
+  TrendingUp,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
 } from "recharts";
 
-// Mock data
-const weeklyEarnings = [
-  { day: "Mon", earnings: 120 },
-  { day: "Tue", earnings: 95 },
-  { day: "Wed", earnings: 180 },
-  { day: "Thu", earnings: 140 },
-  { day: "Fri", earnings: 210 },
-  { day: "Sat", earnings: 260 },
-  { day: "Sun", earnings: 190 },
-];
+// ─── Types ────────────────────────────────────────────────────────────────────
+type Period = "7d" | "30d" | "90d";
+type ActiveTab = "overview" | "settings" | "schedule" | "reviews";
 
-const monthlyReadings = [
-  { week: "W1", readings: 18 },
-  { week: "W2", readings: 24 },
-  { week: "W3", readings: 20 },
-  { week: "W4", readings: 30 },
-];
+// ─── Mock data ────────────────────────────────────────────────────────────────
+const earningsByPeriod: Record<
+  Period,
+  Array<{ label: string; chat: number; voice: number; video: number }>
+> = {
+  "7d": [
+    { label: "Mon", chat: 85,   voice: 40,  video: 55  },
+    { label: "Tue", chat: 60,   voice: 55,  video: 35  },
+    { label: "Wed", chat: 110,  voice: 70,  video: 65  },
+    { label: "Thu", chat: 90,   voice: 45,  video: 80  },
+    { label: "Fri", chat: 130,  voice: 85,  video: 95  },
+    { label: "Sat", chat: 160,  voice: 100, video: 120 },
+    { label: "Sun", chat: 115,  voice: 75,  video: 90  },
+  ],
+  "30d": [
+    { label: "W1", chat: 520, voice: 280, video: 340 },
+    { label: "W2", chat: 680, voice: 360, video: 420 },
+    { label: "W3", chat: 590, voice: 310, video: 380 },
+    { label: "W4", chat: 810, voice: 430, video: 510 },
+  ],
+  "90d": [
+    { label: "Jan", chat: 1850, voice: 980,  video: 1140 },
+    { label: "Feb", chat: 2100, voice: 1120, video: 1320 },
+    { label: "Mar", chat: 1960, voice: 1050, video: 1280 },
+  ],
+};
+
+const statsByPeriod: Record<
+  Period,
+  { earnings: string; sessions: number; rating: number; pending: string }
+> = {
+  "7d":  { earnings: "$750",    sessions: 42,  rating: 4.8, pending: "$95"  },
+  "30d": { earnings: "$4,280",  sessions: 186, rating: 4.8, pending: "$320" },
+  "90d": { earnings: "$12,540", sessions: 548, rating: 4.9, pending: "$680" },
+};
+
+const sessionBreakdownByPeriod: Record<
+  Period,
+  Array<{ key: string; label: string; sessions: number; earnings: string; pct: number }>
+> = {
+  "7d": [
+    { key: "chat",  label: "Chat",  sessions: 22,  earnings: "$550",   pct: 52 },
+    { key: "voice", label: "Voice", sessions: 12,  earnings: "$300",   pct: 29 },
+    { key: "video", label: "Video", sessions: 8,   earnings: "$200",   pct: 19 },
+  ],
+  "30d": [
+    { key: "chat",  label: "Chat",  sessions: 98,  earnings: "$2,450", pct: 53 },
+    { key: "voice", label: "Voice", sessions: 52,  earnings: "$1,300", pct: 28 },
+    { key: "video", label: "Video", sessions: 36,  earnings: "$900",   pct: 19 },
+  ],
+  "90d": [
+    { key: "chat",  label: "Chat",  sessions: 288, earnings: "$7,200", pct: 52 },
+    { key: "voice", label: "Voice", sessions: 155, earnings: "$3,875", pct: 28 },
+    { key: "video", label: "Video", sessions: 105, earnings: "$2,625", pct: 19 },
+  ],
+};
 
 const mockReviews = [
-  {
-    id: "1",
-    name: "Sarah M.",
-    rating: 5,
-    date: "Feb 8, 2026",
-    text: "Incredible reading! Everything resonated deeply. Will definitely come back.",
-  },
-  {
-    id: "2",
-    name: "James K.",
-    rating: 4,
-    date: "Feb 7, 2026",
-    text: "Very insightful session. The tarot spread was spot on with my current situation.",
-  },
-  {
-    id: "3",
-    name: "Luna R.",
-    rating: 5,
-    date: "Feb 5, 2026",
-    text: "Best advisor on the platform. So kind and accurate. 10/10 recommend.",
-  },
-  {
-    id: "4",
-    name: "David P.",
-    rating: 4,
-    date: "Feb 3, 2026",
-    text: "Great energy reading. Helped me understand blockages in my career path.",
-  },
-  {
-    id: "5",
-    name: "Mia W.",
-    rating: 5,
-    date: "Feb 1, 2026",
-    text: "Absolutely phenomenal. She knew things I hadn't even mentioned. Truly gifted.",
-  },
+  { id: "1", name: "Sarah M.", rating: 5, date: "Feb 8, 2026",  text: "Incredible reading! Everything resonated deeply. Will definitely come back." },
+  { id: "2", name: "James K.", rating: 4, date: "Feb 7, 2026",  text: "Very insightful session. The tarot spread was spot on with my current situation." },
+  { id: "3", name: "Luna R.",  rating: 5, date: "Feb 5, 2026",  text: "Best advisor on the platform. So kind and accurate. 10/10 recommend." },
+  { id: "4", name: "David P.", rating: 4, date: "Feb 3, 2026",  text: "Great energy reading. Helped me understand blockages in my career path." },
+  { id: "5", name: "Mia W.",   rating: 5, date: "Feb 1, 2026",  text: "Absolutely phenomenal. She knew things I hadn't even mentioned. Truly gifted." },
 ];
 
+
 const allSpecialties = [
-  "Tarot",
-  "Astrology",
-  "Numerology",
-  "Dream Analysis",
-  "Love Advice",
-  "Career Guidance",
-  "Energy Readings",
-  "Mediumship",
-  "Aura Reading",
-  "Past Lives",
+  "Tarot", "Astrology", "Numerology", "Dream Analysis", "Love Advice",
+  "Career Guidance", "Energy Readings", "Mediumship", "Aura Reading", "Past Lives",
 ];
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+// ─── Component ────────────────────────────────────────────────────────────────
 const AdvisorPrivateProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user?.avatarUrl);
+  // UI state
+  const [activeTab, setActiveTab]       = useState<ActiveTab>("overview");
+  const [activePeriod, setActivePeriod] = useState<Period>("30d");
+
+  // Avatar
+  const [avatarUrl, setAvatarUrl]     = useState<string | undefined>(user?.avatarUrl);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isOnline, setIsOnline] = useState(false);
-  const [pricePerMinute, setPricePerMinute] = useState("3.50");
+  // Status + service
+  const [isOnline, setIsOnline]               = useState(false);
+  const [pricePerMinute, setPricePerMinute]   = useState("3.50");
+  const [bio, setBio] = useState(
+    "Intuitive tarot reader and astrologer with over 8 years of experience guiding seekers on their spiritual journey."
+  );
+  const [selectedSpecialties, setSelectedSpecialties] = useState([
+    "Tarot", "Astrology", "Love Advice",
+  ]);
 
-  // Fetch all advisor details from DB on mount
+  // Schedule
+  const [schedule, setSchedule] = useState<
+    Record<string, { enabled: boolean; start: string; end: string }>
+  >({
+    Mon: { enabled: true,  start: "09:00", end: "17:00" },
+    Tue: { enabled: true,  start: "09:00", end: "17:00" },
+    Wed: { enabled: true,  start: "10:00", end: "18:00" },
+    Thu: { enabled: true,  start: "09:00", end: "17:00" },
+    Fri: { enabled: true,  start: "09:00", end: "15:00" },
+    Sat: { enabled: false, start: "10:00", end: "14:00" },
+    Sun: { enabled: false, start: "10:00", end: "14:00" },
+  });
+  const [scheduleChanged, setScheduleChanged] = useState(false);
+  const savedScheduleRef = useRef(schedule);
+  const [serviceChanged, setServiceChanged]   = useState(false);
+  const savedServiceRef = useRef({
+    pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties],
+  });
+
+  // Fetch advisor details on mount
   useEffect(() => {
     if (!user?.id) return;
     const lsKey = `advisor_schedule_${user.id}`;
     const fetchDetails = async () => {
       const { data, error } = await supabase
-        .from('advisor_details')
-        .select('status, price_per_minute, bio_long, specialties, schedule')
-        .eq('id', user.id)
+        .from("advisor_details")
+        .select("status, price_per_minute, bio_long, specialties, schedule")
+        .eq("id", user.id)
         .single();
       if (!error && data) {
-        setIsOnline(data.status === 'online');
-        const dbPrice = data.price_per_minute != null ? String(data.price_per_minute) : "3.50";
-        const dbBio = data.bio_long ?? bio;
+        setIsOnline(data.status === "online");
+        const dbPrice       = data.price_per_minute != null ? String(data.price_per_minute) : "3.50";
+        const dbBio         = data.bio_long ?? bio;
         const dbSpecialties = data.specialties?.length ? data.specialties : selectedSpecialties;
-        // Prefer DB schedule, fall back to localStorage, then hardcoded defaults
         let resolvedSchedule = (data.schedule as typeof schedule) ?? null;
         if (!resolvedSchedule) {
           const ls = localStorage.getItem(lsKey);
@@ -139,7 +181,7 @@ const AdvisorPrivateProfile = () => {
         setBio(dbBio);
         setSelectedSpecialties(dbSpecialties);
         setSchedule(resolvedSchedule);
-        savedServiceRef.current = { pricePerMinute: dbPrice, bio: dbBio, selectedSpecialties: [...dbSpecialties] };
+        savedServiceRef.current  = { pricePerMinute: dbPrice, bio: dbBio, selectedSpecialties: [...dbSpecialties] };
         savedScheduleRef.current = resolvedSchedule;
       }
     };
@@ -147,42 +189,18 @@ const AdvisorPrivateProfile = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  // Persist status toggle to DB
   const handleStatusToggle = async (checked: boolean) => {
-    setIsOnline(checked); // Optimistic update
+    setIsOnline(checked);
     if (!user?.id) return;
     const { error } = await supabase
-      .from('advisor_details')
-      .update({ status: checked ? 'online' : 'offline' })
-      .eq('id', user.id);
+      .from("advisor_details")
+      .update({ status: checked ? "online" : "offline" })
+      .eq("id", user.id);
     if (error) {
-      console.error('[AdvisorPrivateProfile] Status update error:', error);
-      setIsOnline(!checked); // Revert on failure
+      console.error("[AdvisorPrivateProfile] Status update error:", error);
+      setIsOnline(!checked);
     }
   };
-  const [bio, setBio] = useState(
-    "Intuitive tarot reader and astrologer with over 8 years of experience guiding seekers on their spiritual journey."
-  );
-  const [selectedSpecialties, setSelectedSpecialties] = useState([
-    "Tarot",
-    "Astrology",
-    "Love Advice",
-  ]);
-  const [schedule, setSchedule] = useState<
-    Record<string, { enabled: boolean; start: string; end: string }>
-  >({
-    Mon: { enabled: true, start: "09:00", end: "17:00" },
-    Tue: { enabled: true, start: "09:00", end: "17:00" },
-    Wed: { enabled: true, start: "10:00", end: "18:00" },
-    Thu: { enabled: true, start: "09:00", end: "17:00" },
-    Fri: { enabled: true, start: "09:00", end: "15:00" },
-    Sat: { enabled: false, start: "10:00", end: "14:00" },
-    Sun: { enabled: false, start: "10:00", end: "14:00" },
-  });
-  const [scheduleChanged, setScheduleChanged] = useState(false);
-  const savedScheduleRef = useRef(schedule);
-  const [serviceChanged, setServiceChanged] = useState(false);
-  const savedServiceRef = useRef({ pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties] });
 
   const getInitials = () => {
     if (user?.firstName && user?.lastName)
@@ -195,24 +213,24 @@ const AdvisorPrivateProfile = () => {
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
     setIsUploading(true);
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split(".").pop();
     const filePath = `${user.id}/avatar.${fileExt}`;
     const { error: uploadError } = await supabase.storage
-      .from('avatars')
+      .from("avatars")
       .upload(filePath, file, { upsert: true });
     if (uploadError) {
-      console.error('Avatar upload error:', uploadError);
+      console.error("Avatar upload error:", uploadError);
       setIsUploading(false);
       return;
     }
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
     const { error: updateError } = await supabase
-      .from('profiles')
+      .from("profiles")
       .update({ avatar_url: publicUrl })
-      .eq('id', user.id);
+      .eq("id", user.id);
     if (!updateError) setAvatarUrl(publicUrl);
     setIsUploading(false);
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const toggleSpecialty = (s: string) => {
@@ -225,15 +243,15 @@ const AdvisorPrivateProfile = () => {
   const handleSaveService = async () => {
     if (!user?.id) return;
     const { error } = await supabase
-      .from('advisor_details')
+      .from("advisor_details")
       .update({
         price_per_minute: parseFloat(pricePerMinute) || 0,
         bio_long: bio,
         specialties: selectedSpecialties,
       })
-      .eq('id', user.id);
+      .eq("id", user.id);
     if (error) {
-      console.error('[AdvisorPrivateProfile] Service save error:', error);
+      console.error("[AdvisorPrivateProfile] Service save error:", error);
       toast({ title: "Failed to save", description: error.message, variant: "destructive" });
       return;
     }
@@ -267,16 +285,14 @@ const AdvisorPrivateProfile = () => {
 
   const handleSaveSchedule = async () => {
     if (!user?.id) return;
-    // Always persist to localStorage so refresh works immediately
     localStorage.setItem(`advisor_schedule_${user.id}`, JSON.stringify(schedule));
-    // Also attempt DB save (requires schedule column migration to be applied)
     const { error } = await supabase
-      .from('advisor_details')
+      .from("advisor_details")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .update({ schedule: schedule as any })
-      .eq('id', user.id);
+      .eq("id", user.id);
     if (error) {
-      console.error('[AdvisorPrivateProfile] Schedule DB save error (localStorage used as fallback):', error);
+      console.error("[AdvisorPrivateProfile] Schedule DB save error (localStorage used as fallback):", error);
     }
     savedScheduleRef.current = schedule;
     setScheduleChanged(false);
@@ -288,405 +304,555 @@ const AdvisorPrivateProfile = () => {
     setScheduleChanged(false);
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header / Welcome */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="relative group cursor-pointer" onClick={() => !isUploading && fileInputRef.current?.click()}>
-            <Avatar className="w-20 h-20 ring-4 ring-primary/30">
-              <AvatarImage src={avatarUrl} alt={user?.firstName || user?.username || "Advisor"} className="object-cover" />
-              <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
+  // Derived data
+  const stats       = statsByPeriod[activePeriod];
+  const breakdown   = sessionBreakdownByPeriod[activePeriod];
+  const chartData   = earningsByPeriod[activePeriod];
+  const totalSess   = breakdown.reduce((s, t) => s + t.sessions, 0);
+  const periodLabel = activePeriod === "7d" ? "last 7 days" : activePeriod === "30d" ? "last 30 days" : "last 90 days";
 
-            {/* Hover overlay */}
-            <div className="absolute inset-0 rounded-full bg-black/50 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {isUploading ? (
-                <Loader2 className="w-5 h-5 text-white animate-spin" />
-              ) : (
-                <>
-                  <Camera className="w-4 h-4 text-white" />
-                  <span className="text-white text-[10px] font-medium font-sans leading-none">Change</span>
-                </>
-              )}
+  return (
+    <div className="space-y-5 sm:space-y-6">
+
+      {/* ═══════════════════════════════════════════════════════
+          A · HERO STRIP
+          ═══════════════════════════════════════════════════════ */}
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-card via-card to-card/80 border border-border/50 p-4 sm:p-6">
+        {/* Ambient glow blobs */}
+        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-primary/12 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-36 h-36 rounded-full bg-secondary/18 blur-3xl pointer-events-none" />
+
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          {/* Avatar + name */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div
+              className="relative group cursor-pointer flex-shrink-0"
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+            >
+              <Avatar className="w-14 h-14 sm:w-20 sm:h-20 ring-4 ring-primary/25">
+                <AvatarImage
+                  src={avatarUrl}
+                  alt={user?.firstName || user?.username || "Advisor"}
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-primary/20 text-primary text-lg sm:text-2xl font-bold">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 rounded-full bg-black/50 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4 text-white" />
+                    <span className="text-white text-[9px] font-medium leading-none">Change</span>
+                  </>
+                )}
+              </div>
+              <span className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary border-2 border-card flex items-center justify-center shadow-md">
+                <Camera className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />
+              </span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
             </div>
 
-            {/* Always-visible camera badge */}
-            <span className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary border-2 border-card flex items-center justify-center shadow-md">
-              <Camera className="w-3 h-3 text-primary-foreground" />
-            </span>
+            <div>
+              <h1 className="text-lg sm:text-2xl font-bold text-foreground font-heading leading-tight">
+                Welcome back,{" "}
+                <span className="text-primary">
+                  {user?.firstName || user?.username || "Advisor"}
+                </span>
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                Manage your profile, services, and availability.
+              </p>
+            </div>
+          </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarUpload}
-            />
+          {/* Status toggle — pushes to right on mobile too */}
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto sm:ml-0 self-start sm:self-auto">
+            <span className="text-xs sm:text-sm text-muted-foreground">Status</span>
+            <Switch checked={isOnline} onCheckedChange={handleStatusToggle} />
+            <Badge
+              variant={isOnline ? "default" : "secondary"}
+              className={isOnline ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : ""}
+            >
+              {isOnline ? "Online" : "Offline"}
+            </Badge>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground font-heading">
-              Welcome back, {user?.firstName || user?.username || "Advisor"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Manage your profile, services, and availability.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">Status</span>
-          <Switch checked={isOnline} onCheckedChange={handleStatusToggle} />
-          <Badge
-            variant={isOnline ? "default" : "secondary"}
-            className={
-              isOnline
-                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                : ""
-            }
-          >
-            {isOnline ? "Online" : "Offline"}
-          </Badge>
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            label: "Total Earnings",
-            value: "$4,280",
-            change: "+12%",
-            icon: DollarSign,
-          },
-          {
-            label: "Pending Balance",
-            value: "$320",
-            change: "",
-            icon: Clock,
-          },
-          {
-            label: "Completed Readings",
-            value: "186",
-            change: "+8%",
-            icon: Users,
-          },
-          {
-            label: "Average Rating",
-            value: "4.8",
-            change: "",
-            icon: Star,
-          },
-        ].map((stat) => (
-          <Card key={stat.label} className="bg-card border-border">
-            <CardContent className="p-5 flex items-start justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className="text-2xl font-bold text-foreground mt-1">
-                  {stat.value}
-                </p>
-                {stat.change && (
-                  <span className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
-                    <TrendingUp className="w-3 h-3" />
-                    {stat.change} this month
-                  </span>
-                )}
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                <stat.icon className="w-5 h-5 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
+      {/* ═══════════════════════════════════════════════════════
+          B · TAB NAV  (Overview / Settings / Schedule)
+          ═══════════════════════════════════════════════════════ */}
+      <div className="flex border-b border-border/50 overflow-x-auto gap-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {(["overview", "settings", "schedule", "reviews"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 sm:px-6 py-2.5 text-sm font-medium capitalize whitespace-nowrap transition-colors border-b-2 -mb-px flex-shrink-0 ${
+              activeTab === tab
+                ? "text-foreground border-primary"
+                : "text-muted-foreground border-transparent hover:text-foreground"
+            }`}
+          >
+            {tab === "overview" ? "Overview" : tab === "settings" ? "Settings" : tab === "schedule" ? "Schedule" : "Reviews"}
+          </button>
         ))}
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-heading">
-              Weekly Earnings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={weeklyEarnings}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="hsl(var(--border))"
-                />
-                <XAxis
-                  dataKey="day"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                  tickFormatter={(v) => `$${v}`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    color: "hsl(var(--foreground))",
-                  }}
-                  formatter={(value: number) => [`$${value}`, "Earnings"]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="earnings"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* ═══════════════════════════════════════════════════════
+          OVERVIEW TAB
+          ═══════════════════════════════════════════════════════ */}
+      {activeTab === "overview" && (
+        <div className="space-y-5 sm:space-y-6">
 
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-heading">
-              Monthly Readings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={monthlyReadings}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="hsl(var(--border))"
-                />
-                <XAxis
-                  dataKey="week"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    color: "hsl(var(--foreground))",
-                  }}
-                />
-                <Bar
-                  dataKey="readings"
-                  fill="hsl(var(--secondary))"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Service Management */}
-      <Card className="bg-card border-border">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base font-heading">
-            Service Management
-          </CardTitle>
-          {serviceChanged && (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-              Unsaved changes
-            </span>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {/* Price */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <label className="text-sm text-muted-foreground w-36 shrink-0">
-              Price per minute
-            </label>
-            <div className="relative w-full max-w-xs">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={pricePerMinute}
-                onChange={(e) => { setPricePerMinute(e.target.value); setServiceChanged(true); }}
-                className="pl-8"
-              />
-            </div>
-          </div>
-
-          {/* Bio */}
-          <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Bio</label>
-            <Textarea
-              value={bio}
-              onChange={(e) => { setBio(e.target.value); setServiceChanged(true); }}
-              rows={3}
-            />
-          </div>
-
-          {/* Specialties */}
-          <div className="space-y-2">
-            <label className="text-sm text-muted-foreground">Specialties</label>
-            <div className="flex flex-wrap gap-2">
-              {allSpecialties.map((s) => (
-                <Badge
-                  key={s}
-                  variant={selectedSpecialties.includes(s) ? "default" : "outline"}
-                  className="cursor-pointer select-none"
-                  onClick={() => toggleSpecialty(s)}
+          {/* C · PERIOD SELECTOR */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{totalSess}</span> sessions in {periodLabel}
+            </p>
+            <div className="flex items-center gap-1 bg-card border border-border/60 rounded-xl p-1 w-full sm:w-auto">
+              {(["7d", "30d", "90d"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setActivePeriod(p)}
+                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    activePeriod === p
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
-                  {s}
-                </Badge>
+                  {p}
+                </button>
               ))}
             </div>
           </div>
 
-          {serviceChanged && (
-            <div className="flex items-center justify-end gap-2 pt-4 mt-1 border-t border-border/50">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs font-sans text-muted-foreground hover:text-foreground"
-                onClick={handleDiscardService}
-              >
-                Discard
-              </Button>
-              <Button
-                size="sm"
-                className="h-8 text-xs font-sans"
-                onClick={handleSaveService}
-              >
-                Save Changes
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Schedule */}
-      <Card className="bg-card border-border">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base font-heading">
-            Availability Schedule
-          </CardTitle>
-          {scheduleChanged && (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-              Unsaved changes
-            </span>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {daysOfWeek.map((day) => {
-              const s = schedule[day];
-              return (
-                <div
-                  key={day}
-                  className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-2 border-b border-border last:border-0"
-                >
-                  <div className="flex items-center gap-3 w-28 shrink-0">
-                    <Switch
-                      checked={s.enabled}
-                      onCheckedChange={() => toggleDay(day)}
-                    />
-                    <span
-                      className={`text-sm font-medium ${
-                        s.enabled ? "text-foreground" : "text-muted-foreground"
-                      }`}
-                    >
-                      {day}
-                    </span>
+          {/* D · STATS ROW */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {[
+              { label: "Total Earnings",  value: stats.earnings,         icon: DollarSign, iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: "+12%" },
+              { label: "Sessions",        value: String(stats.sessions), icon: Users,      iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: "+8%"  },
+              { label: "Avg Rating",      value: String(stats.rating),   icon: Star,       iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: ""     },
+              { label: "Pending Balance", value: stats.pending,          icon: Clock,      iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: ""     },
+            ].map((stat) => (
+              <Card key={stat.label} className="bg-card border-border/50">
+                <CardContent className="p-3.5 sm:p-5 flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground leading-tight">{stat.label}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground mt-1">{stat.value}</p>
+                    {stat.change && (
+                      <span className="text-[11px] text-emerald-400 flex items-center gap-1 mt-1">
+                        <TrendingUp className="w-3 h-3 flex-shrink-0" />
+                        {stat.change}
+                      </span>
+                    )}
                   </div>
-                  {s.enabled ? (
-                    <div className="flex items-center gap-2 text-sm">
-                      <TimePicker
-                        value={s.start}
-                        onChange={(v) => updateTime(day, "start", v)}
-                      />
-                      <span className="text-muted-foreground">to</span>
-                      <TimePicker
-                        value={s.end}
-                        onChange={(v) => updateTime(day, "end", v)}
-                      />
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      Unavailable
-                    </span>
-                  )}
-                </div>
-              );
-            })}
+                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${stat.iconBg}`}>
+                    <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${stat.iconColor}`} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          {scheduleChanged && (
-            <div className="flex items-center justify-end gap-2 pt-4 mt-3 border-t border-border/50">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs font-sans text-muted-foreground hover:text-foreground"
-                onClick={handleDiscardSchedule}
-              >
-                Discard
-              </Button>
-              <Button
-                size="sm"
-                className="h-8 text-xs font-sans"
-                onClick={handleSaveSchedule}
-              >
-                Save Schedule
-              </Button>
+          {/* E · SESSION BREAKDOWN */}
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-3">Session Breakdown</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {breakdown.map((t) => (
+                <Card
+                  key={t.key}
+                  className={
+                    t.key === "chat"
+                      ? "bg-gradient-to-br from-primary/[0.07] via-card to-card border-primary/25 shadow-[inset_3px_0_0_hsl(var(--primary))] hover:shadow-[inset_3px_0_0_hsl(var(--primary)),0_0_20px_hsl(var(--primary)/0.08)] transition-shadow"
+                      : t.key === "voice"
+                      ? "bg-gradient-to-br from-[rgba(162,60,222,0.07)] via-card to-card border-[rgba(162,60,222,0.25)] shadow-[inset_3px_0_0_#A23CDE] hover:shadow-[inset_3px_0_0_#A23CDE,0_0_20px_rgba(162,60,222,0.08)] transition-shadow"
+                      : "bg-gradient-to-br from-[rgba(104,66,239,0.07)] via-card to-card border-[rgba(104,66,239,0.25)] shadow-[inset_3px_0_0_#6842EF] hover:shadow-[inset_3px_0_0_#6842EF,0_0_20px_rgba(104,66,239,0.08)] transition-shadow"
+                  }
+                >
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          t.key === "chat"
+                            ? "bg-primary/15"
+                            : t.key === "voice"
+                            ? "bg-[rgba(162,60,222,0.15)]"
+                            : "bg-[rgba(104,66,239,0.15)]"
+                        }`}
+                      >
+                        {t.key === "chat" ? (
+                          <MessageSquare className="w-4 h-4 text-primary" />
+                        ) : t.key === "voice" ? (
+                          <Mic className="w-4 h-4 text-[#A23CDE]" />
+                        ) : (
+                          <Video className="w-4 h-4 text-[#6842EF]" />
+                        )}
+                      </div>
+                      <span className="text-sm font-medium text-foreground">{t.label}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{t.pct}%</span>
+                    </div>
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-2xl font-bold text-foreground">{t.sessions}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">sessions</p>
+                      </div>
+                      <p className="text-base font-semibold text-foreground">{t.earnings}</p>
+                    </div>
+                    <div className="mt-3 h-1.5 rounded-full bg-border/50 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          t.key === "chat" ? "bg-primary" : t.key === "voice" ? "bg-[#A23CDE]" : "bg-[#6842EF]"
+                        }`}
+                        style={{ width: `${t.pct}%` }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
 
-      {/* Reviews */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-base font-heading">
-            Recent Reviews
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-styled">
-            {mockReviews.map((review) => (
-              <div
-                key={review.id}
-                className="p-4 rounded-xl bg-secondary/10 border border-border/50 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">
-                      {review.name}
-                    </span>
-                    <div className="flex gap-0.5">
+          {/* F · EARNINGS AREA CHART */}
+          <Card className="bg-card border-border/40 shadow-[0_0_32px_hsl(var(--primary)/0.07)] overflow-hidden">
+            <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-5">
+              <CardTitle className="text-sm sm:text-base font-heading">Earnings Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent className="px-1 sm:px-3 pb-4">
+              <ResponsiveContainer width="100%" height={210}>
+                <AreaChart data={chartData} margin={{ top: 5, right: 8, left: -15, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="chatGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="voiceGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#A23CDE" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#A23CDE" stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="videoGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#6842EF" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#6842EF" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v: number) => `$${v}`}
+                    width={45}
+                  />
+                  <Tooltip
+                    cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1, strokeDasharray: "4 4" }}
+                    contentStyle={{
+                      background: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      color: "hsl(var(--foreground))",
+                      fontSize: "12px",
+                    }}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    formatter={(value: any, name: string) => [
+                      `$${value}`,
+                      name.charAt(0).toUpperCase() + name.slice(1),
+                    ]}
+                  />
+                  <Area type="monotone" dataKey="chat"  stackId="1" stroke="hsl(var(--primary))" fill="url(#chatGrad)"  strokeWidth={2} />
+                  <Area type="monotone" dataKey="voice" stackId="1" stroke="#A23CDE"              fill="url(#voiceGrad)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="video" stackId="1" stroke="#6842EF"              fill="url(#videoGrad)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+
+              {/* Chart legend */}
+              <div className="flex items-center justify-center gap-4 sm:gap-6 mt-1 pb-1">
+                {[
+                  { label: "Chat",  color: "hsl(var(--primary))" },
+                  { label: "Voice", color: "#A23CDE"              },
+                  { label: "Video", color: "#6842EF"              },
+                ].map((l) => (
+                  <div key={l.label} className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />
+                    <span className="text-xs text-muted-foreground">{l.label}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* G · NAV CARDS — My Clients & Insights */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+
+            {/* My Clients card */}
+            <button
+              onClick={() => navigate("/advisor-clients")}
+              className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--primary)/0.08)] transition-all text-left group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center group-hover:bg-primary/25 transition-colors">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">My Clients</p>
+                <p className="text-xs text-muted-foreground mt-0.5">View &amp; manage your client history</p>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-medium text-primary">
+                View
+                <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+            </button>
+
+            {/* Insights card */}
+            <button
+              onClick={() => navigate("/advisor-insights")}
+              className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border/50 hover:border-[#A23CDE]/40 hover:shadow-[0_0_16px_rgba(162,60,222,0.08)] transition-all text-left group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-[rgba(162,60,222,0.15)] flex items-center justify-center group-hover:bg-[rgba(162,60,222,0.25)] transition-colors">
+                <BarChart2 className="w-5 h-5 text-[#A23CDE]" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Insights</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Performance metrics &amp; analytics</p>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-medium text-[#A23CDE]">
+                View
+                <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+            </button>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+          SETTINGS TAB
+          ═══════════════════════════════════════════════════════ */}
+      {activeTab === "settings" && (
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-base font-heading">Service Management</CardTitle>
+            {serviceChanged && (
+              <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Unsaved changes
+              </span>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {/* Price */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <label className="text-sm text-muted-foreground sm:w-36 shrink-0">
+                Price per minute
+              </label>
+              <div className="relative w-full sm:max-w-xs">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={pricePerMinute}
+                  onChange={(e) => { setPricePerMinute(e.target.value); setServiceChanged(true); }}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground">Bio</label>
+              <Textarea
+                value={bio}
+                onChange={(e) => { setBio(e.target.value); setServiceChanged(true); }}
+                rows={3}
+              />
+            </div>
+
+            {/* Specialties */}
+            <div className="space-y-2">
+              <label className="text-sm text-muted-foreground">Specialties</label>
+              <div className="flex flex-wrap gap-2">
+                {allSpecialties.map((s) => (
+                  <Badge
+                    key={s}
+                    variant={selectedSpecialties.includes(s) ? "default" : "outline"}
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleSpecialty(s)}
+                  >
+                    {s}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {serviceChanged && (
+              <div className="flex items-center justify-end gap-2 pt-4 mt-1 border-t border-border/50">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs font-sans text-muted-foreground hover:text-foreground"
+                  onClick={handleDiscardService}
+                >
+                  Discard
+                </Button>
+                <Button size="sm" className="h-8 text-xs font-sans" onClick={handleSaveService}>
+                  Save Changes
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+          SCHEDULE TAB
+          ═══════════════════════════════════════════════════════ */}
+      {activeTab === "schedule" && (
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-base font-heading">Availability Schedule</CardTitle>
+            {scheduleChanged && (
+              <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Unsaved changes
+              </span>
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              {daysOfWeek.map((day) => {
+                const s = schedule[day];
+                return (
+                  <div
+                    key={day}
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-border/50 last:border-0"
+                  >
+                    <div className="flex items-center gap-3 w-28 shrink-0">
+                      <Switch
+                        checked={s.enabled}
+                        onCheckedChange={() => toggleDay(day)}
+                      />
+                      <span
+                        className={`text-sm font-medium ${
+                          s.enabled ? "text-foreground" : "text-muted-foreground"
+                        }`}
+                      >
+                        {day}
+                      </span>
+                    </div>
+                    {s.enabled ? (
+                      <div className="flex items-center gap-2 text-sm flex-wrap">
+                        <TimePicker
+                          value={s.start}
+                          onChange={(v) => updateTime(day, "start", v)}
+                        />
+                        <span className="text-xs text-muted-foreground">to</span>
+                        <TimePicker
+                          value={s.end}
+                          onChange={(v) => updateTime(day, "end", v)}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Unavailable</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {scheduleChanged && (
+              <div className="flex items-center justify-end gap-2 pt-4 mt-3 border-t border-border/50">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs font-sans text-muted-foreground hover:text-foreground"
+                  onClick={handleDiscardSchedule}
+                >
+                  Discard
+                </Button>
+                <Button size="sm" className="h-8 text-xs font-sans" onClick={handleSaveSchedule}>
+                  Save Schedule
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+          REVIEWS TAB
+          ═══════════════════════════════════════════════════════ */}
+      {activeTab === "reviews" && (
+        <div className="space-y-4">
+
+          {/* Header row */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">My Reviews</h2>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[rgba(162,60,222,0.12)] border border-[rgba(162,60,222,0.25)]">
+              <Star className="w-3.5 h-3.5 fill-[#A23CDE] text-[#A23CDE]" />
+              <span className="text-xs font-semibold text-[#A23CDE]">4.8</span>
+              <span className="text-xs text-muted-foreground">· {mockReviews.length} reviews</span>
+            </div>
+          </div>
+
+          {/* Review cards */}
+          {mockReviews.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-12 h-12 rounded-full bg-card border border-border/50 flex items-center justify-center mb-3">
+                <Star className="w-5 h-5 text-muted-foreground/40" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No reviews yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Reviews will appear here after completed sessions.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {mockReviews.map((review) => (
+                <div key={review.id} className="p-4 rounded-xl bg-card border border-border/50">
+                  {/* Top row: avatar + name/date */}
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-primary">{review.name[0]}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground leading-tight">{review.name}</p>
+                      <p className="text-xs text-muted-foreground">{review.date}</p>
+                    </div>
+                    {/* Stars */}
+                    <div className="flex gap-0.5 flex-shrink-0">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-3 h-3 ${
+                          className={`w-3.5 h-3.5 ${
                             i < review.rating
-                              ? "fill-primary text-primary"
-                              : "text-muted-foreground"
+                              ? "fill-[#A23CDE] text-[#A23CDE]"
+                              : "text-border"
                           }`}
                         />
                       ))}
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {review.date}
-                  </span>
+                  {/* Review text */}
+                  <p className="text-sm text-muted-foreground leading-relaxed">{review.text}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">{review.text}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          )}
+
+        </div>
+      )}
+
     </div>
   );
 };
