@@ -19,6 +19,7 @@ const Chat = React.lazy(() => import("./pages/Chat"));
 const VoiceCall = React.lazy(() => import("./pages/VoiceCall"));
 const VideoCall = React.lazy(() => import("./pages/VideoCall"));
 const AddCredit = React.lazy(() => import("./pages/AddCredit"));
+const AddCreditSuccess = React.lazy(() => import("./pages/AddCreditSuccess"));
 const Settings = React.lazy(() => import("./pages/Settings"));
 const AdvisorPortal = React.lazy(() => import("./pages/AdvisorPortal"));
 const AdvisorCall = React.lazy(() => import("./pages/AdvisorCall"));
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/articles" element={<Articles />} />
               <Route path="/support" element={<Support />} />
               <Route path="/add-credit" element={<AddCredit />} />
+              <Route path="/add-credit/success" element={<AddCreditSuccess />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/advisor-portal" element={<AdvisorPortal />} />

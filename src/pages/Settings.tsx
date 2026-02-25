@@ -8,9 +8,7 @@ import {
   Shield,
   ChevronRight,
   Pencil,
-  Trash2,
   Plus,
-  Star,
   History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,7 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, savedCards, credits, deleteCard, setDefaultCard, updateProfile, updatePassword, logout, isPasswordRecovery, clearPasswordRecovery } = useAuth();
+  const { user, credits, updateProfile, updatePassword, logout, isPasswordRecovery, clearPasswordRecovery } = useAuth();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState<"profile" | "payment" | "history" | "notifications" | "security">(
@@ -251,83 +249,41 @@ const Settings = () => {
                       <h2 className="text-xl font-semibold text-foreground">Payment Methods</h2>
                       <Button variant="outline" size="sm" onClick={() => navigate("/add-credit")}>
                         <Plus className="w-4 h-4 mr-2" />
-                        Add New
+                        Buy Credits
                       </Button>
                     </div>
 
                     <Separator />
 
-                    {savedCards.length > 0 ? (
+                    {user?.stripeCustomerId ? (
                       <div className="space-y-4">
-                        {savedCards.map((card) => (
-                          <div
-                            key={card.id}
-                            className={`flex items-center justify-between p-4 rounded-lg border-2 transition-colors ${
-                              card.isDefault ? "bg-primary/5 border-primary" : "bg-muted/50 border-border"
-                            }`}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded flex items-center justify-center">
-                                <CreditCard className="w-5 h-5 text-white" />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium text-foreground">•••• •••• •••• {card.lastFourDigits}</p>
-                                  {card.isDefault && (
-                                    <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                                      Default
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {card.cardholderName} · Expires {card.expirationDate}
-                                </p>
-                              </div>
+                        <div className="flex items-center justify-between p-4 rounded-lg border-2 bg-primary/5 border-primary">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded flex items-center justify-center">
+                              <CreditCard className="w-5 h-5 text-white" />
                             </div>
-                            <div className="flex items-center gap-2">
-                              {!card.isDefault && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-muted-foreground hover:text-primary"
-                                  onClick={() => {
-                                    setDefaultCard(card.id);
-                                    toast({
-                                      title: "Default card updated",
-                                      description: `Card ending in ${card.lastFourDigits} is now your default payment method.`,
-                                    });
-                                  }}
-                                >
-                                  <Star className="w-4 h-4 mr-1" />
-                                  Set Default
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:text-destructive"
-                                onClick={() => {
-                                  deleteCard(card.id);
-                                  toast({
-                                    title: "Card removed",
-                                    description: `Card ending in ${card.lastFourDigits} has been removed.`,
-                                  });
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                            <div>
+                              <p className="font-medium text-foreground">Payment method on file</p>
+                              <p className="text-sm text-muted-foreground">
+                                Managed securely via Stripe
+                              </p>
                             </div>
                           </div>
-                        ))}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Your payment methods are managed by Stripe. When you purchase credits, your card is saved for future session payments.
+                        </p>
                       </div>
                     ) : (
                       <div className="text-center py-12">
                         <CreditCard className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                        <h3 className="font-medium text-foreground mb-2">No payment methods</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Add a payment method to purchase credits</p>
+                        <h3 className="font-medium text-foreground mb-2">No payment method</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Purchase a credit package to save a payment method for future sessions
+                        </p>
                         <Button onClick={() => navigate("/add-credit")}>
                           <Plus className="w-4 h-4 mr-2" />
-                          Add Payment Method
+                          Buy Credits
                         </Button>
                       </div>
                     )}
