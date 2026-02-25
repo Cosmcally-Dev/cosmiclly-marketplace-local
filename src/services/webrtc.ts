@@ -9,7 +9,7 @@ import {
   LocalTrackPublication,
   ConnectionQuality as LKConnectionQuality,
 } from 'livekit-client';
-import { supabase } from '@/integrations/supabase/client'; // Ensure this import is correct
+import { supabase } from '@/integrations/supabase/client';
 import type {
   WebRTCState,
   WebRTCStats,
@@ -94,8 +94,6 @@ export class WebRTCService {
       this.config.onError(error instanceof Error ? error : new Error(String(error)));
     }
   }
-
-  // ... [keep toggleAudio, toggleVideo, isCameraOff, isMuted, getState, destroy methods as they were] ...
 
   async toggleAudio(): Promise<boolean> {
     if (!this.room) return false;
@@ -195,15 +193,17 @@ export class WebRTCService {
   }
 
   private async fetchLiveKitToken(): Promise<LiveKitTokenResponse> {
-    // UPDATED: Use supabase.functions.invoke instead of manual fetch
-    // This handles the Authorization header automatically and refreshes the token if needed
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Not authenticated — cannot fetch LiveKit token');
+    }
+
     const { data, error } = await supabase.functions.invoke('generate-livekit-token', {
-      body: { sessionId: this.config.sessionId },
+      body: { sessionId: this.config.sessionId }
     });
 
     if (error) {
       console.error('[WebRTC] Token generation error details:', error);
-      // Fallback: If it's a specific auth error, try to logout/login or prompt user
       throw new Error(`LiveKit token failed: ${error.message || 'Unknown error'}`);
     }
 
