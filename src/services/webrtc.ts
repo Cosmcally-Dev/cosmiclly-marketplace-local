@@ -9,7 +9,7 @@ import {
   LocalTrackPublication,
   ConnectionQuality as LKConnectionQuality,
 } from 'livekit-client';
-import { supabase } from '@/integrations/supabase/client'; // Ensure this import is correct
+import { supabase } from '@/integrations/supabase/client';
 import type {
   WebRTCState,
   WebRTCStats,
@@ -94,8 +94,6 @@ export class WebRTCService {
       this.config.onError(error instanceof Error ? error : new Error(String(error)));
     }
   }
-
-  // ... [keep toggleAudio, toggleVideo, isCameraOff, isMuted, getState, destroy methods as they were] ...
 
   async toggleAudio(): Promise<boolean> {
     if (!this.room) return false;
@@ -195,19 +193,13 @@ export class WebRTCService {
   }
 
   private async fetchLiveKitToken(): Promise<LiveKitTokenResponse> {
-    // Explicitly get the current session's access token to ensure we send the
-    // user's JWT, not the anon key. The FunctionsClient can have a stale
-    // Authorization header if onAuthStateChange hasn't propagated yet.
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.access_token) {
       throw new Error('Not authenticated — cannot fetch LiveKit token');
     }
 
     const { data, error } = await supabase.functions.invoke('generate-livekit-token', {
-      body: { sessionId: this.config.sessionId },
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
+      body: { sessionId: this.config.sessionId }
     });
 
     if (error) {

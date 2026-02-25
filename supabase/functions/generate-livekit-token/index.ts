@@ -42,11 +42,13 @@ Deno.serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Extract token and verify user is authenticated
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Invalid or expired token' }),
+        JSON.stringify({ error: 'Invalid or expired token', details: authError }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -95,12 +97,12 @@ Deno.serve(async (req) => {
     const roomName = `session-${sessionId}`;
     const participantIdentity = user.id;
 
-    const token = new AccessToken(livekitApiKey, livekitApiSecret, {
+    const livekitToken = new AccessToken(livekitApiKey, livekitApiSecret, {
       identity: participantIdentity,
       ttl: '1h',
     });
 
-    token.addGrant({
+    livekitToken.addGrant({
       room: roomName,
       roomJoin: true,
       canPublish: true,
@@ -108,7 +110,7 @@ Deno.serve(async (req) => {
       canPublishData: true,
     });
 
-    const jwt = await token.toJwt();
+    const jwt = await livekitToken.toJwt();
 
     return new Response(
       JSON.stringify({
