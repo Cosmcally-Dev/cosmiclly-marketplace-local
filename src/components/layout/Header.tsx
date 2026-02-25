@@ -125,9 +125,9 @@ export const Header = () => {
             </button>
 
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-0">
               <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-9 w-auto object-contain" />
-              <span className="font-heading text-lg md:text-xl font-semibold text-gradient">Cosmiclly</span>
+              <span className="font-heading text-lg md:text-xl font-semibold text-gradient -ml-2">osmiclly</span>
             </Link>
 
             {/* Desktop Navigation */}

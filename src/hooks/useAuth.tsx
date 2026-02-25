@@ -88,9 +88,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [credits, setCredits] = useState<number>(0);
   const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
   const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
-<<<<<<< HEAD
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   const openAuthModal = (mode: 'signin' | 'signup' = 'signin') => {
     setAuthModalMode(mode);
@@ -100,9 +100,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const closeAuthModal = () => {
     setAuthModalOpen(false);
   };
-=======
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
->>>>>>> 594ff76ae1cb93ec15a600294759cd20eb358f2a
 
   // Build a User object from Supabase auth user + optional profile data
   const buildUserFromSession = (

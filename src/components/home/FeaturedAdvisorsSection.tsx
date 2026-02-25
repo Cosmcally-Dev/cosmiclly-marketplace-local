@@ -24,10 +24,10 @@ export const FeaturedAdvisorsSection = () => {
   };
 
   return (
-    <section className="py-10 md:py-14 mb-8 bg-background">
+    <section className="py-4 md:py-5 mb-8 bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-3">
           <div className="flex items-center gap-3">
             <Star className="w-5 h-5 text-primary fill-primary" />
             <h2 className="font-heading text-xl md:text-2xl font-bold text-foreground">

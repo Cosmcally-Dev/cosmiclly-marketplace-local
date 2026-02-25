@@ -19,7 +19,7 @@ export const HeroSection = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-hero-gradient pt-6 pb-8 md:pt-10 md:pb-12">
+    <section className="relative overflow-hidden bg-hero-gradient pt-5 pb-4 md:pt-8 md:pb-6">
       {/* Animated Stars Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(12)].map((_, i) => (
@@ -43,23 +43,23 @@ export const HeroSection = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
           {/* Main Heading */}
-          <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-4 animate-fade-in">
+          <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl font-bold mb-3 animate-fade-in">
             <span className="text-foreground">Find Your </span>
             <span className="text-gradient">Psychic Advisor</span>
           </h1>
 
           {/* Subheading */}
-          <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto mb-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
             Connect with gifted psychic advisors for love, career, and life guidance
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-lg mx-auto mb-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <div className="max-w-lg mx-auto mb-3 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <AdvisorSearchBar variant="hero" placeholder="Search by specialty or reading type" />
           </div>
 
           {/* Quick Filter Pills */}
-          <div className="flex flex-wrap justify-center gap-2 mb-6 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+          <div className="flex flex-wrap justify-center gap-2 mb-3 animate-fade-in" style={{ animationDelay: '0.25s' }}>
             {quickFilters.map((filter) => {
               const IconComponent = filter.icon;
               return (
