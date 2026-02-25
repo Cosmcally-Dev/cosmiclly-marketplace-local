@@ -8,12 +8,13 @@ export interface ChatMessage {
   sender_id: string;
   content: string;
   created_at: string;
+  read_at: string | null;
 }
 
 /**
  * Real-time chat messaging hook via Supabase Realtime.
  * Fetches existing messages on mount, subscribes to new INSERT events,
- * and provides a sendMessage function.
+ * listens for UPDATE events (read receipts), and provides send + markAsRead functions.
  */
 export function useChatMessages(sessionId: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -43,7 +44,7 @@ export function useChatMessages(sessionId: string | null) {
     fetchMessages();
   }, [sessionId]);
 
-  // Subscribe to new messages in real-time
+  // Subscribe to new messages and read receipt updates in real-time
   useEffect(() => {
     if (!sessionId) return;
 
@@ -64,6 +65,21 @@ export function useChatMessages(sessionId: string | null) {
             if (prev.some(m => m.id === newMessage.id)) return prev;
             return [...prev, newMessage];
           });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `session_id=eq.${sessionId}`,
+        },
+        (payload) => {
+          const updated = payload.new as ChatMessage;
+          setMessages(prev =>
+            prev.map(m => m.id === updated.id ? { ...m, read_at: updated.read_at } : m)
+          );
         }
       )
       .subscribe();
@@ -98,5 +114,20 @@ export function useChatMessages(sessionId: string | null) {
     return data as ChatMessage;
   }, [sessionId]);
 
-  return { messages, isLoading, sendMessage };
+  // Mark messages as read
+  const markAsRead = useCallback(async (messageIds: string[]) => {
+    if (!messageIds.length) return;
+
+    const { error } = await supabase
+      .from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .in('id', messageIds)
+      .is('read_at', null);
+
+    if (error) {
+      console.error('[useChatMessages] markAsRead failed:', error);
+    }
+  }, []);
+
+  return { messages, isLoading, sendMessage, markAsRead };
 }

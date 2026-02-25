@@ -22,12 +22,13 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { SessionHistory } from "@/components/settings/SessionHistory";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, savedCards, credits, deleteCard, setDefaultCard, updateProfile, updatePassword, isPasswordRecovery, clearPasswordRecovery } = useAuth();
+  const { user, savedCards, credits, deleteCard, setDefaultCard, updateProfile, updatePassword, logout, isPasswordRecovery, clearPasswordRecovery } = useAuth();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState<"profile" | "payment" | "history" | "notifications" | "security">(
@@ -38,6 +39,9 @@ const Settings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Profile form state
   const getFullName = () => {
@@ -468,7 +472,11 @@ const Settings = () => {
 
                     <div className="pt-4">
                       <h3 className="font-medium text-foreground mb-4">Danger Zone</h3>
-                      <Button variant="outline" className="text-destructive border-destructive hover:bg-destructive/10">
+                      <Button
+                        variant="outline"
+                        className="text-destructive border-destructive hover:bg-destructive/10"
+                        onClick={() => setIsDeleteAccountOpen(true)}
+                      >
                         Delete Account
                       </Button>
                       <p className="text-xs text-muted-foreground mt-2">
@@ -578,6 +586,73 @@ const Settings = () => {
               </Button>
               <Button className="flex-1" onClick={handleChangePassword} disabled={isSaving}>
                 {isSaving ? "Updating..." : "Update Password"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Account Confirmation Modal */}
+      <Dialog open={isDeleteAccountOpen} onOpenChange={(open) => { setIsDeleteAccountOpen(open); if (!open) setDeleteConfirmText(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Delete Account</DialogTitle>
+            <DialogDescription>
+              This action is permanent and cannot be undone. All your messages will be anonymized and your profile data will be deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive font-medium">Warning:</p>
+              <ul className="text-xs text-destructive/80 mt-1 space-y-1 list-disc list-inside">
+                <li>Your messages will be replaced with "[deleted]"</li>
+                <li>Your profile will be anonymized</li>
+                <li>Advisor details and applications will be removed</li>
+                <li>You will be signed out immediately</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="deleteConfirm" className="text-sm">
+                Type <span className="font-mono font-bold text-destructive">DELETE</span> to confirm
+              </Label>
+              <Input
+                id="deleteConfirm"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                className="font-mono"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setIsDeleteAccountOpen(false); setDeleteConfirmText(""); }}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                onClick={async () => {
+                  setIsDeleting(true);
+                  try {
+                    const { error } = await supabase.rpc('delete_my_account');
+                    if (error) throw error;
+                    await logout();
+                    navigate('/');
+                    toast({ title: "Account Deleted", description: "Your account data has been anonymized." });
+                  } catch (err: any) {
+                    console.error('Delete account error:', err);
+                    toast({ variant: "destructive", title: "Error", description: err.message || "Failed to delete account." });
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
+              >
+                {isDeleting ? "Deleting..." : "Delete My Account"}
               </Button>
             </div>
           </div>
