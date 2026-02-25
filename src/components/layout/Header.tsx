@@ -260,35 +260,35 @@ export const Header = () => {
                     </div>
                     <DropdownMenuItem
                       onClick={() => navigate("/profile")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5"
+                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
                     >
                       <User className="w-4 h-4" />
                       My Dashboard
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/activity")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5"
+                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
                     >
                       <Activity className="w-4 h-4" />
                       My Activity
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/favorites")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5"
+                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
                     >
                       <Heart className="w-4 h-4" />
                       Favorite Advisors
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/add-credit")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5"
+                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
                     >
                       <Wallet className="w-4 h-4" />
                       Add Funds
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/payment-methods")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5"
+                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
                     >
                       <CreditCard className="w-4 h-4" />
                       Payment Methods
@@ -298,7 +298,7 @@ export const Header = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => navigate("/advisor-call")}
-                          className="cursor-pointer flex items-center gap-2 p-2.5"
+                          className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
                         >
                           <Phone className="w-4 h-4" />
                           Advisor Dashboard
@@ -308,7 +308,7 @@ export const Header = () => {
                     {user?.isAdmin && (
                       <DropdownMenuItem
                         onClick={() => navigate("/admin")}
-                        className="cursor-pointer flex items-center gap-2 p-2.5"
+                        className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
                       >
                         <Shield className="w-4 h-4" />
                         Admin Panel
@@ -317,7 +317,7 @@ export const Header = () => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => navigate("/settings")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5"
+                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
                     >
                       <Settings className="w-4 h-4" />
                       Settings

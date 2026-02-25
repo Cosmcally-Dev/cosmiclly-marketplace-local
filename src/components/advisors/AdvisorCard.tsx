@@ -73,9 +73,9 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           {/* Top-left badges */}
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
             {advisor.isTopRated && (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/40 shadow-[0_0_8px_hsl(var(--primary)/0.2)] backdrop-blur-sm">
-                <Star className="w-2.5 h-2.5 fill-primary text-primary shrink-0" />
-                <span className="text-[10px] font-bold font-sans tracking-wide text-primary leading-none">Top Rated</span>
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-400/30 shadow-[0_0_8px_rgba(34,211,238,0.2)] backdrop-blur-sm">
+                <Star className="w-2.5 h-2.5 fill-cyan-400 text-cyan-400 shrink-0" />
+                <span className="text-[10px] font-bold font-sans tracking-wide text-cyan-400 leading-none">Top Rated</span>
               </div>
             )}
             {advisor.isNew && (
@@ -183,7 +183,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           {/* Action buttons */}
           <div className="mt-auto">
             {advisor.status === 'online' ? (
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-secondary/20 border border-border/40">
+              <div className="flex items-center gap-1 p-1.5 rounded-xl bg-secondary/20 border border-border/40">
                 {/* Chat */}
                 <button
                   onClick={handleChatClick}
@@ -209,7 +209,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                 <button
                   onClick={handleVideoClick}
                   title="Video Call"
-                  className="flex-1 flex items-center justify-center h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-200"
+                  className="flex-1 flex items-center justify-center h-9 rounded-lg text-foreground/70 hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-200"
                 >
                   <Video className="w-4 h-4" />
                 </button>
@@ -218,9 +218,9 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                 <button
                   onClick={handleAIClick}
                   title="AI Twin"
-                  className="flex-1 flex items-center justify-center h-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-200"
+                  className="flex-1 flex items-center justify-center h-9 rounded-lg text-foreground/70 hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-200"
                 >
-                  <img src={aiTwinIcon} alt="AI Twin" className="w-4 h-4 object-contain opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <img src={aiTwinIcon} alt="AI Twin" className="w-4 h-4 object-contain opacity-80 hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             ) : (
