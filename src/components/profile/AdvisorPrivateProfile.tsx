@@ -444,7 +444,7 @@ const AdvisorPrivateProfile = () => {
       {/* ═══════════════════════════════════════════════════════
           A · HERO STRIP
           ═══════════════════════════════════════════════════════ */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-card via-card to-card/80 border border-border/50 p-4 sm:p-6">
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-card via-card to-card/80 border border-border p-4 sm:p-6">
         {/* Ambient glow blobs */}
         <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-primary/12 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 -left-10 w-36 h-36 rounded-full bg-secondary/18 blur-3xl pointer-events-none" />
@@ -534,7 +534,7 @@ const AdvisorPrivateProfile = () => {
           B · TAB NAV  (Overview / Settings / Schedule)
           ═══════════════════════════════════════════════════════ */}
       {activeTab !== "clients" && activeTab !== "insights" && (
-      <div className="flex border-b border-border/50 overflow-x-auto gap-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="flex border-b border-border overflow-x-auto gap-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {(["overview", "settings", "schedule", "reviews"] as const).map((tab) => (
           <button
             key={tab}
@@ -565,7 +565,7 @@ const AdvisorPrivateProfile = () => {
             <p className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground">{totalSess}</span> sessions in {periodLabel}
             </p>
-            <div className="flex items-center gap-1 bg-card border border-border/60 rounded-xl p-1 w-full sm:w-auto">
+            <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1 w-full sm:w-auto">
               {(["7d", "30d", "90d"] as const).map((p) => (
                 <button
                   key={p}
@@ -596,7 +596,7 @@ const AdvisorPrivateProfile = () => {
               { label: "Avg Rating",      value: String(stats.rating),   icon: Star,       iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15",   change: ""     },
               { label: "Pending Balance", value: stats.pending,          icon: Clock,      iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15",  change: ""     },
             ].map((stat) => (
-              <Card key={stat.label} className="bg-card border-border/50">
+              <Card key={stat.label} className="bg-card border-border">
                 <CardContent className="p-3.5 sm:p-5 flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="text-[11px] sm:text-xs text-muted-foreground leading-tight">{stat.label}</p>
@@ -617,66 +617,72 @@ const AdvisorPrivateProfile = () => {
           </div>
 
           {/* F · SESSION BREAKDOWN */}
-          <div className="flex-1 h-px bg-border/40" />
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">Session Breakdown</h3>
+          <div className="flex-1 h-px bg-border" />
+          <div className="space-y-4">
+            {/* Header + total badge */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">Session Breakdown</h3>
+              <span className="text-xs text-muted-foreground bg-muted/60 border border-border px-2.5 py-1 rounded-full">
+                {breakdown.reduce((a, b) => a + b.sessions, 0)} total sessions
+              </span>
+            </div>
+
+            {/* Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {breakdown.map((t) => (
-                <Card
-                  key={t.key}
-                  className={
-                    t.key === "chat"
-                      ? "bg-gradient-to-br from-primary/[0.07] via-card to-card border-primary/25 shadow-[inset_3px_0_0_hsl(var(--primary))] hover:shadow-[inset_3px_0_0_hsl(var(--primary)),0_0_20px_hsl(var(--primary)/0.08)] transition-shadow"
-                      : t.key === "voice"
-                      ? "bg-gradient-to-br from-[rgba(162,60,222,0.07)] via-card to-card border-[rgba(162,60,222,0.25)] shadow-[inset_3px_0_0_#A23CDE] hover:shadow-[inset_3px_0_0_#A23CDE,0_0_20px_rgba(162,60,222,0.08)] transition-shadow"
-                      : "bg-gradient-to-br from-[rgba(104,66,239,0.07)] via-card to-card border-[rgba(104,66,239,0.25)] shadow-[inset_3px_0_0_#6842EF] hover:shadow-[inset_3px_0_0_#6842EF,0_0_20px_rgba(104,66,239,0.08)] transition-shadow"
-                  }
-                >
-                  <CardContent className="p-4 sm:p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          t.key === "chat"
-                            ? "bg-primary/15"
-                            : t.key === "voice"
-                            ? "bg-[rgba(162,60,222,0.15)]"
-                            : "bg-[rgba(104,66,239,0.15)]"
-                        }`}
-                      >
+              {breakdown.map((t) => {
+                const cfg = {
+                  chat:  { iconBg: "bg-primary/10",              iconColor: "text-primary",   barColor: "bg-primary",    gradFrom: "from-primary/[0.06]",             border: "border-primary/20",            accent: "text-primary",    badgeBg: "bg-primary/10" },
+                  voice: { iconBg: "bg-[rgba(162,60,222,0.1)]",  iconColor: "text-[#A23CDE]", barColor: "bg-[#A23CDE]",  gradFrom: "from-[rgba(162,60,222,0.06)]",    border: "border-[rgba(162,60,222,0.2)]", accent: "text-[#A23CDE]", badgeBg: "bg-[rgba(162,60,222,0.1)]" },
+                  video: { iconBg: "bg-[rgba(104,66,239,0.1)]",  iconColor: "text-[#6842EF]", barColor: "bg-[#6842EF]",  gradFrom: "from-[rgba(104,66,239,0.06)]",    border: "border-[rgba(104,66,239,0.2)]", accent: "text-[#6842EF]", badgeBg: "bg-[rgba(104,66,239,0.1)]" },
+                }[t.key as "chat" | "voice" | "video"];
+
+                return (
+                  <div
+                    key={t.key}
+                    className={`relative overflow-hidden rounded-2xl border ${cfg.border} bg-gradient-to-br ${cfg.gradFrom} via-card to-card p-5 hover:scale-[1.01] transition-all duration-200 group`}
+                  >
+                    {/* Top row: icon + percentage badge */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${cfg.iconBg}`}>
                         {t.key === "chat" ? (
-                          <MessageSquare className="w-4 h-4 text-primary" />
+                          <MessageSquare className={`w-4 h-4 ${cfg.iconColor}`} />
                         ) : t.key === "voice" ? (
-                          <Mic className="w-4 h-4 text-[#A23CDE]" />
+                          <Mic className={`w-4 h-4 ${cfg.iconColor}`} />
                         ) : (
-                          <Video className="w-4 h-4 text-[#6842EF]" />
+                          <Video className={`w-4 h-4 ${cfg.iconColor}`} />
                         )}
                       </div>
-                      <span className="text-sm font-medium text-foreground">{t.label}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">{t.pct}%</span>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.badgeBg} ${cfg.accent}`}>
+                        {t.pct}%
+                      </span>
                     </div>
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <p className="text-2xl font-bold text-foreground">{t.sessions}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">sessions</p>
-                      </div>
-                      <p className="text-base font-semibold text-foreground">{t.earnings}</p>
-                    </div>
-                    <div className="mt-3 h-1.5 rounded-full bg-border/50 overflow-hidden">
+
+                    {/* Label */}
+                    <p className="text-[11px] font-medium text-muted-foreground mb-0.5 uppercase tracking-wide">{t.label}</p>
+
+                    {/* Session count — hero metric */}
+                    <p className="text-[2rem] font-bold text-foreground tracking-tight leading-none mb-0.5">{t.sessions}</p>
+                    <p className="text-xs text-muted-foreground mb-3">sessions</p>
+
+                    {/* Revenue */}
+                    <p className={`text-sm font-semibold ${cfg.accent}`}>{t.earnings}</p>
+                    <p className="text-[10px] text-muted-foreground mb-4">revenue earned</p>
+
+                    {/* Progress bar */}
+                    <div className="h-1 rounded-full bg-border/40 overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${
-                          t.key === "chat" ? "bg-primary" : t.key === "voice" ? "bg-[#A23CDE]" : "bg-[#6842EF]"
-                        }`}
+                        className={`h-full rounded-full ${cfg.barColor} transition-all duration-700`}
                         style={{ width: `${t.pct}%` }}
                       />
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* F · EARNINGS AREA CHART */}
-          <Card className="bg-card border-border/40 shadow-[0_0_32px_hsl(var(--primary)/0.07)] overflow-hidden">
+          <Card className="bg-card border-border shadow-[0_0_32px_hsl(var(--primary)/0.07)] overflow-hidden">
             <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-5">
               <CardTitle className="text-sm sm:text-base font-heading">Earnings Breakdown</CardTitle>
             </CardHeader>
@@ -756,7 +762,7 @@ const AdvisorPrivateProfile = () => {
             {/* My Clients card */}
             <button
               onClick={() => setActiveTab("clients")}
-              className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--primary)/0.08)] transition-all text-left group"
+              className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--primary)/0.08)] transition-all text-left group"
             >
               <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center group-hover:bg-primary/25 transition-colors">
                 <Users className="w-5 h-5 text-primary" />
@@ -773,7 +779,7 @@ const AdvisorPrivateProfile = () => {
             {/* Insights card */}
             <button
               onClick={() => setActiveTab("insights")}
-              className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border/50 hover:border-[#6842EF]/40 hover:shadow-[0_0_16px_rgba(104,66,239,0.08)] transition-all text-left group"
+              className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border hover:border-[#6842EF]/40 hover:shadow-[0_0_16px_rgba(104,66,239,0.08)] transition-all text-left group"
             >
               <div className="w-9 h-9 rounded-xl bg-[rgba(104,66,239,0.15)] flex items-center justify-center group-hover:bg-[rgba(104,66,239,0.25)] transition-colors">
                 <BarChart2 className="w-5 h-5 text-[#6842EF]" />
@@ -862,7 +868,7 @@ const AdvisorPrivateProfile = () => {
             </div>
 
             {serviceChanged && (
-              <div className="flex items-center justify-end gap-2 pt-4 mt-1 border-t border-border/50">
+              <div className="flex items-center justify-end gap-2 pt-4 mt-1 border-t border-border">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -901,7 +907,7 @@ const AdvisorPrivateProfile = () => {
                 return (
                   <div
                     key={day}
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-border/50 last:border-0"
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-border last:border-0"
                   >
                     <div className="flex items-center gap-3 w-28 shrink-0">
                       <Switch
@@ -937,7 +943,7 @@ const AdvisorPrivateProfile = () => {
             </div>
 
             {scheduleChanged && (
-              <div className="flex items-center justify-end gap-2 pt-4 mt-3 border-t border-border/50">
+              <div className="flex items-center justify-end gap-2 pt-4 mt-3 border-t border-border">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -974,7 +980,7 @@ const AdvisorPrivateProfile = () => {
           {/* Review cards */}
           {mockReviews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-12 h-12 rounded-full bg-card border border-border/50 flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center mb-3">
                 <Star className="w-5 h-5 text-muted-foreground/40" />
               </div>
               <p className="text-sm font-medium text-foreground">No reviews yet</p>
@@ -983,7 +989,7 @@ const AdvisorPrivateProfile = () => {
           ) : (
             <div className="space-y-3">
               {mockReviews.map((review) => (
-                <div key={review.id} className="p-4 rounded-xl bg-card border border-border/50">
+                <div key={review.id} className="p-4 rounded-xl bg-card border border-border">
                   {/* Top row: avatar + name/date */}
                   <div className="flex items-start gap-3 mb-3">
                     <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
@@ -1068,7 +1074,7 @@ const AdvisorPrivateProfile = () => {
               {clientGroups.map((client) => (
                 <div
                   key={client.clientId}
-                  className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-primary/[0.04] to-card border border-border/40 border-t-2 border-t-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.10)] transition-shadow"
+                  className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-primary/[0.04] to-card border border-border border-t-2 border-t-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.10)] transition-shadow"
                 >
                   {/* Avatar with ring accent */}
                   <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden ring-1 ring-primary/30 bg-primary/20 flex items-center justify-center">
@@ -1151,7 +1157,7 @@ const AdvisorPrivateProfile = () => {
               {/* Empty state for new advisors */}
               {totalInsightSessions === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-12 h-12 rounded-full bg-card border border-border/50 flex items-center justify-center mb-3">
+                  <div className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center mb-3">
                     <BarChart2 className="w-5 h-5 text-muted-foreground/40" />
                   </div>
                   <p className="text-sm font-medium text-foreground">No data yet</p>
@@ -1170,7 +1176,7 @@ const AdvisorPrivateProfile = () => {
                     ].map((m) => (
                       <Card
                         key={m.label}
-                        className="bg-card border-border/50 border-t-2 border-t-cyan-400/30 hover:shadow-[0_0_20px_rgba(34,211,238,0.10)] transition-shadow"
+                        className="bg-card border-border border-t-2 border-t-cyan-400/30 hover:shadow-[0_0_20px_rgba(34,211,238,0.10)] transition-shadow"
                       >
                         <CardContent className="p-3.5 sm:p-4 flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
@@ -1189,7 +1195,7 @@ const AdvisorPrivateProfile = () => {
                   <div className="grid grid-cols-2 gap-3">
 
                     {/* Return clients card */}
-                    <Card className="bg-gradient-to-br from-cyan-400/[0.04] to-card border-border/40 border-t-2 border-t-cyan-400/30">
+                    <Card className="bg-gradient-to-br from-cyan-400/[0.04] to-card border-border border-t-2 border-t-cyan-400/30">
                       <CardContent className="p-4 sm:p-5">
                         <div className="flex items-center justify-between mb-4">
                           <div>
@@ -1218,7 +1224,7 @@ const AdvisorPrivateProfile = () => {
                     </Card>
 
                     {/* Avg session duration card */}
-                    <Card className="bg-gradient-to-br from-cyan-400/[0.04] to-card border-border/40 border-t-2 border-t-cyan-400/30">
+                    <Card className="bg-gradient-to-br from-cyan-400/[0.04] to-card border-border border-t-2 border-t-cyan-400/30">
                       <CardContent className="p-4 sm:p-5 flex flex-col items-center justify-center h-full gap-1">
                         <p className="text-[10px] text-muted-foreground mb-1">Avg session duration</p>
                         <p className="text-3xl font-bold text-foreground">{avgDurationFormatted}</p>
@@ -1240,7 +1246,7 @@ const AdvisorPrivateProfile = () => {
                   </div>
 
                   {/* Session type distribution bar chart */}
-                  <Card className="bg-card border-border/40">
+                  <Card className="bg-card border-border">
                     <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-5">
                       <CardTitle className="text-sm sm:text-base font-heading flex items-center gap-2">
                         <BarChart2 className="w-4 h-4 text-cyan-400 flex-shrink-0" />
@@ -1274,7 +1280,7 @@ const AdvisorPrivateProfile = () => {
                   </Card>
 
                   {/* All-time earnings summary */}
-                  <Card className="bg-gradient-to-r from-cyan-400/[0.06] via-card to-card border-border/40 border-t-2 border-t-cyan-400/30 overflow-hidden relative">
+                  <Card className="bg-gradient-to-r from-cyan-400/[0.06] via-card to-card border-border border-t-2 border-t-cyan-400/30 overflow-hidden relative">
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                       <BarChart2 className="w-16 h-16 text-cyan-400/[0.06]" />
                     </div>
