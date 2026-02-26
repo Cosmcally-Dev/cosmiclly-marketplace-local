@@ -97,13 +97,22 @@ const VoiceCall = () => {
         description: `${advisor.name} is not available right now.`,
       });
       setTimeout(() => navigate(`/advisor/${id}`), 2000);
+    } else if (newStatus === 'completed') {
+      // Advisor ended the session
+      setWebrtcEnabled(false);
+      setCallStatus('ended');
+      setShowReview(true);
+      toast({
+        title: "Call Ended",
+        description: `${advisor.name} has ended the session.`,
+      });
     }
   }, [advisor.name, id, navigate, toast]);
 
   useSessionRealtime({
     sessionId,
     onStatusChange: handleStatusChange,
-    enabled: callStatus === 'ringing',
+    enabled: callStatus === 'ringing' || callStatus === 'connected',
   });
 
   // Check if user has enough credits to start session
@@ -622,6 +631,7 @@ const VoiceCall = () => {
         sessionType="call"
         sessionDuration={sessionTime}
         creditsUsed={creditsUsed}
+        sessionId={sessionId}
       />
 
       {/* Low Credit Warning */}

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Phone, PhoneOff, Mic, MicOff, Video, VideoOff,
-  Clock, Star, ArrowLeft, Wifi, WifiOff, X
+  Clock, Star, ArrowLeft, Wifi, WifiOff, X, Minimize2, Maximize2
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,7 @@ const VideoCall = () => {
   const [showHoldModal, setShowHoldModal] = useState(false);
   const [holdError, setHoldError] = useState<string | null>(null);
   const [stripeSessionId, setStripeSessionId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(true);
 
   const { hasPaymentMethod, isCreatingHold, createSessionHold, captureSessionPayment } = useStripePayment();
 
@@ -98,13 +99,22 @@ const VideoCall = () => {
         description: `${advisor.name} is not available right now.`,
       });
       setTimeout(() => navigate(`/advisor/${id}`), 2000);
+    } else if (newStatus === 'completed') {
+      // Advisor ended the session
+      setWebrtcEnabled(false);
+      setCallStatus('ended');
+      setShowReview(true);
+      toast({
+        title: "Call Ended",
+        description: `${advisor.name} has ended the session.`,
+      });
     }
   }, [advisor.name, id, navigate, toast]);
 
   useSessionRealtime({
     sessionId,
     onStatusChange: handleStatusChange,
-    enabled: callStatus === 'ringing',
+    enabled: callStatus === 'ringing' || callStatus === 'connected',
   });
 
   // Check if user has enough credits to start session
@@ -409,8 +419,11 @@ const VideoCall = () => {
       <main className="flex-1 pt-16 md:pt-20 flex flex-col relative">
         {/* Video Container */}
         {callStatus === 'connected' && (
-          <div className="flex-1 relative bg-black">
-            {/* Remote video (full size) */}
+          <div className={isFullscreen
+            ? 'flex-1 relative bg-black'
+            : 'relative bg-black mx-auto mt-4 rounded-xl overflow-hidden shadow-2xl'
+          } style={!isFullscreen ? { width: '640px', maxWidth: '90vw', aspectRatio: '16/9' } : undefined}>
+            {/* Remote video */}
             <video
               ref={remoteVideoRef}
               autoPlay
@@ -420,7 +433,7 @@ const VideoCall = () => {
 
             {/* No remote video fallback */}
             {!remoteStream && (
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center bg-black">
                 <div className="text-center text-white">
                   <img
                     src={advisor.avatar}
@@ -462,6 +475,14 @@ const VideoCall = () => {
                   ) : (
                     <span className="text-xs text-white/70">${creditsUsed.toFixed(2)}</span>
                   )}
+                  {/* Fullscreen toggle */}
+                  <button
+                    onClick={() => setIsFullscreen(!isFullscreen)}
+                    className="p-1.5 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+                    title={isFullscreen ? 'Minimize video' : 'Maximize video'}
+                  >
+                    {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             </div>
@@ -511,6 +532,15 @@ const VideoCall = () => {
                   <PhoneOff className="w-7 h-7" />
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Non-fullscreen: show billing info below video */}
+        {callStatus === 'connected' && !isFullscreen && (
+          <div className="mx-auto mt-4 px-4 text-center">
+            <div className="text-sm text-muted-foreground">
+              Rate: ${pricePerMinute}/min • Balance: ${remainingCredits.toFixed(2)}
             </div>
           </div>
         )}
@@ -594,6 +624,7 @@ const VideoCall = () => {
         sessionType="call"
         sessionDuration={sessionTime}
         creditsUsed={creditsUsed}
+        sessionId={sessionId}
       />
 
       {/* Low Credit Warning */}

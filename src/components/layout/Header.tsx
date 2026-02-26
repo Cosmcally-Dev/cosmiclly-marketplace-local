@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -27,12 +27,15 @@ import {
   Activity,
   Phone,
   Shield,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "./MobileMenu";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { AdvisorApplicationModal } from "@/components/modals/AdvisorApplicationModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdvisorIncomingCalls } from "@/hooks/useAdvisorIncomingCalls";
+import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -69,6 +72,31 @@ export const Header = () => {
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
 
   const { user, isAuthenticated, logout, credits } = useAuth();
+  const { toast } = useToast();
+
+  // Global advisor notification — only active for advisor users
+  const isAdvisor = user?.isAdvisor ?? false;
+  const { incomingSessions } = useAdvisorIncomingCalls(isAdvisor ? user?.id : undefined);
+  const prevCountRef = useRef(0);
+
+  // Toast notification when new incoming sessions arrive
+  useEffect(() => {
+    if (!isAdvisor) return;
+    const count = incomingSessions.length;
+    if (count > prevCountRef.current && prevCountRef.current >= 0) {
+      const newest = incomingSessions[0];
+      toast({
+        title: "Incoming Session",
+        description: `${newest?.client_name || 'A client'} is requesting a ${newest?.type || 'session'}`,
+        action: (
+          <Button size="sm" variant="default" onClick={() => navigate('/advisor-call')}>
+            View
+          </Button>
+        ),
+      });
+    }
+    prevCountRef.current = count;
+  }, [incomingSessions, isAdvisor, toast, navigate]);
 
   const handleAuth = (mode: "signin" | "signup") => {
     setAuthMode(mode);
@@ -236,6 +264,20 @@ export const Header = () => {
               </Link>
 
               {isAuthenticated ? (
+                <>
+                {/* Notification bell for advisors */}
+                {isAdvisor && incomingSessions.length > 0 && (
+                  <button
+                    onClick={() => navigate('/advisor-call')}
+                    className="relative p-2 text-foreground/70 hover:text-primary transition-colors"
+                    title={`${incomingSessions.length} incoming session(s)`}
+                  >
+                    <Bell className="w-5 h-5 animate-bounce" />
+                    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {incomingSessions.length}
+                    </span>
+                  </button>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 p-1 min-h-11 rounded-full hover:bg-secondary/50 transition-colors outline-none">
@@ -302,6 +344,11 @@ export const Header = () => {
                         >
                           <Phone className="w-4 h-4" />
                           Advisor Dashboard
+                          {incomingSessions.length > 0 && (
+                            <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                              {incomingSessions.length}
+                            </span>
+                          )}
                         </DropdownMenuItem>
                       </>
                     )}
@@ -331,6 +378,7 @@ export const Header = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                </>
               ) : (
                 <>
                   <Button

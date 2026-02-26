@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Star,
@@ -25,6 +25,7 @@ import { type Advisor } from "@/data/advisors";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdvisors } from "@/hooks/useAdvisors";
+import { supabase } from "@/integrations/supabase/client";
 import aiTwinIcon from "@/assets/ai-twin-icon.png";
 
 const StatusBadge = ({ status }: { status: Advisor["status"] }) => {
@@ -45,41 +46,13 @@ const StatusBadge = ({ status }: { status: Advisor["status"] }) => {
   );
 };
 
-const reviews = [
-  {
-    id: 1,
-    user: "Sarah M.",
-    date: "17 Jan 26",
-    text: "Absolutely incredible reading! She knew things I never told anyone. Highly recommend!",
-  },
-  {
-    id: 2,
-    user: "Michael T.",
-    date: "17 Jan 26",
-    text: "Very insightful and caring. Helped me understand my situation better.",
-  },
-  {
-    id: 3,
-    user: "Emily R.",
-    date: "17 Jan 26",
-    text: "Amazing accuracy! Will definitely come back for more guidance.",
-  },
-  {
-    id: 4,
-    user: "David K.",
-    date: "16 Jan 26",
-    text: "Wonderful experience. Very patient and detailed in explanations.",
-  },
-  {
-    id: 5,
-    user: "Jessica L.",
-    date: "16 Jan 26",
-    text: "Thank you so much for the clarity! Feeling much better about my path.",
-  },
-  { id: 6, user: "Chris P.", date: "16 Jan 26", text: "Great reader, always aligned with energetic fields." },
-  { id: 7, user: "Amanda S.", date: "15 Jan 26", text: "Such a sweetheart! Always a wonderful reading 👍" },
-  { id: 8, user: "Robert J.", date: "15 Jan 26", text: "Incredible reader, thank you for your kindness and wisdom." },
-];
+interface ReviewData {
+  id: string;
+  user: string;
+  date: string;
+  text: string;
+  rating: number;
+}
 
 const AdvisorProfile = () => {
   const { id } = useParams();
@@ -89,11 +62,42 @@ const AdvisorProfile = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<"chat" | "call" | null>(null);
 
+  const [reviews, setReviews] = useState<ReviewData[]>([]);
+
   const { isAuthenticated } = useAuth();
   const { advisors, getAdvisorById } = useAdvisors();
 
   // Find advisor by id or use first one as default
   const advisor = getAdvisorById(id) || advisors[0];
+
+  // Fetch real reviews from database
+  useEffect(() => {
+    const advisorDbId = advisor?.dbId || advisor?.id;
+    if (!advisorDbId) return;
+
+    const fetchReviews = async () => {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('id, rating, review_text, created_at, client:profiles!client_id(full_name)')
+        .eq('advisor_id', advisorDbId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (!error && data) {
+        setReviews(data.map((r: any) => ({
+          id: r.id,
+          user: r.client?.full_name
+            ? `${r.client.full_name.split(' ')[0]} ${(r.client.full_name.split(' ')[1] || '')[0] || ''}.`.trim()
+            : 'Anonymous',
+          date: new Date(r.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: '2-digit' }),
+          text: r.review_text || '',
+          rating: r.rating,
+        })));
+      }
+    };
+
+    fetchReviews();
+  }, [advisor?.dbId, advisor?.id]);
 
   const handleChatClick = () => {
     if (isAuthenticated) {
@@ -414,7 +418,11 @@ const AdvisorProfile = () => {
                   </div>
 
                   <div className="space-y-4">
-                    {reviews.map((review) => (
+                    {reviews.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">
+                        No reviews yet. Be the first to leave a review!
+                      </p>
+                    ) : reviews.map((review) => (
                       <div key={review.id} className="p-4 rounded-lg bg-secondary/50">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
@@ -427,17 +435,19 @@ const AdvisorProfile = () => {
                         </div>
                         <div className="flex gap-0.5 mb-2">
                           {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="w-3 h-3 text-primary fill-primary" />
+                            <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
                           ))}
                         </div>
-                        <p className="text-sm text-muted-foreground">{review.text}</p>
+                        {review.text && <p className="text-sm text-muted-foreground">{review.text}</p>}
                       </div>
                     ))}
                   </div>
 
-                  <button className="mt-6 w-full py-3 text-center text-primary hover:underline font-medium">
-                    + See more reviews
-                  </button>
+                  {reviews.length > 0 && (
+                    <button className="mt-6 w-full py-3 text-center text-primary hover:underline font-medium">
+                      + See more reviews
+                    </button>
+                  )}
                 </div>
               </div>
 
