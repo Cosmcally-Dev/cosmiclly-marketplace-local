@@ -26,6 +26,7 @@ import {
   TrendingUp,
   Phone,
   Sparkles,
+  HelpCircle,
 } from "lucide-react";
 import {
   AreaChart,
@@ -192,11 +193,12 @@ const AdvisorPrivateProfile = () => {
     const lsKey = `advisor_schedule_${user.id}`;
     const fetchDetails = async () => {
       setIsLoadingDetails(true);
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase
         .from("advisor_details")
         .select("status, price_per_minute, bio_long, specialties, schedule")
         .eq("id", user.id)
-        .single();
+        .single() as Promise<{ data: any; error: any }>);
       if (!error && data) {
         setIsOnline(data.status === "online");
         const dbPrice       = data.price_per_minute != null ? String(data.price_per_minute) : "3.50";
@@ -357,7 +359,7 @@ const AdvisorPrivateProfile = () => {
     const { error } = await supabase
       .from("advisor_details")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update({ schedule: schedule as any })
+      .update({ schedule } as any)
       .eq("id", user.id);
     if (error) {
       console.error("[AdvisorPrivateProfile] Schedule DB save error (localStorage used as fallback):", error);
@@ -416,6 +418,25 @@ const AdvisorPrivateProfile = () => {
     { label: "Voice", count: insightSessions.filter(s => s.type === "audio").length, fill: "#A23CDE" },
     { label: "Video", count: insightSessions.filter(s => s.type === "video").length, fill: "#6842EF" },
   ];
+
+  // Returning clients (last 30 days)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const sessions30d = insightSessions.filter(s => s.started_at && new Date(s.started_at) >= thirtyDaysAgo);
+  const clientFreq30d = sessions30d.reduce((acc, s) => {
+    acc[s.client_id] = (acc[s.client_id] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const uniqueClients30d    = Object.keys(clientFreq30d).length;
+  const returningClients30d = Object.values(clientFreq30d).filter(c => c > 1).length;
+  const returningClientsPct = uniqueClients30d > 0 ? Math.round((returningClients30d / uniqueClients30d) * 100) : 0;
+
+  // Formatted average session duration
+  const avgRawMins        = totalInsightSessions > 0 ? totalMinutes / totalInsightSessions : 0;
+  const avgDurHours       = Math.floor(avgRawMins / 60);
+  const avgDurMins        = Math.round(avgRawMins % 60);
+  const avgDurationFormatted = avgDurHours > 0 ? `${avgDurHours}h ${avgDurMins}m` : `${avgDurMins}m`;
+  // Track position (0–100) for the indicator dot — caps at 60 min = 100%
+  const avgDurTrackPct = Math.min(Math.round((avgRawMins / 60) * 100), 100);
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -512,8 +533,9 @@ const AdvisorPrivateProfile = () => {
       {/* ═══════════════════════════════════════════════════════
           B · TAB NAV  (Overview / Settings / Schedule)
           ═══════════════════════════════════════════════════════ */}
+      {activeTab !== "clients" && activeTab !== "insights" && (
       <div className="flex border-b border-border/50 overflow-x-auto gap-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {(["overview", "settings", "schedule", "reviews", "clients", "insights"] as const).map((tab) => (
+        {(["overview", "settings", "schedule", "reviews"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -526,12 +548,11 @@ const AdvisorPrivateProfile = () => {
             {tab === "overview" ? "Overview"
               : tab === "settings" ? "Settings"
               : tab === "schedule" ? "Schedule"
-              : tab === "reviews" ? "Reviews"
-              : tab === "clients" ? "Clients"
-              : "Insights"}
+              : "Reviews"}
           </button>
         ))}
       </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════
           OVERVIEW TAB
@@ -570,10 +591,10 @@ const AdvisorPrivateProfile = () => {
           {/* E · STATS ROW */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { label: "Total Earnings",  value: stats.earnings,         icon: DollarSign, iconColor: "text-emerald-400", iconBg: "bg-emerald-400/15", change: "+12%" },
-              { label: "Sessions",        value: String(stats.sessions), icon: Users,      iconColor: "text-cyan-400",    iconBg: "bg-cyan-400/15",    change: "+8%"  },
-              { label: "Avg Rating",      value: String(stats.rating),   icon: Star,       iconColor: "text-amber-400",   iconBg: "bg-amber-400/15",   change: ""     },
-              { label: "Pending Balance", value: stats.pending,          icon: Clock,      iconColor: "text-violet-400",  iconBg: "bg-violet-400/15",  change: ""     },
+              { label: "Total Earnings",  value: stats.earnings,         icon: DollarSign, iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: "+12%" },
+              { label: "Sessions",        value: String(stats.sessions), icon: Users,      iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15",    change: "+8%"  },
+              { label: "Avg Rating",      value: String(stats.rating),   icon: Star,       iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15",   change: ""     },
+              { label: "Pending Balance", value: stats.pending,          icon: Clock,      iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15",  change: ""     },
             ].map((stat) => (
               <Card key={stat.label} className="bg-card border-border/50">
                 <CardContent className="p-3.5 sm:p-5 flex items-start justify-between gap-2">
@@ -752,16 +773,16 @@ const AdvisorPrivateProfile = () => {
             {/* Insights card */}
             <button
               onClick={() => setActiveTab("insights")}
-              className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border/50 hover:border-[#A23CDE]/40 hover:shadow-[0_0_16px_rgba(162,60,222,0.08)] transition-all text-left group"
+              className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border/50 hover:border-[#6842EF]/40 hover:shadow-[0_0_16px_rgba(104,66,239,0.08)] transition-all text-left group"
             >
-              <div className="w-9 h-9 rounded-xl bg-[rgba(162,60,222,0.15)] flex items-center justify-center group-hover:bg-[rgba(162,60,222,0.25)] transition-colors">
-                <BarChart2 className="w-5 h-5 text-[#A23CDE]" />
+              <div className="w-9 h-9 rounded-xl bg-[rgba(104,66,239,0.15)] flex items-center justify-center group-hover:bg-[rgba(104,66,239,0.25)] transition-colors">
+                <BarChart2 className="w-5 h-5 text-[#6842EF]" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-foreground">Insights</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Performance metrics &amp; analytics</p>
               </div>
-              <div className="flex items-center gap-1 text-xs font-medium text-[#A23CDE]">
+              <div className="flex items-center gap-1 text-xs font-medium text-[#6842EF]">
                 View <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </button>
@@ -943,9 +964,9 @@ const AdvisorPrivateProfile = () => {
           {/* Header row */}
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">My Reviews</h2>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/25">
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="text-xs font-semibold text-amber-400">4.8</span>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[rgba(104,66,239,0.10)] border border-[rgba(104,66,239,0.25)]">
+              <Star className="w-3.5 h-3.5 fill-[#6842EF] text-[#6842EF]" />
+              <span className="text-xs font-semibold text-[#6842EF]">4.8</span>
               <span className="text-xs text-muted-foreground">· {mockReviews.length} reviews</span>
             </div>
           </div>
@@ -979,7 +1000,7 @@ const AdvisorPrivateProfile = () => {
                           key={i}
                           className={`w-3.5 h-3.5 ${
                             i < review.rating
-                              ? "fill-amber-400 text-amber-400"
+                              ? "fill-[#6842EF] text-[#6842EF]"
                               : "text-border"
                           }`}
                         />
@@ -1000,13 +1021,25 @@ const AdvisorPrivateProfile = () => {
           CLIENTS TAB
           ═══════════════════════════════════════════════════════ */}
       {activeTab === "clients" && (
-        <div className="space-y-4">
-          {/* Header */}
+        <div className="space-y-5">
+          {/* Header — matches insights style */}
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">My Clients</h2>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+                Overview
+              </button>
+              <div className="flex items-center gap-2 border-l-2 border-primary/60 pl-3">
+                <Users className="w-4 h-4 text-primary" />
+                <h2 className="text-sm font-semibold text-foreground tracking-wide">My Clients</h2>
+              </div>
+            </div>
             {clientGroups.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {clientGroups.length} unique client{clientGroups.length !== 1 ? "s" : ""}
+              <span className="text-[11px] font-medium text-primary/80 bg-primary/10 px-2.5 py-0.5 rounded-full">
+                {clientGroups.length} client{clientGroups.length !== 1 ? "s" : ""}
               </span>
             )}
           </div>
@@ -1021,8 +1054,8 @@ const AdvisorPrivateProfile = () => {
           {/* Empty state */}
           {!isLoadingClients && clientGroups.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-12 h-12 rounded-full bg-card border border-border/50 flex items-center justify-center mb-3">
-                <Users className="w-5 h-5 text-muted-foreground/40" />
+              <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-3">
+                <Users className="w-5 h-5 text-primary/40" />
               </div>
               <p className="text-sm font-medium text-foreground">No clients yet</p>
               <p className="text-xs text-muted-foreground mt-1">Your clients will appear here after completed sessions.</p>
@@ -1031,11 +1064,14 @@ const AdvisorPrivateProfile = () => {
 
           {/* Client list */}
           {!isLoadingClients && clientGroups.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {clientGroups.map((client) => (
-                <div key={client.clientId} className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/50">
-                  {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <div
+                  key={client.clientId}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-br from-primary/[0.04] to-card border border-border/40 border-t-2 border-t-primary/30 hover:shadow-[0_0_20px_hsl(var(--primary)/0.10)] transition-shadow"
+                >
+                  {/* Avatar with ring accent */}
+                  <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden ring-1 ring-primary/30 bg-primary/20 flex items-center justify-center">
                     {client.avatarUrl ? (
                       <img src={client.avatarUrl} alt={client.name} className="w-full h-full object-cover" />
                     ) : (
@@ -1067,7 +1103,7 @@ const AdvisorPrivateProfile = () => {
 
                   {/* Right stats */}
                   <div className="text-right shrink-0 space-y-0.5">
-                    <p className="text-sm font-semibold text-foreground">${client.totalEarnings.toFixed(2)}</p>
+                    <p className="text-sm font-bold text-foreground">${client.totalEarnings.toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">
                       {client.sessions.length} session{client.sessions.length !== 1 ? "s" : ""}
                     </p>
@@ -1089,7 +1125,19 @@ const AdvisorPrivateProfile = () => {
           ═══════════════════════════════════════════════════════ */}
       {activeTab === "insights" && (
         <div className="space-y-5">
-          <h2 className="text-sm font-semibold text-foreground">Performance Insights</h2>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-cyan-400 transition-colors"
+            >
+              <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+              Overview
+            </button>
+            <div className="flex items-center gap-2 border-l-2 border-cyan-400/60 pl-3">
+              <BarChart2 className="w-4 h-4 text-cyan-400" />
+              <h2 className="text-sm font-semibold text-foreground tracking-wide">Performance Insights</h2>
+            </div>
+          </div>
 
           {/* Loading */}
           {isLoadingInsights && (
@@ -1116,28 +1164,88 @@ const AdvisorPrivateProfile = () => {
                   {/* 3 metric cards */}
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: "Unique Clients",   value: String(uniqueClientCount), icon: Users,      iconColor: "text-cyan-400",    iconBg: "bg-cyan-400/15"    },
-                      { label: "Avg Session",       value: `${avgDurationMin}m`,      icon: Clock,      iconColor: "text-violet-400",  iconBg: "bg-violet-400/15"  },
-                      { label: "Total Hours",       value: `${totalHours}h`,          icon: TrendingUp, iconColor: "text-emerald-400", iconBg: "bg-emerald-400/15" },
+                      { label: "Unique Clients", value: String(uniqueClientCount), icon: Users      },
+                      { label: "Avg Session",    value: `${avgDurationMin}m`,      icon: Clock      },
+                      { label: "Total Hours",    value: `${totalHours}h`,          icon: TrendingUp },
                     ].map((m) => (
-                      <Card key={m.label} className="bg-card border-border/50">
+                      <Card
+                        key={m.label}
+                        className="bg-card border-border/50 border-t-2 border-t-cyan-400/30 hover:shadow-[0_0_20px_rgba(34,211,238,0.10)] transition-shadow"
+                      >
                         <CardContent className="p-3.5 sm:p-4 flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
                             <p className="text-[11px] text-muted-foreground leading-tight">{m.label}</p>
                             <p className="text-lg sm:text-xl font-bold text-foreground mt-1">{m.value}</p>
                           </div>
-                          <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center ${m.iconBg}`}>
-                            <m.icon className={`w-4 h-4 ${m.iconColor}`} />
+                          <div className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center bg-cyan-400/15">
+                            <m.icon className="w-4 h-4 text-cyan-400" />
                           </div>
                         </CardContent>
                       </Card>
                     ))}
                   </div>
 
+                  {/* Returning clients + Avg session duration */}
+                  <div className="grid grid-cols-2 gap-3">
+
+                    {/* Return clients card */}
+                    <Card className="bg-gradient-to-br from-cyan-400/[0.04] to-card border-border/40 border-t-2 border-t-cyan-400/30">
+                      <CardContent className="p-4 sm:p-5">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <p className="text-xs font-medium text-foreground leading-tight">Return clients</p>
+                            <p className="text-[10px] text-muted-foreground/60 mt-0.5">(last 30 days)</p>
+                          </div>
+                          <button
+                            title="Clients who had more than one session with you in the last 30 days"
+                            className="flex-shrink-0 w-6 h-6 rounded-lg bg-cyan-400/10 flex items-center justify-center text-cyan-400/60 hover:text-cyan-400 transition-colors"
+                          >
+                            <HelpCircle className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="flex-1 flex flex-col items-center gap-0.5">
+                            <p className="text-3xl font-bold text-foreground">{returningClients30d}</p>
+                            <p className="text-[10px] text-muted-foreground">clients</p>
+                          </div>
+                          <div className="w-px h-10 bg-border/50 mx-2 flex-shrink-0" />
+                          <div className="flex-1 flex flex-col items-center gap-0.5">
+                            <p className="text-3xl font-bold text-cyan-400">{returningClientsPct}%</p>
+                            <p className="text-[10px] text-muted-foreground">return rate</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Avg session duration card */}
+                    <Card className="bg-gradient-to-br from-cyan-400/[0.04] to-card border-border/40 border-t-2 border-t-cyan-400/30">
+                      <CardContent className="p-4 sm:p-5 flex flex-col items-center justify-center h-full gap-1">
+                        <p className="text-[10px] text-muted-foreground mb-1">Avg session duration</p>
+                        <p className="text-3xl font-bold text-foreground">{avgDurationFormatted}</p>
+                        {/* Track indicator */}
+                        <div className="relative w-full mt-3">
+                          <div className="h-1 rounded-full bg-border/50 w-full" />
+                          <div
+                            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-cyan-400 border-2 border-card shadow-[0_0_6px_rgba(34,211,238,0.5)] transition-all"
+                            style={{ left: `calc(${avgDurTrackPct}% - 6px)` }}
+                          />
+                        </div>
+                        <div className="flex justify-between w-full mt-1">
+                          <span className="text-[9px] text-muted-foreground/50">0m</span>
+                          <span className="text-[9px] text-muted-foreground/50">60m</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                  </div>
+
                   {/* Session type distribution bar chart */}
                   <Card className="bg-card border-border/40">
                     <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-5">
-                      <CardTitle className="text-sm sm:text-base font-heading">Session Distribution</CardTitle>
+                      <CardTitle className="text-sm sm:text-base font-heading flex items-center gap-2">
+                        <BarChart2 className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                        Session Distribution
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="px-2 pb-4">
                       <ResponsiveContainer width="100%" height={160}>
@@ -1166,11 +1274,14 @@ const AdvisorPrivateProfile = () => {
                   </Card>
 
                   {/* All-time earnings summary */}
-                  <Card className="bg-card border-border/40">
-                    <CardContent className="p-4 sm:p-5 flex items-center justify-between gap-4">
+                  <Card className="bg-gradient-to-r from-cyan-400/[0.06] via-card to-card border-border/40 border-t-2 border-t-cyan-400/30 overflow-hidden relative">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <BarChart2 className="w-16 h-16 text-cyan-400/[0.06]" />
+                    </div>
+                    <CardContent className="p-4 sm:p-5 flex items-center justify-between gap-4 relative">
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">All-time earnings</p>
-                        <p className="text-2xl font-bold text-foreground">${totalInsightEarnings.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-cyan-400">${totalInsightEarnings.toFixed(2)}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground mb-1">Total sessions</p>
