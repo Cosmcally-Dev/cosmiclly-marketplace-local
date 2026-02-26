@@ -1,1 +1,19 @@
-project_id = "egluycabmxfpnodlrvnz"
+project_id = "jxpzxdbforvuphqvvqkz"
+
+[functions.generate-livekit-token]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.create-session-hold]
+verify_jwt = false
+
+[functions.capture-session-payment]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = false
