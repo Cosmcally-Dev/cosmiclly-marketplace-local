@@ -176,15 +176,6 @@ const AdvisorPortal = () => {
 
         {portalState === 'approved' && (
           <div className="container mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-heading font-bold text-foreground">Advisor Dashboard</h1>
-              <Link to="/advisor-call">
-                <Button variant="hero" size="sm">
-                  <Phone className="w-4 h-4 mr-2" />
-                  Incoming Sessions
-                </Button>
-              </Link>
-            </div>
             <AdvisorPrivateProfile />
           </div>
         )}

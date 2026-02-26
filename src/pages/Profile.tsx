@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -11,7 +11,6 @@ import { Settings, MessageCircle, Users, Sparkles, ArrowRight } from "lucide-rea
 import { advisors } from "@/data/advisors";
 import { AdvisorCard } from "@/components/advisors/AdvisorCard";
 import { zodiacSigns } from "@/data/zodiacSigns";
-import AdvisorPrivateProfile from "@/components/profile/AdvisorPrivateProfile";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -30,17 +29,9 @@ const Profile = () => {
     );
   }
 
-  // Advisor view
+  // Advisor view — canonical dashboard is /advisor-portal
   if (user?.isAdvisor) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container max-w-7xl mx-auto pt-24 pb-12 px-4">
-          <AdvisorPrivateProfile />
-        </main>
-        <Footer />
-      </div>
-    );
+    return <Navigate to="/advisor-portal" replace />;
   }
 
   // Regular user view

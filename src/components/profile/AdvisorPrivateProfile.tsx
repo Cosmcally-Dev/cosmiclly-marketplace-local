@@ -24,20 +24,39 @@ import {
   ChevronRight,
   Clock,
   TrendingUp,
+  Phone,
+  Sparkles,
 } from "lucide-react";
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import type { Session } from "@/types/session";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Period = "7d" | "30d" | "90d";
-type ActiveTab = "overview" | "settings" | "schedule" | "reviews";
+type ActiveTab = "overview" | "settings" | "schedule" | "reviews" | "clients" | "insights";
+
+interface SessionWithClient extends Session {
+  client: { full_name: string | null; avatar_url: string | null } | null;
+}
+interface ClientGroup {
+  clientId: string;
+  name: string;
+  avatarUrl: string | null;
+  sessions: SessionWithClient[];
+  totalEarnings: number;
+  lastSessionAt: string | null;
+  typeCounts: { chat: number; audio: number; video: number };
+}
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 const earningsByPeriod: Record<
@@ -111,6 +130,10 @@ const allSpecialties = [
 ];
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const dayLabels: Record<string, string> = {
+  Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday",
+  Fri: "Friday", Sat: "Saturday", Sun: "Sunday",
+};
 
 // ─── Component ────────────────────────────────────────────────────────────────
 const AdvisorPrivateProfile = () => {
@@ -123,8 +146,15 @@ const AdvisorPrivateProfile = () => {
   const [activePeriod, setActivePeriod] = useState<Period>("30d");
 
   // Avatar
-  const [avatarUrl, setAvatarUrl]     = useState<string | undefined>(user?.avatarUrl);
-  const [isUploading, setIsUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl]               = useState<string | undefined>(user?.avatarUrl);
+  const [isUploading, setIsUploading]           = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+
+  // Clients + insights data
+  const [clientSessions, setClientSessions]         = useState<SessionWithClient[]>([]);
+  const [isLoadingClients, setIsLoadingClients]     = useState(false);
+  const [insightSessions, setInsightSessions]       = useState<Session[]>([]);
+  const [isLoadingInsights, setIsLoadingInsights]   = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Status + service
@@ -161,6 +191,7 @@ const AdvisorPrivateProfile = () => {
     if (!user?.id) return;
     const lsKey = `advisor_schedule_${user.id}`;
     const fetchDetails = async () => {
+      setIsLoadingDetails(true);
       const { data, error } = await supabase
         .from("advisor_details")
         .select("status, price_per_minute, bio_long, specialties, schedule")
@@ -184,10 +215,47 @@ const AdvisorPrivateProfile = () => {
         savedServiceRef.current  = { pricePerMinute: dbPrice, bio: dbBio, selectedSpecialties: [...dbSpecialties] };
         savedScheduleRef.current = resolvedSchedule;
       }
+      setIsLoadingDetails(false);
     };
     fetchDetails();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
+  // Fetch clients (lazy — only when tab first opened)
+  useEffect(() => {
+    if (activeTab !== "clients" || !user?.id || clientSessions.length > 0) return;
+    const fetchClients = async () => {
+      setIsLoadingClients(true);
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("*, client:profiles!client_id(full_name, avatar_url)")
+        .eq("advisor_id", user.id)
+        .eq("status", "completed")
+        .order("started_at", { ascending: false })
+        .limit(200);
+      if (!error && data) setClientSessions(data as SessionWithClient[]);
+      setIsLoadingClients(false);
+    };
+    fetchClients();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, user?.id]);
+
+  // Fetch insights (lazy — only when tab first opened)
+  useEffect(() => {
+    if (activeTab !== "insights" || !user?.id || insightSessions.length > 0) return;
+    const fetchInsights = async () => {
+      setIsLoadingInsights(true);
+      const { data, error } = await supabase
+        .from("sessions")
+        .select("id, type, billable_minutes, cost_total, started_at, client_id")
+        .eq("advisor_id", user.id)
+        .eq("status", "completed");
+      if (!error && data) setInsightSessions(data as Session[]);
+      setIsLoadingInsights(false);
+    };
+    fetchInsights();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, user?.id]);
 
   const handleStatusToggle = async (checked: boolean) => {
     setIsOnline(checked);
@@ -311,6 +379,44 @@ const AdvisorPrivateProfile = () => {
   const totalSess   = breakdown.reduce((s, t) => s + t.sessions, 0);
   const periodLabel = activePeriod === "7d" ? "last 7 days" : activePeriod === "30d" ? "last 30 days" : "last 90 days";
 
+  // Clients tab — group sessions by client
+  const clientGroups: ClientGroup[] = Object.values(
+    clientSessions.reduce((acc, s) => {
+      if (!acc[s.client_id]) {
+        acc[s.client_id] = {
+          clientId: s.client_id,
+          name: s.client?.full_name || "Unknown Client",
+          avatarUrl: s.client?.avatar_url ?? null,
+          sessions: [],
+          totalEarnings: 0,
+          lastSessionAt: null,
+          typeCounts: { chat: 0, audio: 0, video: 0 },
+        };
+      }
+      acc[s.client_id].sessions.push(s);
+      acc[s.client_id].totalEarnings += s.cost_total ?? 0;
+      if (!acc[s.client_id].lastSessionAt || (s.started_at && s.started_at > (acc[s.client_id].lastSessionAt ?? ""))) {
+        acc[s.client_id].lastSessionAt = s.started_at;
+      }
+      const t = s.type as keyof ClientGroup["typeCounts"];
+      if (t in acc[s.client_id].typeCounts) acc[s.client_id].typeCounts[t]++;
+      return acc;
+    }, {} as Record<string, ClientGroup>)
+  ).sort((a, b) => b.sessions.length - a.sessions.length);
+
+  // Insights tab — aggregate metrics from real session data
+  const totalInsightSessions = insightSessions.length;
+  const totalInsightEarnings = insightSessions.reduce((s, r) => s + (r.cost_total ?? 0), 0);
+  const uniqueClientCount    = new Set(insightSessions.map(s => s.client_id)).size;
+  const totalMinutes         = insightSessions.reduce((s, r) => s + r.billable_minutes, 0);
+  const avgDurationMin       = totalInsightSessions > 0 ? (totalMinutes / totalInsightSessions).toFixed(1) : "0";
+  const totalHours           = (totalMinutes / 60).toFixed(1);
+  const typeDistributionData = [
+    { label: "Chat",  count: insightSessions.filter(s => s.type === "chat").length,  fill: "hsl(var(--primary))" },
+    { label: "Voice", count: insightSessions.filter(s => s.type === "audio").length, fill: "#A23CDE" },
+    { label: "Video", count: insightSessions.filter(s => s.type === "video").length, fill: "#6842EF" },
+  ];
+
   return (
     <div className="space-y-5 sm:space-y-6">
 
@@ -369,13 +475,28 @@ const AdvisorPrivateProfile = () => {
                 </span>
               </h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                Manage your profile, services, and availability.
+                {isOnline ? "You're live — clients can book you now." : "You're offline — toggle status to go live."}
               </p>
+              <button
+                onClick={() => navigate(`/advisor/${user?.id}`)}
+                className="text-xs text-primary/70 hover:text-primary transition-colors mt-1 underline-offset-2 hover:underline"
+              >
+                View public profile →
+              </button>
             </div>
           </div>
 
-          {/* Status toggle — pushes to right on mobile too */}
-          <div className="flex items-center gap-2 sm:gap-3 ml-auto sm:ml-0 self-start sm:self-auto">
+          {/* Status toggle + Live Sessions — pushes to right on mobile too */}
+          <div className="flex items-center gap-2 sm:gap-3 ml-auto sm:ml-0 self-start sm:self-auto flex-wrap justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+              onClick={() => navigate("/advisor-call")}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              Live Sessions
+            </Button>
             <span className="text-xs sm:text-sm text-muted-foreground">Status</span>
             <Switch checked={isOnline} onCheckedChange={handleStatusToggle} />
             <Badge
@@ -392,7 +513,7 @@ const AdvisorPrivateProfile = () => {
           B · TAB NAV  (Overview / Settings / Schedule)
           ═══════════════════════════════════════════════════════ */}
       <div className="flex border-b border-border/50 overflow-x-auto gap-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {(["overview", "settings", "schedule", "reviews"] as const).map((tab) => (
+        {(["overview", "settings", "schedule", "reviews", "clients", "insights"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -402,7 +523,12 @@ const AdvisorPrivateProfile = () => {
                 : "text-muted-foreground border-transparent hover:text-foreground"
             }`}
           >
-            {tab === "overview" ? "Overview" : tab === "settings" ? "Settings" : tab === "schedule" ? "Schedule" : "Reviews"}
+            {tab === "overview" ? "Overview"
+              : tab === "settings" ? "Settings"
+              : tab === "schedule" ? "Schedule"
+              : tab === "reviews" ? "Reviews"
+              : tab === "clients" ? "Clients"
+              : "Insights"}
           </button>
         ))}
       </div>
@@ -435,13 +561,19 @@ const AdvisorPrivateProfile = () => {
             </div>
           </div>
 
-          {/* D · STATS ROW */}
+          {/* D · MOCK DATA BANNER */}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/8 border border-primary/20 text-sm text-muted-foreground">
+            <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
+            <span>Stats preview — your real earnings and sessions will appear here after your first reading.</span>
+          </div>
+
+          {/* E · STATS ROW */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {[
-              { label: "Total Earnings",  value: stats.earnings,         icon: DollarSign, iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: "+12%" },
-              { label: "Sessions",        value: String(stats.sessions), icon: Users,      iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: "+8%"  },
-              { label: "Avg Rating",      value: String(stats.rating),   icon: Star,       iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: ""     },
-              { label: "Pending Balance", value: stats.pending,          icon: Clock,      iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: ""     },
+              { label: "Total Earnings",  value: stats.earnings,         icon: DollarSign, iconColor: "text-emerald-400", iconBg: "bg-emerald-400/15", change: "+12%" },
+              { label: "Sessions",        value: String(stats.sessions), icon: Users,      iconColor: "text-cyan-400",    iconBg: "bg-cyan-400/15",    change: "+8%"  },
+              { label: "Avg Rating",      value: String(stats.rating),   icon: Star,       iconColor: "text-amber-400",   iconBg: "bg-amber-400/15",   change: ""     },
+              { label: "Pending Balance", value: stats.pending,          icon: Clock,      iconColor: "text-violet-400",  iconBg: "bg-violet-400/15",  change: ""     },
             ].map((stat) => (
               <Card key={stat.label} className="bg-card border-border/50">
                 <CardContent className="p-3.5 sm:p-5 flex items-start justify-between gap-2">
@@ -463,7 +595,8 @@ const AdvisorPrivateProfile = () => {
             ))}
           </div>
 
-          {/* E · SESSION BREAKDOWN */}
+          {/* F · SESSION BREAKDOWN */}
+          <div className="flex-1 h-px bg-border/40" />
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-3">Session Breakdown</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -601,7 +734,7 @@ const AdvisorPrivateProfile = () => {
 
             {/* My Clients card */}
             <button
-              onClick={() => navigate("/advisor-clients")}
+              onClick={() => setActiveTab("clients")}
               className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border/50 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--primary)/0.08)] transition-all text-left group"
             >
               <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center group-hover:bg-primary/25 transition-colors">
@@ -612,14 +745,13 @@ const AdvisorPrivateProfile = () => {
                 <p className="text-xs text-muted-foreground mt-0.5">View &amp; manage your client history</p>
               </div>
               <div className="flex items-center gap-1 text-xs font-medium text-primary">
-                View
-                <ChevronRight className="w-3.5 h-3.5" />
+                View <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </button>
 
             {/* Insights card */}
             <button
-              onClick={() => navigate("/advisor-insights")}
+              onClick={() => setActiveTab("insights")}
               className="flex flex-col gap-3 p-4 sm:p-5 rounded-xl bg-card border border-border/50 hover:border-[#A23CDE]/40 hover:shadow-[0_0_16px_rgba(162,60,222,0.08)] transition-all text-left group"
             >
               <div className="w-9 h-9 rounded-xl bg-[rgba(162,60,222,0.15)] flex items-center justify-center group-hover:bg-[rgba(162,60,222,0.25)] transition-colors">
@@ -630,8 +762,7 @@ const AdvisorPrivateProfile = () => {
                 <p className="text-xs text-muted-foreground mt-0.5">Performance metrics &amp; analytics</p>
               </div>
               <div className="flex items-center gap-1 text-xs font-medium text-[#A23CDE]">
-                View
-                <ChevronRight className="w-3.5 h-3.5" />
+                View <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </button>
 
@@ -643,7 +774,13 @@ const AdvisorPrivateProfile = () => {
       {/* ═══════════════════════════════════════════════════════
           SETTINGS TAB
           ═══════════════════════════════════════════════════════ */}
-      {activeTab === "settings" && (
+      {activeTab === "settings" && isLoadingDetails && (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      )}
+
+      {activeTab === "settings" && !isLoadingDetails && (
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-base font-heading">Service Management</CardTitle>
@@ -672,11 +809,17 @@ const AdvisorPrivateProfile = () => {
 
             {/* Bio */}
             <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Bio</label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-muted-foreground">Bio</label>
+                <span className={`text-xs ${bio.length > 500 ? "text-destructive" : "text-muted-foreground"}`}>
+                  {bio.length}/500
+                </span>
+              </div>
               <Textarea
                 value={bio}
                 onChange={(e) => { setBio(e.target.value); setServiceChanged(true); }}
                 rows={3}
+                maxLength={500}
               />
             </div>
 
@@ -749,7 +892,7 @@ const AdvisorPrivateProfile = () => {
                           s.enabled ? "text-foreground" : "text-muted-foreground"
                         }`}
                       >
-                        {day}
+                        {dayLabels[day]}
                       </span>
                     </div>
                     {s.enabled ? (
@@ -800,9 +943,9 @@ const AdvisorPrivateProfile = () => {
           {/* Header row */}
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">My Reviews</h2>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[rgba(162,60,222,0.12)] border border-[rgba(162,60,222,0.25)]">
-              <Star className="w-3.5 h-3.5 fill-[#A23CDE] text-[#A23CDE]" />
-              <span className="text-xs font-semibold text-[#A23CDE]">4.8</span>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/25">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="text-xs font-semibold text-amber-400">4.8</span>
               <span className="text-xs text-muted-foreground">· {mockReviews.length} reviews</span>
             </div>
           </div>
@@ -836,7 +979,7 @@ const AdvisorPrivateProfile = () => {
                           key={i}
                           className={`w-3.5 h-3.5 ${
                             i < review.rating
-                              ? "fill-[#A23CDE] text-[#A23CDE]"
+                              ? "fill-amber-400 text-amber-400"
                               : "text-border"
                           }`}
                         />
@@ -850,6 +993,195 @@ const AdvisorPrivateProfile = () => {
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+          CLIENTS TAB
+          ═══════════════════════════════════════════════════════ */}
+      {activeTab === "clients" && (
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">My Clients</h2>
+            {clientGroups.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {clientGroups.length} unique client{clientGroups.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+
+          {/* Loading */}
+          {isLoadingClients && (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!isLoadingClients && clientGroups.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-12 h-12 rounded-full bg-card border border-border/50 flex items-center justify-center mb-3">
+                <Users className="w-5 h-5 text-muted-foreground/40" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No clients yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Your clients will appear here after completed sessions.</p>
+            </div>
+          )}
+
+          {/* Client list */}
+          {!isLoadingClients && clientGroups.length > 0 && (
+            <div className="space-y-2">
+              {clientGroups.map((client) => (
+                <div key={client.clientId} className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border/50">
+                  {/* Avatar */}
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {client.avatarUrl ? (
+                      <img src={client.avatarUrl} alt={client.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-bold text-primary">{client.name[0]?.toUpperCase()}</span>
+                    )}
+                  </div>
+
+                  {/* Name + type badges */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{client.name}</p>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      {client.typeCounts.chat > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
+                          {client.typeCounts.chat} chat
+                        </span>
+                      )}
+                      {client.typeCounts.audio > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(162,60,222,0.15)] text-[#A23CDE] font-medium">
+                          {client.typeCounts.audio} voice
+                        </span>
+                      )}
+                      {client.typeCounts.video > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(104,66,239,0.15)] text-[#6842EF] font-medium">
+                          {client.typeCounts.video} video
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right stats */}
+                  <div className="text-right shrink-0 space-y-0.5">
+                    <p className="text-sm font-semibold text-foreground">${client.totalEarnings.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {client.sessions.length} session{client.sessions.length !== 1 ? "s" : ""}
+                    </p>
+                    {client.lastSessionAt && (
+                      <p className="text-[10px] text-muted-foreground/60">
+                        {new Date(client.lastSessionAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+          INSIGHTS TAB
+          ═══════════════════════════════════════════════════════ */}
+      {activeTab === "insights" && (
+        <div className="space-y-5">
+          <h2 className="text-sm font-semibold text-foreground">Performance Insights</h2>
+
+          {/* Loading */}
+          {isLoadingInsights && (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          )}
+
+          {!isLoadingInsights && (
+            <>
+              {/* Empty state for new advisors */}
+              {totalInsightSessions === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-12 h-12 rounded-full bg-card border border-border/50 flex items-center justify-center mb-3">
+                    <BarChart2 className="w-5 h-5 text-muted-foreground/40" />
+                  </div>
+                  <p className="text-sm font-medium text-foreground">No data yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Complete your first session to see insights here.</p>
+                </div>
+              )}
+
+              {totalInsightSessions > 0 && (
+                <>
+                  {/* 3 metric cards */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: "Unique Clients",   value: String(uniqueClientCount), icon: Users,      iconColor: "text-cyan-400",    iconBg: "bg-cyan-400/15"    },
+                      { label: "Avg Session",       value: `${avgDurationMin}m`,      icon: Clock,      iconColor: "text-violet-400",  iconBg: "bg-violet-400/15"  },
+                      { label: "Total Hours",       value: `${totalHours}h`,          icon: TrendingUp, iconColor: "text-emerald-400", iconBg: "bg-emerald-400/15" },
+                    ].map((m) => (
+                      <Card key={m.label} className="bg-card border-border/50">
+                        <CardContent className="p-3.5 sm:p-4 flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] text-muted-foreground leading-tight">{m.label}</p>
+                            <p className="text-lg sm:text-xl font-bold text-foreground mt-1">{m.value}</p>
+                          </div>
+                          <div className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center ${m.iconBg}`}>
+                            <m.icon className={`w-4 h-4 ${m.iconColor}`} />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Session type distribution bar chart */}
+                  <Card className="bg-card border-border/40">
+                    <CardHeader className="pb-2 px-4 sm:px-6 pt-4 sm:pt-5">
+                      <CardTitle className="text-sm sm:text-base font-heading">Session Distribution</CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-2 pb-4">
+                      <ResponsiveContainer width="100%" height={160}>
+                        <BarChart data={typeDistributionData} margin={{ top: 5, right: 8, left: -15, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                          <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                          <Tooltip
+                            contentStyle={{
+                              background: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "8px",
+                              color: "hsl(var(--foreground))",
+                              fontSize: "12px",
+                            }}
+                            cursor={{ fill: "hsl(var(--border)/0.3)" }}
+                          />
+                          <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                            {typeDistributionData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* All-time earnings summary */}
+                  <Card className="bg-card border-border/40">
+                    <CardContent className="p-4 sm:p-5 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">All-time earnings</p>
+                        <p className="text-2xl font-bold text-foreground">${totalInsightEarnings.toFixed(2)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground mb-1">Total sessions</p>
+                        <p className="text-2xl font-bold text-foreground">{totalInsightSessions}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+            </>
+          )}
         </div>
       )}
 
