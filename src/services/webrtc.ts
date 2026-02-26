@@ -177,6 +177,43 @@ export class WebRTCService {
       }
     );
 
+    this.room.on(
+      RoomEvent.TrackUnsubscribed,
+      (track: RemoteTrack, _publication: RemoteTrackPublication, _participant: RemoteParticipant) => {
+        if (this.isDestroyed) return;
+        if (track.kind === Track.Kind.Video) {
+          // Remote participant disabled their video — clear frozen frame
+          this.config.onRemoteTrack(track.mediaStreamTrack, new MediaStream());
+          console.log('[LiveKit] Remote video track unsubscribed');
+        }
+      }
+    );
+
+    this.room.on(
+      RoomEvent.TrackMuted,
+      (publication: RemoteTrackPublication, _participant: RemoteParticipant) => {
+        if (this.isDestroyed) return;
+        if (publication.kind === Track.Kind.Video && publication.track) {
+          // Remote muted video — clear frozen frame
+          this.config.onRemoteTrack(publication.track.mediaStreamTrack, new MediaStream());
+          console.log('[LiveKit] Remote video track muted');
+        }
+      }
+    );
+
+    this.room.on(
+      RoomEvent.TrackUnmuted,
+      (publication: RemoteTrackPublication, _participant: RemoteParticipant) => {
+        if (this.isDestroyed) return;
+        if (publication.kind === Track.Kind.Video && publication.track) {
+          // Remote unmuted video — restore stream
+          const mediaStream = new MediaStream([publication.track.mediaStreamTrack]);
+          this.config.onRemoteTrack(publication.track.mediaStreamTrack, mediaStream);
+          console.log('[LiveKit] Remote video track unmuted');
+        }
+      }
+    );
+
     this.room.on(RoomEvent.Disconnected, (reason?: string) => {
       if (this.isDestroyed) return;
       console.log('[LiveKit] Disconnected:', reason);

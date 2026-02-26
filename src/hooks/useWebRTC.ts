@@ -101,7 +101,8 @@ export function useWebRTC(config: WebRTCConfig): UseWebRTCReturn {
       },
       onRemoteTrack: (_track, stream) => {
         if (!mountedRef.current) return;
-        setRemoteStream(stream);
+        // Empty stream (0 tracks) means remote disabled their video — clear it
+        setRemoteStream(stream.getTracks().length > 0 ? stream : null);
       },
       onStats: (newStats) => {
         if (!mountedRef.current) return;

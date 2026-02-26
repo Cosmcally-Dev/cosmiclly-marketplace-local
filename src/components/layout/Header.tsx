@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -27,13 +27,15 @@ import {
   Activity,
   Phone,
   Shield,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "./MobileMenu";
 import { AuthModal } from "@/components/modals/AuthModal";
-import { WelcomeModal } from "@/components/modals/WelcomeModal";
 import { AdvisorApplicationModal } from "@/components/modals/AdvisorApplicationModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdvisorIncomingCalls } from "@/hooks/useAdvisorIncomingCalls";
+import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -65,14 +67,40 @@ const exploreMenuItems = [
 export const Header = () => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
-  const [welcomeOpen, setWelcomeOpen] = useState(false);
-  const [welcomeName, setWelcomeName] = useState('');
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
 
-  const { user, isAuthenticated, logout, credits, authModalOpen, authModalMode, openAuthModal, closeAuthModal } = useAuth();
+  const { user, isAuthenticated, logout, credits } = useAuth();
+  const { toast } = useToast();
+
+  // Global advisor notification — only active for advisor users
+  const isAdvisor = user?.isAdvisor ?? false;
+  const { incomingSessions } = useAdvisorIncomingCalls(isAdvisor ? user?.id : undefined);
+  const prevCountRef = useRef(0);
+
+  // Toast notification when new incoming sessions arrive
+  useEffect(() => {
+    if (!isAdvisor) return;
+    const count = incomingSessions.length;
+    if (count > prevCountRef.current && prevCountRef.current >= 0) {
+      const newest = incomingSessions[0];
+      toast({
+        title: "Incoming Session",
+        description: `${newest?.client_name || 'A client'} is requesting a ${newest?.type || 'session'}`,
+        action: (
+          <Button size="sm" variant="default" onClick={() => navigate('/advisor-call')}>
+            View
+          </Button>
+        ),
+      });
+    }
+    prevCountRef.current = count;
+  }, [incomingSessions, isAdvisor, toast, navigate]);
 
   const handleAuth = (mode: "signin" | "signup") => {
-    openAuthModal(mode);
+    setAuthMode(mode);
+    setIsAuthOpen(true);
   };
 
   const handleSignOut = () => {
@@ -126,9 +154,9 @@ export const Header = () => {
             </button>
 
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-0">
+            <Link to="/" className="flex items-center gap-2">
               <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-9 w-auto object-contain" />
-              <span className="font-heading text-lg md:text-xl font-semibold text-gradient -ml-2">osmiclly</span>
+              <span className="font-heading text-lg md:text-xl font-semibold text-gradient">Cosmiclly</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -186,7 +214,7 @@ export const Header = () => {
                         Specialties
                       </span>
                     </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="w-64 max-h-[60vh] overflow-y-auto bg-popover border-border shadow-2xl rounded-xl scrollbar-styled">
+                    <DropdownMenuSubContent className="w-64 max-h-[60vh] overflow-y-auto bg-popover border-border shadow-2xl rounded-xl">
                       {exploreMenuItems.map((item) => {
                         const IconComponent = item.icon;
                         return (
@@ -236,6 +264,20 @@ export const Header = () => {
               </Link>
 
               {isAuthenticated ? (
+                <>
+                {/* Notification bell for advisors */}
+                {isAdvisor && incomingSessions.length > 0 && (
+                  <button
+                    onClick={() => navigate('/advisor-call')}
+                    className="relative p-2 text-foreground/70 hover:text-primary transition-colors"
+                    title={`${incomingSessions.length} incoming session(s)`}
+                  >
+                    <Bell className="w-5 h-5 animate-bounce" />
+                    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {incomingSessions.length}
+                    </span>
+                  </button>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button className="flex items-center gap-2 p-1 min-h-11 rounded-full hover:bg-secondary/50 transition-colors outline-none">
@@ -260,35 +302,35 @@ export const Header = () => {
                     </div>
                     <DropdownMenuItem
                       onClick={() => navigate("/profile")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
+                      className="cursor-pointer flex items-center gap-2 p-2.5"
                     >
                       <User className="w-4 h-4" />
                       My Dashboard
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/activity")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
+                      className="cursor-pointer flex items-center gap-2 p-2.5"
                     >
                       <Activity className="w-4 h-4" />
                       My Activity
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/favorites")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
+                      className="cursor-pointer flex items-center gap-2 p-2.5"
                     >
                       <Heart className="w-4 h-4" />
                       Favorite Advisors
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/add-credit")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
+                      className="cursor-pointer flex items-center gap-2 p-2.5"
                     >
                       <Wallet className="w-4 h-4" />
                       Add Funds
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate("/payment-methods")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
+                      className="cursor-pointer flex items-center gap-2 p-2.5"
                     >
                       <CreditCard className="w-4 h-4" />
                       Payment Methods
@@ -298,17 +340,22 @@ export const Header = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => navigate("/advisor-call")}
-                          className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
+                          className="cursor-pointer flex items-center gap-2 p-2.5"
                         >
                           <Phone className="w-4 h-4" />
                           Advisor Dashboard
+                          {incomingSessions.length > 0 && (
+                            <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                              {incomingSessions.length}
+                            </span>
+                          )}
                         </DropdownMenuItem>
                       </>
                     )}
                     {user?.isAdmin && (
                       <DropdownMenuItem
                         onClick={() => navigate("/admin")}
-                        className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
+                        className="cursor-pointer flex items-center gap-2 p-2.5"
                       >
                         <Shield className="w-4 h-4" />
                         Admin Panel
@@ -317,7 +364,7 @@ export const Header = () => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => navigate("/settings")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5 hover:bg-cyan-500/10 hover:text-cyan-400 data-[highlighted]:bg-cyan-500/10 data-[highlighted]:text-cyan-400 transition-colors"
+                      className="cursor-pointer flex items-center gap-2 p-2.5"
                     >
                       <Settings className="w-4 h-4" />
                       Settings
@@ -331,6 +378,7 @@ export const Header = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                </>
               ) : (
                 <>
                   <Button
@@ -357,20 +405,8 @@ export const Header = () => {
       </header>
 
       <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-      {authModalOpen && (
-        <AuthModal
-          isOpen={true}
-          onClose={closeAuthModal}
-          mode={authModalMode}
-          onSignupSuccess={(name) => { setWelcomeOpen(true); setWelcomeName(name); }}
-        />
-      )}
-      {welcomeOpen && (
-        <WelcomeModal isOpen={true} onClose={() => setWelcomeOpen(false)} userName={welcomeName} />
-      )}
-      {isApplicationOpen && (
-        <AdvisorApplicationModal isOpen={true} onClose={() => setIsApplicationOpen(false)} />
-      )}
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} mode={authMode} />
+      <AdvisorApplicationModal isOpen={isApplicationOpen} onClose={() => setIsApplicationOpen(false)} />
     </>
   );
 };

@@ -595,11 +595,12 @@ const Settings = () => {
                 onClick={async () => {
                   setIsDeleting(true);
                   try {
-                    const { error } = await supabase.rpc('delete_my_account');
+                    const { data, error } = await supabase.functions.invoke('delete-account');
                     if (error) throw error;
+                    if (!data?.success) throw new Error(data?.error || 'Deletion failed');
                     await logout();
                     navigate('/');
-                    toast({ title: "Account Deleted", description: "Your account data has been anonymized." });
+                    toast({ title: "Account Deleted", description: "Your account has been permanently deleted." });
                   } catch (err: any) {
                     console.error('Delete account error:', err);
                     toast({ variant: "destructive", title: "Error", description: err.message || "Failed to delete account." });

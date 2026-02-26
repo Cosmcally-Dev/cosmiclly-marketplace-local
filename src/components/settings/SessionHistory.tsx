@@ -9,6 +9,9 @@ interface SessionWithAdvisor extends Session {
   advisor: {
     full_name: string | null;
   } | null;
+  client: {
+    full_name: string | null;
+  } | null;
 }
 
 const formatDuration = (seconds: number) => {
@@ -46,9 +49,10 @@ export const SessionHistory = () => {
           .from('sessions')
           .select(`
             *,
-            advisor:profiles!advisor_id(full_name)
+            advisor:profiles!advisor_id(full_name),
+            client:profiles!client_id(full_name)
           `)
-          .eq('client_id', user.id)
+          .or(`client_id.eq.${user.id},advisor_id.eq.${user.id}`)
           .eq('status', 'completed')
           .order('started_at', { ascending: false })
           .limit(50);
@@ -137,7 +141,9 @@ export const SessionHistory = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-foreground">
-                    {session.advisor?.full_name || 'Unknown Advisor'}
+                    {session.client_id === user?.id
+                      ? (session.advisor?.full_name || 'Unknown Advisor')
+                      : (session.client?.full_name || 'Unknown Client')}
                   </p>
                   <span className="text-xs text-muted-foreground capitalize px-2 py-0.5 rounded-full bg-secondary">
                     {session.type}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX,
+  Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, VideoOff,
   Clock, ArrowLeft, Wifi, WifiOff, Users, MessageCircle, Video,
   Check, CheckCheck, X, Send
 } from 'lucide-react';
@@ -164,6 +164,16 @@ const SessionListView = () => {
   );
 };
 
+/** Format timestamp: show date for past days, time-only for today */
+const formatMessageTime = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (isToday) return time;
+  return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
+};
+
 // ============================================
 // CALL SESSION VIEW — /advisor-call/:sessionId
 // ============================================
@@ -212,7 +222,9 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
     connectionQuality: webrtcQuality,
     error: webrtcError,
     toggleAudio,
+    toggleVideo,
     isMuted,
+    isCameraOff,
   } = useWebRTC({
     sessionId,
     userId: user?.id || '',
@@ -410,7 +422,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
                     }`}>
                       <p className="text-sm leading-relaxed">{msg.content}</p>
                       <span className="text-xs mt-1 block text-muted-foreground">
-                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatMessageTime(msg.created_at)}
                       </span>
                     </div>
                   </div>
@@ -436,7 +448,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
                   <span className={`text-xs mt-1 flex items-center gap-1 ${
                     msg.sender_id === user?.id ? 'text-primary-foreground/70 justify-end' : 'text-muted-foreground'
                   }`}>
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {formatMessageTime(msg.created_at)}
                     {msg.sender_id === user?.id && (
                       msg.read_at
                         ? <CheckCheck className="w-3.5 h-3.5 text-accent" />
@@ -562,6 +574,17 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
             >
               {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
             </button>
+
+            {sessionType === 'video' && (
+              <button
+                onClick={toggleVideo}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
+                  isCameraOff ? 'bg-red-500/20 text-red-500' : 'bg-secondary text-foreground hover:bg-secondary/80'
+                }`}
+              >
+                {isCameraOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
+              </button>
+            )}
 
             <button
               onClick={handleLeaveCall}

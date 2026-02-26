@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, ThumbsUp, X } from 'lucide-react';
+import { Star, ThumbsUp } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -8,6 +8,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import type { Advisor } from '@/data/advisors';
 
 interface ReviewModalProps {
@@ -17,6 +19,7 @@ interface ReviewModalProps {
   sessionType: 'chat' | 'call';
   sessionDuration: number;
   creditsUsed: number;
+  sessionId?: string | null;
 }
 
 export const ReviewModal = ({
@@ -26,7 +29,9 @@ export const ReviewModal = ({
   sessionType,
   sessionDuration,
   creditsUsed,
+  sessionId,
 }: ReviewModalProps) => {
+  const { user } = useAuth();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [review, setReview] = useState('');
@@ -38,9 +43,27 @@ export const ReviewModal = ({
     return `${mins}m ${secs}s`;
   };
 
-  const handleSubmit = () => {
-    // In a real app, this would send the review to an API
-    console.log('Review submitted:', { rating, review, advisor: advisor.id });
+  const handleSubmit = async () => {
+    if (!user?.id || rating === 0) return;
+
+    try {
+      const advisorDbId = advisor.dbId || advisor.id;
+      const { error } = await supabase.from('reviews').insert({
+        session_id: sessionId || null,
+        advisor_id: advisorDbId,
+        client_id: user.id,
+        rating,
+        review_text: review.trim() || null,
+        session_type: sessionType,
+      });
+
+      if (error) {
+        console.error('Failed to save review:', error);
+      }
+    } catch (err) {
+      console.error('Review submission error:', err);
+    }
+
     setIsSubmitted(true);
     setTimeout(() => {
       onClose();

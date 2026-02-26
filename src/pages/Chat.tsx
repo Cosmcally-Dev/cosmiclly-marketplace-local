@@ -20,6 +20,16 @@ import type { ConnectionQuality } from '@/types/session';
 
 const RINGING_TIMEOUT_MS = 60000; // 60 seconds
 
+/** Format timestamp: show date for past days, time-only for today */
+const formatMessageTime = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (isToday) return time;
+  return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
+};
+
 const Chat = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -581,7 +591,6 @@ const Chat = () => {
                 <>
                   {pastMessages.map((message) => {
                     const isUser = message.sender_id === user?.id;
-                    const timestamp = new Date(message.created_at);
                     return (
                       <div
                         key={`past-${message.id}`}
@@ -603,7 +612,7 @@ const Chat = () => {
                         >
                           <p className="text-sm leading-relaxed">{message.content}</p>
                           <span className="text-xs mt-1 block text-muted-foreground">
-                            {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {formatMessageTime(message.created_at)}
                           </span>
                         </div>
                       </div>
@@ -625,7 +634,6 @@ const Chat = () => {
 
               {messages.map((message) => {
                 const isUser = message.sender_id === user?.id;
-                const timestamp = new Date(message.created_at);
                 return (
                   <div
                     key={message.id}
@@ -649,7 +657,7 @@ const Chat = () => {
                       <span className={`text-xs mt-1 flex items-center gap-1 ${
                         isUser ? 'text-primary-foreground/70 justify-end' : 'text-muted-foreground'
                       }`}>
-                        {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatMessageTime(message.created_at)}
                         {isUser && (
                           message.read_at
                             ? <CheckCheck className="w-3.5 h-3.5 text-accent" />
@@ -728,6 +736,7 @@ const Chat = () => {
         sessionType="chat"
         sessionDuration={sessionTime}
         creditsUsed={creditsUsed}
+        sessionId={sessionId}
       />
 
       {/* Low Credit Warning */}
