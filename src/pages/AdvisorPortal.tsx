@@ -28,10 +28,10 @@ const AdvisorPortal = () => {
   const portalState = isLoading ? 'loading' : getPortalState();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col scrollbar-hide">
       <Header />
 
-      <main className="flex-1 pt-20">
+      <main className={`flex-1 ${portalState !== 'approved' ? 'pt-14 md:pt-16' : ''}`}>
         {portalState === 'loading' && (
           <div className="flex items-center justify-center py-32">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -175,9 +175,7 @@ const AdvisorPortal = () => {
         )}
 
         {portalState === 'approved' && (
-          <div className="container mx-auto px-4 py-8">
-            <AdvisorPrivateProfile />
-          </div>
+          <AdvisorPrivateProfile />
         )}
       </main>
 
