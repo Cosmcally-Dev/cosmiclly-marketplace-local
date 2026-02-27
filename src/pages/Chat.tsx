@@ -15,6 +15,7 @@ import { useChatMessages } from '@/hooks/useChatMessages';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useChatHistory } from '@/hooks/useChatHistory';
 import { useStripePayment } from '@/hooks/useStripePayment';
+import { useSessionBilling } from '@/hooks/useSessionBilling';
 import { SessionHoldModal } from '@/components/modals/SessionHoldModal';
 import type { ConnectionQuality } from '@/types/session';
 
@@ -42,14 +43,9 @@ const Chat = () => {
 
   const [chatStatus, setChatStatus] = useState<'connecting' | 'ringing' | 'connected' | 'ended'>('connecting');
   const [inputValue, setInputValue] = useState('');
-  const [sessionTime, setSessionTime] = useState(0);
   const [showReview, setShowReview] = useState(false);
-  const [showLowCreditWarning, setShowLowCreditWarning] = useState(false);
   const [showInsufficientCredits, setShowInsufficientCredits] = useState(false);
-  const [creditsUsed, setCreditsUsed] = useState(0);
-  const [hasShownWarning, setHasShownWarning] = useState(false);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
-  const [continueUntilEnd, setContinueUntilEnd] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showHoldModal, setShowHoldModal] = useState(false);
   const [holdError, setHoldError] = useState<string | null>(null);
@@ -59,8 +55,25 @@ const Chat = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef<Date | null>(null);
-  const lastDeductionRef = useRef(0);
   const ringingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const endChatRef = useRef<() => void>(() => {});
+
+  // Billing hook — credits consumed first, free minutes as fallback
+  const billing = useSessionBilling({
+    isActive: chatStatus === 'connected' && !isSessionEnded && !showInsufficientCredits,
+    credits,
+    pricePerMinute,
+    freeMinutes: advisor.freeMinutes || 0,
+    onSessionEnd: () => {
+      endChatRef.current();
+      toast({
+        variant: "destructive",
+        title: "Session Ended",
+        description: "Your credits and free minutes have been used up.",
+      });
+    },
+    onLowCredits: () => {},
+  });
 
   // Real-time chat messages hook
   const { messages, sendMessage, markAsRead } = useChatMessages(
@@ -208,59 +221,6 @@ const Chat = () => {
     };
   }, [chatStatus, advisor, pricePerMinute, user?.id, hasMinimumCredits, toast, navigate, id]);
 
-  // Session timer and credit deduction (only when connected)
-  useEffect(() => {
-    if (chatStatus !== 'connected' || isSessionEnded || showInsufficientCredits) return;
-
-    const interval = setInterval(() => {
-      setSessionTime((prev) => {
-        const newTime = prev + 1;
-
-        const freeSeconds = (advisor.freeMinutes || 0) * 60;
-        const billableSeconds = Math.max(0, newTime - freeSeconds);
-        const minutesBilled = Math.floor(billableSeconds / 60);
-
-        if (minutesBilled > lastDeductionRef.current && billableSeconds > 0) {
-          const deduction = pricePerMinute;
-          const remainingAfterDeduction = credits - creditsUsed - deduction;
-
-          if (remainingAfterDeduction < 0) {
-            handleEndChat();
-            toast({
-              variant: "destructive",
-              title: "Session Ended",
-              description: "Your session has ended due to insufficient credits.",
-            });
-          } else {
-            setCreditsUsed(prev => prev + deduction);
-            lastDeductionRef.current = minutesBilled;
-
-            const newRemainingCredits = credits - creditsUsed - deduction;
-            const minutesLeft = newRemainingCredits / pricePerMinute;
-
-            if (minutesLeft <= 2 && minutesLeft > 0 && !hasShownWarning && !continueUntilEnd) {
-              setShowLowCreditWarning(true);
-              setHasShownWarning(true);
-            }
-          }
-        } else if (billableSeconds === 0) {
-          const remainingCredits = credits - creditsUsed;
-          const minutesRemaining = remainingCredits / pricePerMinute;
-          const secondsUntilBilling = freeSeconds - newTime;
-
-          if (secondsUntilBilling <= 30 && secondsUntilBilling > 0 && minutesRemaining < 2 && !hasShownWarning && !continueUntilEnd) {
-            setShowLowCreditWarning(true);
-            setHasShownWarning(true);
-          }
-        }
-
-        return newTime;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [chatStatus, isSessionEnded, showInsufficientCredits, advisor, credits, creditsUsed, hasShownWarning, continueUntilEnd, pricePerMinute, toast]);
-
   // Auto scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -274,12 +234,6 @@ const Chat = () => {
       markAsRead(unread.map(m => m.id));
     }
   }, [messages, user?.id, chatStatus, markAsRead]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const handleCancelChat = async () => {
     if (ringingTimeoutRef.current) {
@@ -308,11 +262,7 @@ const Chat = () => {
     try {
       setIsSessionEnded(true);
 
-      const totalSeconds = sessionTime;
-      const freeSeconds = (advisor.freeMinutes || 0) * 60;
-      const billableSeconds = Math.max(0, totalSeconds - freeSeconds);
-      const billableMinutes = Math.ceil(billableSeconds / 60);
-
+      const billableMinutes = billing.getBillableMinutes();
       const quality: ConnectionQuality = 'good';
 
       const { error } = await supabase.rpc('end_rtc_session', {
@@ -371,14 +321,14 @@ const Chat = () => {
   };
 
   const handleAddCredits = () => {
-    setShowLowCreditWarning(false);
+    billing.setShowLowCreditWarning(false);
     setShowInsufficientCredits(false);
     navigate('/add-credit');
   };
 
   const handleContinueUntilEnd = () => {
-    setShowLowCreditWarning(false);
-    setContinueUntilEnd(true);
+    billing.setShowLowCreditWarning(false);
+    billing.setContinueUntilEnd(true);
   };
 
   // Handle hold confirmation from SessionHoldModal
@@ -433,14 +383,13 @@ const Chat = () => {
     }, RINGING_TIMEOUT_MS);
   };
 
+  // Keep endChatRef in sync so billing hook can call it
+  endChatRef.current = handleEndChat;
+
   const handleReviewClose = () => {
     setShowReview(false);
     navigate(`/advisor/${advisor.id}`);
   };
-
-  const freeMinutesRemaining = Math.max(0, (advisor.freeMinutes || 0) * 60 - sessionTime);
-  const remainingCredits = credits - creditsUsed;
-  const estimatedMinutesRemaining = Math.floor(remainingCredits / pricePerMinute);
 
   if (!isAuthenticated) {
     return null;
@@ -509,15 +458,15 @@ const Chat = () => {
               <div className="text-right">
                 <div className="flex items-center gap-1 text-sm font-mono">
                   <Clock className="w-4 h-4 text-primary" />
-                  <span className="text-foreground">{formatTime(sessionTime)}</span>
+                  <span className="text-foreground">{billing.formatTime(billing.sessionTime)}</span>
                 </div>
-                {freeMinutesRemaining > 0 ? (
+                {billing.inFreePhase && billing.freeSecondsRemaining > 0 ? (
                   <div className="text-xs text-accent">
-                    {formatTime(freeMinutesRemaining)} free remaining
+                    {billing.formatTime(billing.freeSecondsRemaining)} free remaining
                   </div>
                 ) : (
                   <div className="text-xs text-muted-foreground">
-                    ${creditsUsed.toFixed(2)} • Balance: ${remainingCredits.toFixed(2)}
+                    ${billing.creditsUsed.toFixed(2)} • Balance: ${billing.remainingCredits.toFixed(2)}
                   </div>
                 )}
               </div>
@@ -548,10 +497,10 @@ const Chat = () => {
         </div>
 
         {/* Free Minutes Banner */}
-        {chatStatus === 'connected' && freeMinutesRemaining > 0 && (
+        {chatStatus === 'connected' && billing.inFreePhase && billing.freeSecondsRemaining > 0 && (
           <div className="px-4 py-2 bg-accent/10 border-b border-accent/20 text-center">
             <span className="text-sm text-accent font-medium">
-              You have {formatTime(freeMinutesRemaining)} of free chat remaining!
+              You have {billing.formatTime(billing.freeSecondsRemaining)} of free chat remaining!
             </span>
           </div>
         )}
@@ -577,7 +526,7 @@ const Chat = () => {
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
                   Rate: ${pricePerMinute}/min
-                  {advisor.freeMinutes ? ` • First ${advisor.freeMinutes} min free` : ''}
+                  {advisor.freeMinutes ? ` • ${advisor.freeMinutes} free min included` : ''}
                 </p>
               </div>
             </div>
@@ -734,17 +683,17 @@ const Chat = () => {
         onClose={handleReviewClose}
         advisor={advisor}
         sessionType="chat"
-        sessionDuration={sessionTime}
-        creditsUsed={creditsUsed}
+        sessionDuration={billing.sessionTime}
+        creditsUsed={billing.creditsUsed}
         sessionId={sessionId}
       />
 
       {/* Low Credit Warning */}
       <LowCreditWarning
-        isOpen={showLowCreditWarning}
-        onClose={() => setShowLowCreditWarning(false)}
-        currentCredits={remainingCredits}
-        estimatedTimeRemaining={`${estimatedMinutesRemaining} min`}
+        isOpen={billing.showLowCreditWarning}
+        onClose={() => billing.setShowLowCreditWarning(false)}
+        currentCredits={billing.remainingCredits}
+        estimatedTimeRemaining={`${billing.estimatedMinutesRemaining} min`}
         onAddCredits={handleAddCredits}
         onEndSession={handleEndChat}
         onContinueUntilEnd={handleContinueUntilEnd}

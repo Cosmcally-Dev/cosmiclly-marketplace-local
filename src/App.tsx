@@ -27,6 +27,7 @@ const Profile = React.lazy(() => import("./pages/Profile"));
 const TestGuide = React.lazy(() => import("./pages/TestGuide"));
 const Activity = React.lazy(() => import("./pages/Activity"));
 const AdminPanel = React.lazy(() => import("./pages/admin/AdminPanel"));
+const ComingSoon = React.lazy(() => import("./pages/ComingSoon"));
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,14 @@ const App = () => (
               <Route path="/activity" element={<Activity />} />
               <Route path="/test-guide" element={<TestGuide />} />
               <Route path="/admin" element={<AdminPanel />} />
+              {/* Coming Soon routes for planned but unbuilt features */}
+              <Route path="/about" element={<ComingSoon />} />
+              <Route path="/privacy" element={<ComingSoon />} />
+              <Route path="/terms" element={<ComingSoon />} />
+              <Route path="/cookies" element={<ComingSoon />} />
+              <Route path="/favorites" element={<ComingSoon />} />
+              <Route path="/payment-methods" element={<ComingSoon />} />
+              <Route path="/advisor/:id/ai" element={<ComingSoon />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
