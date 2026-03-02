@@ -1,3 +1,5 @@
+// DORMANT: Auth & Capture flow disabled. Credits-only billing is active.
+// This file is kept for potential future use but is not imported anywhere.
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';

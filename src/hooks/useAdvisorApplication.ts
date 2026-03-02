@@ -17,6 +17,7 @@ export interface AdvisorApplication {
 export interface UseAdvisorApplicationResult {
   application: AdvisorApplication | null;
   hasAdvisorDetails: boolean;
+  isProfileComplete: boolean;
   isLoading: boolean;
   refetch: () => Promise<void>;
 }
@@ -25,12 +26,14 @@ export function useAdvisorApplication(): UseAdvisorApplicationResult {
   const { user } = useAuth();
   const [application, setApplication] = useState<AdvisorApplication | null>(null);
   const [hasAdvisorDetails, setHasAdvisorDetails] = useState(false);
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     if (!user?.email) {
       setApplication(null);
       setHasAdvisorDetails(false);
+      setIsProfileComplete(false);
       setIsLoading(false);
       return;
     }
@@ -57,7 +60,7 @@ export function useAdvisorApplication(): UseAdvisorApplicationResult {
       if (user.id) {
         const { data: detailsData, error: detailsError } = await supabase
           .from('advisor_details')
-          .select('id')
+          .select('id, profile_complete')
           .eq('id', user.id)
           .maybeSingle();
 
@@ -66,6 +69,7 @@ export function useAdvisorApplication(): UseAdvisorApplicationResult {
         }
 
         setHasAdvisorDetails(!!detailsData);
+        setIsProfileComplete(detailsData?.profile_complete === true);
       }
     } catch (err) {
       console.error('[useAdvisorApplication] Error:', err);
@@ -81,6 +85,7 @@ export function useAdvisorApplication(): UseAdvisorApplicationResult {
   return {
     application,
     hasAdvisorDetails,
+    isProfileComplete,
     isLoading,
     refetch: fetchData,
   };

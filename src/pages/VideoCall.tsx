@@ -14,8 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useWebRTC } from '@/hooks/useWebRTC';
 import { useSessionRealtime } from '@/hooks/useSessionRealtime';
-import { useStripePayment } from '@/hooks/useStripePayment';
-import { SessionHoldModal } from '@/components/modals/SessionHoldModal';
+import { useSessionBilling } from '@/hooks/useSessionBilling';
 import type { ConnectionQuality } from '@/types/session';
 
 const RINGING_TIMEOUT_MS = 60000; // 60 seconds
@@ -31,28 +30,35 @@ const VideoCall = () => {
   const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
 
   const [callStatus, setCallStatus] = useState<'connecting' | 'ringing' | 'connected' | 'ended'>('connecting');
-  const [sessionTime, setSessionTime] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [showReview, setShowReview] = useState(false);
-  const [showLowCreditWarning, setShowLowCreditWarning] = useState(false);
   const [showInsufficientCredits, setShowInsufficientCredits] = useState(false);
-  const [creditsUsed, setCreditsUsed] = useState(0);
-  const [hasShownWarning, setHasShownWarning] = useState(false);
-  const [continueUntilEnd, setContinueUntilEnd] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [webrtcEnabled, setWebrtcEnabled] = useState(false);
   const [webrtcError, setWebrtcError] = useState<string | null>(null);
-  const [showHoldModal, setShowHoldModal] = useState(false);
-  const [holdError, setHoldError] = useState<string | null>(null);
-  const [stripeSessionId, setStripeSessionId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(true);
 
-  const { hasPaymentMethod, isCreatingHold, createSessionHold, captureSessionPayment } = useStripePayment();
-
   const sessionStartRef = useRef<Date | null>(null);
-  const lastDeductionRef = useRef(0);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const ringingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const endCallRef = useRef<() => void>(() => {});
+
+  // Billing hook — credits consumed first, free minutes as fallback
+  const billing = useSessionBilling({
+    isActive: callStatus === 'connected' && !showInsufficientCredits,
+    credits,
+    pricePerMinute,
+    freeMinutes: advisor.freeMinutes || 0,
+    onSessionEnd: () => {
+      endCallRef.current();
+      toast({
+        variant: "destructive",
+        title: "Session Ended",
+        description: "Your credits and free minutes have been used up.",
+      });
+    },
+    onLowCredits: () => {},
+  });
 
   // LiveKit WebRTC hook - video mode
   const {
@@ -151,14 +157,6 @@ const VideoCall = () => {
         if (error) throw error;
 
         setSessionId(newSessionId);
-
-        // If user has a Stripe payment method, show hold modal before ringing
-        if (hasPaymentMethod) {
-          setStripeSessionId(newSessionId);
-          setShowHoldModal(true);
-          return;
-        }
-
         setCallStatus('ringing');
 
         // Start ringing timeout
@@ -196,59 +194,6 @@ const VideoCall = () => {
     };
   }, [callStatus, advisor, pricePerMinute, user?.id, hasMinimumCredits, toast, navigate, id]);
 
-  // Session timer and credit deduction
-  useEffect(() => {
-    if (callStatus !== 'connected' || showInsufficientCredits) return;
-
-    const interval = setInterval(() => {
-      setSessionTime((prev) => {
-        const newTime = prev + 1;
-
-        const freeSeconds = (advisor.freeMinutes || 0) * 60;
-        const billableSeconds = Math.max(0, newTime - freeSeconds);
-        const minutesBilled = Math.floor(billableSeconds / 60);
-
-        if (minutesBilled > lastDeductionRef.current && billableSeconds > 0) {
-          const deduction = pricePerMinute;
-          const remainingAfterDeduction = credits - creditsUsed - deduction;
-
-          if (remainingAfterDeduction < 0) {
-            handleEndCall();
-            toast({
-              variant: "destructive",
-              title: "Session Ended",
-              description: "Your call has ended due to insufficient credits.",
-            });
-          } else {
-            setCreditsUsed(prev => prev + deduction);
-            lastDeductionRef.current = minutesBilled;
-
-            const newRemainingCredits = credits - creditsUsed - deduction;
-            const minutesLeft = newRemainingCredits / pricePerMinute;
-
-            if (minutesLeft <= 2 && minutesLeft > 0 && !hasShownWarning && !continueUntilEnd) {
-              setShowLowCreditWarning(true);
-              setHasShownWarning(true);
-            }
-          }
-        } else if (billableSeconds === 0) {
-          const remainingCredits = credits - creditsUsed;
-          const minutesRemaining = remainingCredits / pricePerMinute;
-          const secondsUntilBilling = freeSeconds - newTime;
-
-          if (secondsUntilBilling <= 30 && secondsUntilBilling > 0 && minutesRemaining < 2 && !hasShownWarning && !continueUntilEnd) {
-            setShowLowCreditWarning(true);
-            setHasShownWarning(true);
-          }
-        }
-
-        return newTime;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [callStatus, showInsufficientCredits, advisor, credits, creditsUsed, hasShownWarning, continueUntilEnd, pricePerMinute, toast]);
-
   // Attach remote video stream to video element
   useEffect(() => {
     if (remoteStream && remoteVideoRef.current) {
@@ -275,12 +220,6 @@ const VideoCall = () => {
     }
   }, [webrtcHookError, toast]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const handleCancelCall = async () => {
     if (ringingTimeoutRef.current) {
       clearTimeout(ringingTimeoutRef.current);
@@ -305,11 +244,7 @@ const VideoCall = () => {
     }
 
     try {
-      const totalSeconds = sessionTime;
-      const freeSeconds = (advisor.freeMinutes || 0) * 60;
-      const billableSeconds = Math.max(0, totalSeconds - freeSeconds);
-      const billableMinutes = Math.ceil(billableSeconds / 60);
-
+      const billableMinutes = billing.getBillableMinutes();
       const quality: ConnectionQuality = webrtcQuality || 'good';
 
       setWebrtcEnabled(false);
@@ -321,11 +256,6 @@ const VideoCall = () => {
       });
 
       if (error) throw error;
-
-      // Capture Stripe payment if session had a hold
-      await captureSessionPayment(sessionId).catch(err => {
-        console.warn('Stripe capture failed (will retry via webhook):', err);
-      });
 
       setCallStatus('ended');
       setShowReview(true);
@@ -342,71 +272,23 @@ const VideoCall = () => {
   };
 
   const handleAddCredits = () => {
-    setShowLowCreditWarning(false);
+    billing.setShowLowCreditWarning(false);
     setShowInsufficientCredits(false);
     navigate('/add-credit');
   };
 
   const handleContinueUntilEnd = () => {
-    setShowLowCreditWarning(false);
-    setContinueUntilEnd(true);
+    billing.setShowLowCreditWarning(false);
+    billing.setContinueUntilEnd(true);
   };
 
-  const handleConfirmHold = async (maxMinutes: number) => {
-    if (!stripeSessionId) return;
-    setHoldError(null);
-
-    const result = await createSessionHold(pricePerMinute, maxMinutes, stripeSessionId);
-    if (!result.success) {
-      setHoldError(result.error || 'Failed to authorize payment.');
-      return;
-    }
-
-    setShowHoldModal(false);
-    setCallStatus('ringing');
-    ringingTimeoutRef.current = setTimeout(async () => {
-      try {
-        await supabase.rpc('decline_session', { p_session_id: stripeSessionId });
-      } catch (e) {
-        console.warn('Failed to cancel timed-out session:', e);
-      }
-      setCallStatus('ended');
-      toast({
-        variant: "destructive",
-        title: "No Answer",
-        description: `${advisor.name} is not available right now. Please try again later.`,
-      });
-      setTimeout(() => navigate(`/advisor/${id}`), 2000);
-    }, RINGING_TIMEOUT_MS);
-  };
-
-  const handleSkipHold = () => {
-    setShowHoldModal(false);
-    setCallStatus('ringing');
-    ringingTimeoutRef.current = setTimeout(async () => {
-      try {
-        if (sessionId) await supabase.rpc('decline_session', { p_session_id: sessionId });
-      } catch (e) {
-        console.warn('Failed to cancel timed-out session:', e);
-      }
-      setCallStatus('ended');
-      toast({
-        variant: "destructive",
-        title: "No Answer",
-        description: `${advisor.name} is not available right now. Please try again later.`,
-      });
-      setTimeout(() => navigate(`/advisor/${id}`), 2000);
-    }, RINGING_TIMEOUT_MS);
-  };
+  // Keep endCallRef in sync so billing hook can call it
+  endCallRef.current = handleEndCall;
 
   const handleReviewClose = () => {
     setShowReview(false);
     navigate(`/advisor/${advisor.id}`);
   };
-
-  const freeSecondsRemaining = Math.max(0, (advisor.freeMinutes || 0) * 60 - sessionTime);
-  const remainingCredits = credits - creditsUsed;
-  const estimatedMinutesRemaining = Math.floor(remainingCredits / pricePerMinute);
 
   if (!isAuthenticated) {
     return null;
@@ -468,12 +350,12 @@ const VideoCall = () => {
                 <div className="flex items-center gap-3 text-white">
                   <div className="flex items-center gap-1 text-sm font-mono">
                     <Clock className="w-4 h-4" />
-                    <span>{formatTime(sessionTime)}</span>
+                    <span>{billing.formatTime(billing.sessionTime)}</span>
                   </div>
-                  {freeSecondsRemaining > 0 ? (
-                    <span className="text-xs text-green-400">{formatTime(freeSecondsRemaining)} free</span>
+                  {billing.inFreePhase && billing.freeSecondsRemaining > 0 ? (
+                    <span className="text-xs text-green-400">{billing.formatTime(billing.freeSecondsRemaining)} free</span>
                   ) : (
-                    <span className="text-xs text-white/70">${creditsUsed.toFixed(2)}</span>
+                    <span className="text-xs text-white/70">${billing.creditsUsed.toFixed(2)}</span>
                   )}
                   {/* Fullscreen toggle */}
                   <button
@@ -540,7 +422,7 @@ const VideoCall = () => {
         {callStatus === 'connected' && !isFullscreen && (
           <div className="mx-auto mt-4 px-4 text-center">
             <div className="text-sm text-muted-foreground">
-              Rate: ${pricePerMinute}/min • Balance: ${remainingCredits.toFixed(2)}
+              Rate: ${pricePerMinute}/min • Balance: ${billing.remainingCredits.toFixed(2)}
             </div>
           </div>
         )}
@@ -580,7 +462,7 @@ const VideoCall = () => {
               <div className="bg-card border border-amber-500/30 rounded-xl p-4 mb-6">
                 <p className="text-muted-foreground text-sm">
                   Rate: ${pricePerMinute}/min
-                  {advisor.freeMinutes ? ` • First ${advisor.freeMinutes} min free` : ''}
+                  {advisor.freeMinutes ? ` • ${advisor.freeMinutes} free min included` : ''}
                 </p>
               </div>
 
@@ -622,17 +504,17 @@ const VideoCall = () => {
         onClose={handleReviewClose}
         advisor={advisor}
         sessionType="call"
-        sessionDuration={sessionTime}
-        creditsUsed={creditsUsed}
+        sessionDuration={billing.sessionTime}
+        creditsUsed={billing.creditsUsed}
         sessionId={sessionId}
       />
 
       {/* Low Credit Warning */}
       <LowCreditWarning
-        isOpen={showLowCreditWarning}
-        onClose={() => setShowLowCreditWarning(false)}
-        currentCredits={remainingCredits}
-        estimatedTimeRemaining={`${estimatedMinutesRemaining} min`}
+        isOpen={billing.showLowCreditWarning}
+        onClose={() => billing.setShowLowCreditWarning(false)}
+        currentCredits={billing.remainingCredits}
+        estimatedTimeRemaining={`${billing.estimatedMinutesRemaining} min`}
         onAddCredits={handleAddCredits}
         onEndSession={handleEndCall}
         onContinueUntilEnd={handleContinueUntilEnd}
@@ -650,22 +532,6 @@ const VideoCall = () => {
         onAddCredits={handleAddCredits}
         onEndSession={() => navigate(`/advisor/${advisor.id}`)}
         isInsufficientCredits
-      />
-
-      {/* Stripe Session Hold Modal */}
-      <SessionHoldModal
-        isOpen={showHoldModal}
-        onClose={() => {
-          setShowHoldModal(false);
-          handleCancelCall();
-        }}
-        advisorName={advisor.name}
-        advisorRate={pricePerMinute}
-        freeMinutes={advisor.freeMinutes || 0}
-        onConfirmHold={handleConfirmHold}
-        onSkipHold={handleSkipHold}
-        isProcessing={isCreatingHold}
-        error={holdError}
       />
 
       {/* WebRTC Error Display */}

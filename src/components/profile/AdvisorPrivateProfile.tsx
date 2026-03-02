@@ -34,6 +34,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import StripeConnectCard from "@/components/advisor/StripeConnectCard";
 import {
   Tooltip,
   TooltipContent,
@@ -183,6 +184,51 @@ const AdvisorPrivateProfile = () => {
   // Status + service
   const [isOnline, setIsOnline]             = useState(false);
   const [pricePerMinute, setPricePerMinute] = useState("3.50");
+<<<<<<< HEAD
+=======
+
+  // Fetch advisor details from DB on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchDetails = async () => {
+      const { data, error } = await supabase
+        .from('advisor_details')
+        .select('status, bio_short, bio_long, specialties, price_per_minute, free_minutes, schedule')
+        .eq('id', user.id)
+        .single();
+      if (!error && data) {
+        setIsOnline(data.status === 'online');
+        if (data.bio_short || data.bio_long) setBio(data.bio_short || data.bio_long || '');
+        if (data.specialties && data.specialties.length > 0) setSelectedSpecialties(data.specialties);
+        if (data.price_per_minute) setPricePerMinute(data.price_per_minute.toString());
+        if (data.schedule && typeof data.schedule === 'object' && Object.keys(data.schedule).length > 0) {
+          setSchedule(data.schedule as typeof schedule);
+          savedScheduleRef.current = data.schedule as typeof schedule;
+        }
+        savedServiceRef.current = {
+          pricePerMinute: data.price_per_minute?.toString() || '3.50',
+          bio: data.bio_short || data.bio_long || '',
+          selectedSpecialties: data.specialties && data.specialties.length > 0 ? [...data.specialties] : ['Tarot', 'Astrology', 'Love Advice'],
+        };
+      }
+    };
+    fetchDetails();
+  }, [user?.id]);
+
+  // Persist status toggle to DB
+  const handleStatusToggle = async (checked: boolean) => {
+    setIsOnline(checked); // Optimistic update
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from('advisor_details')
+      .update({ status: checked ? 'online' : 'offline' })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Status update error:', error);
+      setIsOnline(!checked); // Revert on failure
+    }
+  };
+>>>>>>> a79e59f781578e406de081afb9b45232cd6c1ac8
   const [bio, setBio] = useState(
     "Intuitive tarot reader and astrologer with over 8 years of experience guiding seekers on their spiritual journey."
   );
@@ -328,11 +374,24 @@ const AdvisorPrivateProfile = () => {
   const handleSaveService = async () => {
     if (!user?.id) return;
     const { error } = await supabase
+<<<<<<< HEAD
       .from("advisor_details")
       .update({ price_per_minute: parseFloat(pricePerMinute) || 0, bio_long: bio, specialties: selectedSpecialties })
       .eq("id", user.id);
     if (error) {
       toast({ title: "Failed to save", description: error.message, variant: "destructive" });
+=======
+      .from('advisor_details')
+      .update({
+        price_per_minute: parseFloat(pricePerMinute),
+        bio_short: bio,
+        specialties: selectedSpecialties,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Save service error:', error);
+>>>>>>> a79e59f781578e406de081afb9b45232cd6c1ac8
       return;
     }
     savedServiceRef.current = { pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties] };
@@ -359,6 +418,7 @@ const AdvisorPrivateProfile = () => {
 
   const handleSaveSchedule = async () => {
     if (!user?.id) return;
+<<<<<<< HEAD
     localStorage.setItem(`advisor_schedule_${user.id}`, JSON.stringify(schedule));
     const { error } = await supabase
       .from("advisor_details")
@@ -366,6 +426,19 @@ const AdvisorPrivateProfile = () => {
       .update({ schedule } as any)
       .eq("id", user.id);
     if (error) console.error("[AdvisorPrivateProfile] Schedule DB save error:", error);
+=======
+    const { error } = await supabase
+      .from('advisor_details')
+      .update({
+        schedule: schedule,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Save schedule error:', error);
+      return;
+    }
+>>>>>>> a79e59f781578e406de081afb9b45232cd6c1ac8
     savedScheduleRef.current = schedule;
     setScheduleChanged(false);
     toast({ title: "Schedule saved" });
@@ -540,6 +613,7 @@ const AdvisorPrivateProfile = () => {
           {/* Ambient glow */}
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-40 h-40 rounded-full bg-primary/8 blur-3xl pointer-events-none" />
 
+<<<<<<< HEAD
           <div className={`relative flex flex-col items-center gap-3 ${sidebarCollapsed ? "gap-2" : ""}`}>
             {/* Avatar */}
             <div
@@ -553,6 +627,123 @@ const AdvisorPrivateProfile = () => {
                     : "bg-gradient-to-br from-border/60 to-muted/40"
                 }`}
                 style={isOnline ? { boxShadow: "0 0 18px rgba(16,185,129,0.4)" } : {}}
+=======
+      {/* Stripe Connect Payouts */}
+      <StripeConnectCard />
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-heading">
+              Weekly Earnings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={weeklyEarnings}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--border))"
+                />
+                <XAxis
+                  dataKey="day"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickFormatter={(v) => `$${v}`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                  formatter={(value: number) => [`$${value}`, "Earnings"]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="earnings"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-heading">
+              Monthly Readings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={monthlyReadings}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--border))"
+                />
+                <XAxis
+                  dataKey="week"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+                <Bar
+                  dataKey="readings"
+                  fill="hsl(var(--secondary))"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Service Management */}
+      <Card className="bg-card border-border">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base font-heading">
+            Service Management
+          </CardTitle>
+          {serviceChanged && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Unsaved changes
+            </span>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Price */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <label className="text-sm text-muted-foreground w-36 shrink-0">
+              Price per minute
+            </label>
+            <div className="relative w-full max-w-xs">
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={pricePerMinute}
+                onChange={(e) => { setPricePerMinute(e.target.value); setServiceChanged(true); }}
+                className="pl-8"
+>>>>>>> a79e59f781578e406de081afb9b45232cd6c1ac8
               />
               <Avatar className={`relative z-10 ring-[3px] ring-card transition-all duration-300 ${sidebarCollapsed ? "w-10 h-10" : "w-[68px] h-[68px]"}`}>
                 <AvatarImage src={avatarUrl} alt={user?.firstName || user?.username || "Advisor"} className="object-cover" />

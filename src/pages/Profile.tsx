@@ -106,7 +106,7 @@ const Profile = () => {
             <nav className="space-y-1 text-left">
               {[
                 { label: "Profile", icon: Users, path: "/profile" },
-                { label: "Chatroom", icon: MessageCircle, path: "/chat", dot: true },
+                { label: "Chatroom", icon: MessageCircle, path: "/advisors", dot: true },
                 { label: "Psychics", icon: Sparkles, path: "/advisors" },
                 { label: "Horoscope", icon: Sparkles, path: "/horoscope" },
                 { label: "Settings", icon: Settings, path: "/settings" },
