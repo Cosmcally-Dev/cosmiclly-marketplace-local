@@ -16,6 +16,8 @@ export interface Advisor {
   description: string;
   isTopRated?: boolean;
   isNew?: boolean;
+  twinEnabled?: boolean;
+  vapiAgentId?: string;
 }
 
 export const advisors: Advisor[] = [

@@ -14,6 +14,8 @@ interface DBAdvisorRow {
   years_experience: number | null;
   status: string | null;
   is_top_rated: boolean | null;
+  twin_enabled: boolean | null;
+  vapi_agent_id: string | null;
   profiles: {
     full_name: string | null;
     avatar_url: string | null;
@@ -39,6 +41,8 @@ function mapDBToAdvisor(row: DBAdvisorRow): Advisor {
     specialties: row.specialties || [],
     description: row.bio_short || row.bio_long || '',
     isTopRated: row.is_top_rated ?? false,
+    twinEnabled: row.twin_enabled ?? false,
+    vapiAgentId: row.vapi_agent_id ?? undefined,
   };
 }
 
@@ -56,7 +60,7 @@ export function useAdvisors(): UseAdvisorsResult {
     try {
       const { data, error } = await supabase
         .from('advisor_details')
-        .select('id, title, bio_short, bio_long, specialties, price_per_minute, discounted_price, free_minutes, years_experience, status, is_top_rated, profiles!advisor_details_id_fkey(full_name, avatar_url)');
+        .select('id, title, bio_short, bio_long, specialties, price_per_minute, discounted_price, free_minutes, years_experience, status, is_top_rated, twin_enabled, vapi_agent_id, profiles!advisor_details_id_fkey(full_name, avatar_url)');
 
       if (error) {
         console.warn('[useAdvisors] DB fetch error:', error.message);
