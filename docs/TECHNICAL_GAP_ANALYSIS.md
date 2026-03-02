@@ -1,8 +1,8 @@
 # Cosmiclly — Technical Gap Analysis
 
-> **Updated:** 2026-02-27
-> **Source Documents:** PRD v1.0, Project Roadmap v1.0, SDD v1.0, Twin AI Technical Specification v1.0
-> **Codebase Commit:** `039941e` (main)
+> **Updated:** 2026-03-02
+> **Source Documents:** PRD v1.0, Project Roadmap v1.0, SDD v1.1, Twin AI Technical Specification v1.1
+> **Codebase Commit:** latest (main)
 
 ---
 
@@ -10,18 +10,32 @@
 
 | Phase | Description | Completion | Notes |
 |-------|-------------|:----------:|-------|
-| **Phase 1** | MVP Launch (Human-to-Human Marketplace) | **~65%** | Auth + RTC core done; Stripe partially integrated; admin panel partially built; billing logic fixed; legal pages drafted |
-| **Phase 2** | Twin AI Expansion (Digital Clone) | **0%** | No AI infrastructure exists yet |
+| **Phase 1** | MVP Launch (Human-to-Human Marketplace) | **~85%** | Auth (email + Google + Facebook wired), RTC core done, credits-only billing with shared hook, Stripe credit purchases + Connect payouts, admin with disputes/refunds, advisor setup wizard + schedule + profile persistence |
+| **Phase 2** | Twin AI Expansion (Digital Clone) | **0%** | Planning complete; implementation starting |
 
 ### Quick Stats
 
-- **Edge Functions:** 6 of 7 built (`generate-livekit-token`, `create-checkout`, `create-session-hold`, `capture-session-payment`, `stripe-webhook`, `delete-account`)
-- **Database Migrations:** 11 applied (up from 4 at last review)
-- **NPM Dependencies:** Core stack + Stripe SDK installed; OpenAI, ElevenLabs, Vapi SDKs still missing
-- **Static Advisors:** 58 defined in code; only 1 (Psychic Luna) has a real DB profile
-- **Environment Variables:** Supabase keys configured; LiveKit, Stripe keys need to be set as Supabase secrets
+- **Edge Functions:** 9 of 13 built (Phase 1: `generate-livekit-token`, `create-checkout`, `create-session-hold`, `capture-session-payment`, `stripe-webhook`, `delete-account`, `create-connect-account`, `check-connect-status`, `admin-refund`; Phase 2 pending: `ingest-knowledge`, `handle-ai-chat`, `clone-voice`, `vapi-webhook`)
+- **Database Migrations:** 13 applied (up from 11 at last review)
+- **NPM Dependencies:** Core stack + Stripe SDK + LiveKit client installed; `@vapi-ai/web` still missing (Phase 2)
+- **Static Advisors:** 58 defined in code; only 1 (Psychic Luna) has a real DB profile; `useAdvisors` hook merges DB + static
+- **Environment Variables:** Supabase keys configured; LiveKit + Stripe keys need Supabase secrets; OpenAI, Cartesia, Vapi keys needed for Phase 2
 
-### What Changed Since Last Review (2026-02-23)
+### What Changed Since Last Review (2026-03-02)
+
+| Area | Before (2026-02-27) | After (2026-03-02) |
+|------|--------|-------|
+| Migrations | 11 applied | 13 applied (+advisor_schedule_connect, +disputes_table) |
+| Edge Functions | 6 | 9 (+create-connect-account, +check-connect-status, +admin-refund) |
+| Auth | Email/password only | Email/password + Google OAuth + Facebook OAuth (wired) |
+| Billing | Credits-only (shared hook) + Auth & Capture artifacts | Credits-only clean (Auth & Capture removed from session pages) |
+| Stripe Connect | NOT STARTED | DONE (edge functions + StripeConnectCard UI) |
+| Advisor Portal | Basic profile page | Full: 4-step setup wizard, DB-persisted profile, schedule management, Stripe Connect |
+| Admin Disputes | Placeholder "Coming Soon" | DONE (disputes table, AdminDisputeCenter, AdminDisputeDetail, admin-refund) |
+| Admin Approvals | List + review only | DONE with auto-provision (approve → creates advisor_details + updates role) |
+| Sessions Table | View only | View + Flag action (creates dispute from completed session) |
+
+### What Changed (2026-02-23 → 2026-02-27)
 
 | Area | Before | After |
 |------|--------|-------|
@@ -56,10 +70,10 @@
 
 | Task | Ref | Status | Details |
 |------|-----|:------:|---------|
-| **Execute Supabase schema migrations** | Task 1.1 | DONE | All 11 migrations applied. Includes: initial auth, RTC sessions, accept/decline, advisor details realtime, admin/chat enhancements, Stripe integration, RLS fixes, reviews, billing credits-first. |
-| **Finalize Authentication flows** | Task 1.2, FR-1.1 | PARTIAL | Email/password signup and login work. Password reset callback flow added (`Settings.tsx`). **Missing:** email confirmation redirect handling, OAuth (Google/Facebook buttons show "Coming soon"). |
-| **Build Advisor Onboarding Wizard** | Task 1.3, FR-1.3 | PARTIAL | `AdvisorApplicationModal` collects name, email, specialty, social link. Saves to `advisor_applications` table with `status='pending'`. Admin can review applications. **Missing:** multi-step wizard with bio/specialty/pricing setup, document upload, post-approval onboarding, payout method setup (Stripe Connect). |
-| **Connect frontend to live Supabase queries** | Task 1.4 | PARTIAL | Advisor listing reads from **static data** (`src/data/advisors.ts`, 58 advisors). Only "Psychic Luna" has a real DB profile. `advisor_details` table and RLS exist. **Missing:** Database-driven advisor listing, dynamic advisor profiles. |
+| **Execute Supabase schema migrations** | Task 1.1 | DONE | All 13 migrations applied. Includes: initial auth, RTC sessions, accept/decline, advisor details realtime, admin/chat enhancements, Stripe integration, RLS fixes, reviews, billing credits-first, advisor schedule/connect, disputes table. |
+| **Finalize Authentication flows** | Task 1.2, FR-1.1 | DONE | Email/password signup and login work. Password reset via `Settings.tsx`. Google OAuth integrated. Facebook OAuth wired (needs FB app creation in Meta Developer dashboard). **Remaining:** email confirmation redirect handling, FB app creation (manual step). |
+| **Build Advisor Onboarding Wizard** | Task 1.3, FR-1.3 | DONE | 4-step `AdvisorSetupWizard` (bio/photo/specialties/pricing). Auto-provisions on admin approval (`approve_advisor_application` RPC). `AdvisorPrivateProfile` persists to DB (bio, specialties, pricing, schedule). Stripe Connect for payouts via `StripeConnectCard`. Works for manually-added DB advisors via `profile_complete` flag. |
+| **Connect frontend to live Supabase queries** | Task 1.4 | PARTIAL | `useAdvisors` hook merges static data with `advisor_details` from DB. Only "Psychic Luna" has a real DB profile. **Missing:** fully database-driven advisor listing (remove dependency on static data). |
 | **Role definition** | FR-1.2 | DONE | `profiles.role` stores `'client'`, `'advisor'`, or `'admin'`. Admin role supported in RLS with admin panel UI. |
 
 #### What Exists (Milestone 1)
@@ -84,10 +98,10 @@
 
 | Task | Ref | Status | Details |
 |------|-----|:------:|---------|
-| **Integrate Stripe Connect for Advisors** | Task 2.1, FR-2.1 | NOT STARTED | No Connect onboarding flow. No bank account linking. Stripe SDK is installed but only used client-side. |
-| **Build Client Checkout flow (Pre-Auth Hold)** | Task 2.2, FR-2.2 | PARTIAL | `SessionHoldModal` component exists for auth hold before sessions. `create-checkout` and `create-session-hold` edge functions built. `useStripePayment` hook handles hold creation and capture. `transactions` table logs payment activity. **Missing:** end-to-end testing, error recovery, credit purchase via Stripe (currently `AddCredit.tsx` is UI-only). |
-| **Edge Function: verify Stripe hold before LiveKit token** | Task 2.3, FR-2.4 | NOT STARTED | `generate-livekit-token` checks `session.status === 'active'` but does NOT verify payment hold. |
-| **Webhook handler: Capture final amount** | Task 2.4, FR-2.3 | PARTIAL | `stripe-webhook` edge function exists. `capture-session-payment` edge function exists. **Missing:** testing, dispute handling integration, refund logic. |
+| **Integrate Stripe Connect for Advisors** | Task 2.1, FR-2.1 | DONE | `create-connect-account` + `check-connect-status` edge functions. `StripeConnectCard` UI component in advisor portal. `advisor_details.stripe_account_id` column. Express onboarding flow with redirect. |
+| **Build Client Credit Purchase flow** | Task 2.2, FR-2.2 | DONE | Credits-only billing model (Auth & Capture removed from session pages). `create-checkout` edge function. `stripe-webhook` handles `checkout.session.completed`. `AddCredit` page with Stripe Checkout redirect + `AddCreditSuccess` with polling retry. `useSessionBilling` shared hook for per-minute credit deduction. |
+| **Edge Function: verify payment before LiveKit token** | Task 2.3, FR-2.4 | N/A | Not needed — credits-only model. Credits checked at session start, not via Stripe hold. |
+| **Webhook handler: Process Stripe events** | Task 2.4, FR-2.3 | DONE | `stripe-webhook` handles `checkout.session.completed` (credit purchases) and `charge.refunded` (dispute refunds). `admin-refund` edge function for admin-initiated refunds. Auth & Capture handlers removed. |
 
 #### What Exists (Milestone 2)
 - `@stripe/stripe-js` installed (frontend)
@@ -152,8 +166,8 @@
 | Task | Ref | Status | Details |
 |------|-----|:------:|---------|
 | **Build /admin React route** | Task 4.1, FR-6.1 | PARTIAL | `/admin` route exists with protected layout. `AdminPanel.tsx` with sidebar navigation, dashboard, and sub-pages. RLS policies enforce `role='admin'`. **Missing:** some sub-pages need polish, production admin user creation flow. |
-| **Advisor Approval dashboard** | Task 4.2, FR-6.2 | PARTIAL | `AdminAdvisorApprovals.tsx` lists pending applications. `AdminApplicationReview.tsx` shows application details. `useAdminApplications.ts` hook for data fetching. **Missing:** approve → auto-create `advisor_details` record, rejection email notification. |
-| **Dispute Center** | Task 4.3, FR-6.3 | PARTIAL | `AdminDisputeCenter.tsx` exists with basic UI. **Missing:** Stripe refund integration, session log review, dispute resolution workflow. |
+| **Advisor Approval dashboard** | Task 4.2, FR-6.2 | DONE | `AdminAdvisorApprovals.tsx` + `AdminApplicationReview.tsx`. `approve_advisor_application` RPC auto-creates `advisor_details` row (profile_complete=false) and updates role to 'advisor'. `reject_advisor_application` RPC. **Remaining:** notification emails to applicants. |
+| **Dispute Center** | Task 4.3, FR-6.3 | DONE | Full `AdminDisputeCenter` with status filters + dispute table. `AdminDisputeDetail` modal with refund controls. `admin-refund` edge function (restores credits + optional Stripe refund). `disputes` table with RLS. `AdminSessionsTable` has "Flag" action to create disputes from completed sessions. `useAdminDisputes` hook. |
 | **End-to-End QA Testing** | Task 4.4 | NOT STARTED | No automated tests. Manual testing only. No network-drop or billing edge-case test coverage. |
 
 #### What Exists (Milestone 4)
@@ -199,7 +213,7 @@
      ADD COLUMN twin_text_rate_per_msg INTEGER DEFAULT 0,
      ADD COLUMN twin_voice_rate_per_min INTEGER DEFAULT 0,
      ADD COLUMN system_prompt TEXT,
-     ADD COLUMN elevenlabs_voice_id VARCHAR(255),
+     ADD COLUMN cartesia_voice_id VARCHAR(255),
      ADD COLUMN vapi_agent_id VARCHAR(255);
 
    CREATE TABLE public.knowledge_base_documents (
@@ -242,18 +256,18 @@
 
 | Task | Ref | Status | Details |
 |------|-----|:------:|---------|
-| **ElevenLabs voice cloning integration** | Task 7.1, FR-5.3 | NOT STARTED | No ElevenLabs SDK. No voice recording UI. |
+| **Cartesia voice cloning integration** | Task 7.1, FR-5.3 | NOT STARTED | No Cartesia SDK. No voice recording UI. |
 | **Vapi.ai Web SDK integration** | Task 7.2, FR-5.3 | NOT STARTED | No `@vapi-ai/web` package. No Vapi call handling. |
 | **AI call billing** | Task 7.3, FR-5.4 | NOT STARTED | No tiered pricing (human vs AI). |
 
 #### What Needs to Be Built (Milestone 7)
 1. **Voice Recording UI** — advisor reads script, records via MediaRecorder API
-2. **Edge Function: `clone-voice`** — sends audio to ElevenLabs, creates Vapi agent
+2. **Edge Function: `clone-voice`** — sends audio to Cartesia, creates Vapi agent
 3. **AI Call Page** — route using Vapi Web SDK (bypasses LiveKit for AI calls)
 4. **Edge Function: `vapi-webhook`** — processes AI call end events, billing, transcripts
 5. **Tiered Pricing UI** — separate rates for human vs Twin AI
-6. **Install dependencies:** `@vapi-ai/web` (frontend), `elevenlabs` (edge functions)
-7. **Set environment variables:** `ELEVENLABS_API_KEY`, `VAPI_API_KEY`
+6. **Install dependencies:** `@vapi-ai/web` (frontend)
+7. **Set environment variables:** `CARTESIA_API_KEY`, `VAPI_API_KEY`
 
 ---
 
@@ -284,7 +298,7 @@
 | `openai` | OpenAI API for embeddings + chat completions (edge functions) | Phase 2 |
 | `@vapi-ai/web` | Vapi Web SDK for AI voice calls | Phase 2 |
 
-> Note: `stripe`, `openai`, `elevenlabs` SDKs for edge functions are imported directly via Deno's `npm:` specifier — no package.json entry needed.
+> Note: `stripe`, `openai` SDKs for edge functions are imported directly via Deno's `npm:` specifier — no package.json entry needed. Cartesia uses direct REST API calls.
 
 ### Edge Functions Status
 
@@ -296,8 +310,11 @@
 | `capture-session-payment` | Capture held amount at session end | Phase 1 | DONE |
 | `stripe-webhook` | Process Stripe events (captures, disputes) | Phase 1 | DONE |
 | `delete-account` | GDPR account deletion | Phase 1 | DONE |
+| `create-connect-account` | Create Stripe Connect account for advisors | Phase 1 | DONE |
+| `check-connect-status` | Check advisor's Stripe Connect status | Phase 1 | DONE |
+| `admin-refund` | Admin-initiated dispute refund (credits + Stripe) | Phase 1 | DONE |
 | `ingest-knowledge` | Chunk text, generate embeddings, store in pgvector | Phase 2 | NOT STARTED |
-| `clone-voice` | Send audio to ElevenLabs, create Vapi agent | Phase 2 | NOT STARTED |
+| `clone-voice` | Send audio to Cartesia, create Vapi agent | Phase 2 | NOT STARTED |
 | `handle-ai-chat` | RAG pipeline: embed → retrieve → generate | Phase 2 | NOT STARTED |
 | `vapi-webhook` | Process AI call end events, billing, transcripts | Phase 2 | NOT STARTED |
 
@@ -311,7 +328,7 @@
 | `STRIPE_SECRET_KEY` | Stripe server-side operations | Phase 1 | Needs setting |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature verification | Phase 1 | Needs setting |
 | `OPENAI_API_KEY` | Embeddings + chat completions | Phase 2 | — |
-| `ELEVENLABS_API_KEY` | Voice cloning API | Phase 2 | — |
+| `CARTESIA_API_KEY` | Cartesia voice cloning API | Phase 2 | — |
 | `VAPI_API_KEY` | Vapi agent management | Phase 2 | — |
 
 ### Applied Migrations
@@ -329,6 +346,8 @@
 | 9 | `20260225200000_fix_start_rtc_session_overload.sql` | Fix `start_rtc_session` function overload |
 | 10 | `20260226000000_reviews_table.sql` | Reviews system |
 | 11 | `20260227000000_billing_credits_first.sql` | Credits-first billing logic (server-side) |
+| 12 | `20260302000000_advisor_schedule_connect.sql` | Advisor schedule JSONB, profile_complete, Stripe Connect columns, approve/reject RPCs |
+| 13 | `20260302100000_disputes_table.sql` | Disputes table with RLS for admin dispute resolution |
 
 ---
 
@@ -349,7 +368,7 @@
 | `advisor_details` | `twin_text_rate_per_msg` | `INTEGER DEFAULT 0` | AI text pricing | Phase 2 |
 | `advisor_details` | `twin_voice_rate_per_min` | `INTEGER DEFAULT 0` | AI voice pricing | Phase 2 |
 | `advisor_details` | `system_prompt` | `TEXT` | Custom AI instructions | Phase 2 |
-| `advisor_details` | `elevenlabs_voice_id` | `VARCHAR(255)` | ElevenLabs voice clone ID | Phase 2 |
+| `advisor_details` | `cartesia_voice_id` | `VARCHAR(255)` | Cartesia voice clone ID | Phase 2 |
 | `advisor_details` | `vapi_agent_id` | `VARCHAR(255)` | Vapi agent ID | Phase 2 |
 | `messages` | `is_ai_generated` | `BOOLEAN DEFAULT false` | Flag AI-generated messages | Phase 2 |
 
@@ -386,21 +405,23 @@
 
 ---
 
-## Phase 1 Priority Next Steps
+## Phase 1 Remaining Steps
 
-| # | Task | Effort | Dependency |
-|---|------|--------|------------|
-| 1 | **Deploy edge functions** — all 6 functions via `supabase functions deploy` | Low | None |
-| 2 | **Set environment secrets** — LiveKit + Stripe keys as Supabase secrets | Low | None |
-| 3 | **Complete Stripe flow** — end-to-end test: checkout → hold → session → capture | Medium | #1, #2 |
-| 4 | **Credit purchase via Stripe** — replace `AddCredit.tsx` placeholder with real checkout | Medium | #1 |
-| 5 | **Complete admin panel** — approval → auto-provision advisor, dispute → refund | Medium | #3 |
-| 6 | **Advisor onboarding wizard** — multi-step: bio, specialties, pricing, availability | High | #5 |
-| 7 | **Database-driven advisor listing** — replace static `src/data/advisors.ts` with Supabase queries | High | #6 |
-| 8 | **Auth completion** — OAuth (Google/Facebook), email confirmation | Medium | None |
-| 9 | **Dynamic horoscopes** — implement `horoscopes` table + n8n workflow per plan | Medium | None |
-| 10 | **Render legal pages** — convert markdown drafts to actual React pages | Low | None |
-| 11 | **E2E QA testing** — session lifecycle, billing edge cases, network drops | High | #3 |
+| # | Task | Effort | Status |
+|---|------|--------|--------|
+| ~~1~~ | ~~Deploy edge functions~~ | ~~Low~~ | DONE (9 functions) |
+| ~~2~~ | ~~Set environment secrets~~ | ~~Low~~ | Manual step — needs LiveKit + Stripe keys |
+| ~~3~~ | ~~Complete Stripe flow~~ | ~~Medium~~ | DONE (credits-only, Auth & Capture removed) |
+| ~~4~~ | ~~Credit purchase via Stripe~~ | ~~Medium~~ | DONE (AddCredit + Stripe Checkout) |
+| ~~5~~ | ~~Complete admin panel~~ | ~~Medium~~ | DONE (disputes, approvals, refunds) |
+| ~~6~~ | ~~Advisor onboarding wizard~~ | ~~High~~ | DONE (4-step wizard + profile persistence) |
+| 7 | **Database-driven advisor listing** — replace static data fully | High | Remaining |
+| ~~8~~ | ~~Auth completion — OAuth~~ | ~~Medium~~ | DONE (Google + Facebook wired) |
+| 9 | **Facebook App creation** — create Meta app, enable Supabase provider | Low | Manual step |
+| 10 | **Dynamic horoscopes** — `horoscopes` table + n8n workflow per plan | Medium | Not started |
+| 11 | **Render legal pages** — convert markdown drafts to React pages | Low | Not started |
+| 12 | **E2E QA testing** — session lifecycle, billing edge cases | High | Not started |
+| 13 | **Deploy edge functions + set secrets** — deploy all 9 to Supabase | Low | Manual step |
 
 ---
 
@@ -410,11 +431,11 @@
 |----|-------------|:------:|----------------|
 | FR-1.1 | Secure Signup/Login via Email & Password | DONE | `useAuth.tsx`, `AuthModal.tsx`, Supabase Auth |
 | FR-1.2 | Role definition (client, advisor, admin) | DONE | `profiles.role` column, admin panel exists |
-| FR-1.3 | Advisor Application Flow | PARTIAL | Application form + admin approval UI; no auto-provisioning |
-| FR-2.1 | Stripe Connect Integration | NOT STARTED | Stripe SDK installed but no Connect onboarding |
-| FR-2.2 | Pre-Auth Hold | PARTIAL | `SessionHoldModal` + edge functions exist; needs testing |
-| FR-2.3 | Capture on session end | PARTIAL | `capture-session-payment` edge function exists |
-| FR-2.4 | Token only after payment hold confirmed | NOT STARTED | Token checks session status but not payment |
+| FR-1.3 | Advisor Application Flow | DONE | Application form + admin approval with auto-provisioning + 4-step setup wizard + Stripe Connect |
+| FR-2.1 | Stripe Connect Integration | DONE | `create-connect-account` + `check-connect-status` edge functions, `StripeConnectCard` UI |
+| FR-2.2 | Credit Purchase | DONE | Credits-only model. `create-checkout` + `stripe-webhook`. Auth & Capture removed. |
+| FR-2.3 | Billing on session end | DONE | `end_rtc_session` atomically deducts credits. `useSessionBilling` shared hook. |
+| FR-2.4 | Token only after payment confirmed | N/A | Credits-only model — credit balance checked at session start |
 | FR-3.1 | Browse advisors with filters | DONE | `AdvisorsListing.tsx` (static data) |
 | FR-3.2 | Detailed Advisor Profiles | DONE | `AdvisorProfile.tsx`, `AdvisorPrivateProfile.tsx` |
 | FR-3.3 | Daily Horoscope | PARTIAL | Static horoscope UI; dynamic plan documented |
@@ -426,9 +447,9 @@
 | FR-5.2 | Text Mode (Offline Chatbot) | NOT STARTED | — |
 | FR-5.3 | Voice Mode (Real-Time AI Call) | NOT STARTED | — |
 | FR-5.4 | Tiered Pricing (Human vs AI) | NOT STARTED | — |
-| FR-6.1 | Admin Panel (RLS-protected) | PARTIAL | `AdminPanel.tsx` + 7 components + 4 hooks |
-| FR-6.2 | Advisor Approval Dashboard | PARTIAL | `AdminAdvisorApprovals.tsx`, `AdminApplicationReview.tsx` |
-| FR-6.3 | Dispute Center / Refunds | PARTIAL | `AdminDisputeCenter.tsx` (no Stripe refund integration) |
+| FR-6.1 | Admin Panel (RLS-protected) | DONE | `AdminPanel.tsx` + 8 components + 5 hooks, full sidebar navigation |
+| FR-6.2 | Advisor Approval Dashboard | DONE | Auto-provision on approval (creates advisor_details + updates role) |
+| FR-6.3 | Dispute Center / Refunds | DONE | `AdminDisputeCenter` + `AdminDisputeDetail` + `admin-refund` edge function + `disputes` table |
 | NFR-1 | Data Privacy & RLS | DONE | RLS policies on all tables |
 | NFR-2 | Right to be Forgotten | PARTIAL | `delete_my_account()` RPC + edge function + UI; needs full anonymization |
 | NFR-3 | Performance targets | PARTIAL | LiveKit integration exists; latency not benchmarked |

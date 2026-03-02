@@ -35,6 +35,8 @@ import {
   X,
 } from "lucide-react";
 import StripeConnectCard from "@/components/advisor/StripeConnectCard";
+import TwinSetupCard from "@/components/advisor/TwinSetupCard";
+import VoiceRecordingCard from "@/components/advisor/VoiceRecordingCard";
 import {
   Tooltip,
   TooltipContent,
@@ -630,6 +632,12 @@ const AdvisorPrivateProfile = () => {
 =======
       {/* Stripe Connect Payouts */}
       <StripeConnectCard />
+
+      {/* Twin AI Setup */}
+      <TwinSetupCard />
+
+      {/* Voice Clone */}
+      <VoiceRecordingCard />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -32,7 +32,12 @@ const AdvisorClients = React.lazy(() => import("./pages/AdvisorClients"));
 const AdvisorInsights = React.lazy(() => import("./pages/AdvisorInsights"));
 =======
 const ComingSoon = React.lazy(() => import("./pages/ComingSoon"));
+<<<<<<< HEAD
 >>>>>>> a79e59f781578e406de081afb9b45232cd6c1ac8
+=======
+const TwinChat = React.lazy(() => import("./pages/TwinChat"));
+const TwinVoiceCall = React.lazy(() => import("./pages/TwinVoiceCall"));
+>>>>>>> ef11010917951bdb454bf214c26e06cd4b9bc360
 
 const queryClient = new QueryClient();
 
@@ -85,8 +90,13 @@ const App = () => (
               <Route path="/cookies" element={<ComingSoon />} />
               <Route path="/favorites" element={<ComingSoon />} />
               <Route path="/payment-methods" element={<ComingSoon />} />
+<<<<<<< HEAD
               <Route path="/advisor/:id/ai" element={<ComingSoon />} />
 >>>>>>> a79e59f781578e406de081afb9b45232cd6c1ac8
+=======
+              <Route path="/advisor/:id/ai" element={<TwinChat />} />
+              <Route path="/advisor/:id/ai-voice" element={<TwinVoiceCall />} />
+>>>>>>> ef11010917951bdb454bf214c26e06cd4b9bc360
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
