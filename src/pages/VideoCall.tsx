@@ -14,9 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useWebRTC } from '@/hooks/useWebRTC';
 import { useSessionRealtime } from '@/hooks/useSessionRealtime';
-import { useStripePayment } from '@/hooks/useStripePayment';
 import { useSessionBilling } from '@/hooks/useSessionBilling';
-import { SessionHoldModal } from '@/components/modals/SessionHoldModal';
 import type { ConnectionQuality } from '@/types/session';
 
 const RINGING_TIMEOUT_MS = 60000; // 60 seconds
@@ -38,12 +36,7 @@ const VideoCall = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [webrtcEnabled, setWebrtcEnabled] = useState(false);
   const [webrtcError, setWebrtcError] = useState<string | null>(null);
-  const [showHoldModal, setShowHoldModal] = useState(false);
-  const [holdError, setHoldError] = useState<string | null>(null);
-  const [stripeSessionId, setStripeSessionId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(true);
-
-  const { hasPaymentMethod, isCreatingHold, createSessionHold, captureSessionPayment } = useStripePayment();
 
   const sessionStartRef = useRef<Date | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -164,14 +157,6 @@ const VideoCall = () => {
         if (error) throw error;
 
         setSessionId(newSessionId);
-
-        // If user has a Stripe payment method, show hold modal before ringing
-        if (hasPaymentMethod) {
-          setStripeSessionId(newSessionId);
-          setShowHoldModal(true);
-          return;
-        }
-
         setCallStatus('ringing');
 
         // Start ringing timeout
@@ -272,11 +257,6 @@ const VideoCall = () => {
 
       if (error) throw error;
 
-      // Capture Stripe payment if session had a hold
-      await captureSessionPayment(sessionId).catch(err => {
-        console.warn('Stripe capture failed (will retry via webhook):', err);
-      });
-
       setCallStatus('ended');
       setShowReview(true);
     } catch (error) {
@@ -300,53 +280,6 @@ const VideoCall = () => {
   const handleContinueUntilEnd = () => {
     billing.setShowLowCreditWarning(false);
     billing.setContinueUntilEnd(true);
-  };
-
-  const handleConfirmHold = async (maxMinutes: number) => {
-    if (!stripeSessionId) return;
-    setHoldError(null);
-
-    const result = await createSessionHold(pricePerMinute, maxMinutes, stripeSessionId);
-    if (!result.success) {
-      setHoldError(result.error || 'Failed to authorize payment.');
-      return;
-    }
-
-    setShowHoldModal(false);
-    setCallStatus('ringing');
-    ringingTimeoutRef.current = setTimeout(async () => {
-      try {
-        await supabase.rpc('decline_session', { p_session_id: stripeSessionId });
-      } catch (e) {
-        console.warn('Failed to cancel timed-out session:', e);
-      }
-      setCallStatus('ended');
-      toast({
-        variant: "destructive",
-        title: "No Answer",
-        description: `${advisor.name} is not available right now. Please try again later.`,
-      });
-      setTimeout(() => navigate(`/advisor/${id}`), 2000);
-    }, RINGING_TIMEOUT_MS);
-  };
-
-  const handleSkipHold = () => {
-    setShowHoldModal(false);
-    setCallStatus('ringing');
-    ringingTimeoutRef.current = setTimeout(async () => {
-      try {
-        if (sessionId) await supabase.rpc('decline_session', { p_session_id: sessionId });
-      } catch (e) {
-        console.warn('Failed to cancel timed-out session:', e);
-      }
-      setCallStatus('ended');
-      toast({
-        variant: "destructive",
-        title: "No Answer",
-        description: `${advisor.name} is not available right now. Please try again later.`,
-      });
-      setTimeout(() => navigate(`/advisor/${id}`), 2000);
-    }, RINGING_TIMEOUT_MS);
   };
 
   // Keep endCallRef in sync so billing hook can call it
@@ -599,22 +532,6 @@ const VideoCall = () => {
         onAddCredits={handleAddCredits}
         onEndSession={() => navigate(`/advisor/${advisor.id}`)}
         isInsufficientCredits
-      />
-
-      {/* Stripe Session Hold Modal */}
-      <SessionHoldModal
-        isOpen={showHoldModal}
-        onClose={() => {
-          setShowHoldModal(false);
-          handleCancelCall();
-        }}
-        advisorName={advisor.name}
-        advisorRate={pricePerMinute}
-        freeMinutes={advisor.freeMinutes || 0}
-        onConfirmHold={handleConfirmHold}
-        onSkipHold={handleSkipHold}
-        isProcessing={isCreatingHold}
-        error={holdError}
       />
 
       {/* WebRTC Error Display */}

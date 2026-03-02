@@ -1,15 +1,39 @@
 import { useState } from 'react';
 import { useAdminSessions } from '@/hooks/useAdminSessions';
+import { useAdminDisputes } from '@/hooks/useAdminDisputes';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Phone, MessageCircle, Video, Calendar } from 'lucide-react';
+import { Phone, MessageCircle, Video, Calendar, Flag, Loader2 } from 'lucide-react';
 
 export const AdminSessionsTable = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const { sessions, isLoading } = useAdminSessions(statusFilter, typeFilter);
+  const { createDispute } = useAdminDisputes();
+
+  const [flagSessionId, setFlagSessionId] = useState<string | null>(null);
+  const [flagReason, setFlagReason] = useState('');
+  const [isFlagging, setIsFlagging] = useState(false);
+
+  const handleFlag = async () => {
+    if (!flagSessionId || !flagReason.trim()) return;
+    setIsFlagging(true);
+    try {
+      await createDispute(flagSessionId, flagReason.trim());
+      setFlagSessionId(null);
+      setFlagReason('');
+    } catch (err) {
+      console.error('Failed to create dispute:', err);
+    } finally {
+      setIsFlagging(false);
+    }
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -98,6 +122,7 @@ export const AdminSessionsTable = () => {
                 <TableHead>Duration</TableHead>
                 <TableHead className="text-right">Cost</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -126,6 +151,19 @@ export const AdminSessionsTable = () => {
                       ? new Date(s.started_at).toLocaleDateString()
                       : '—'}
                   </TableCell>
+                  <TableCell className="text-right">
+                    {s.status === 'completed' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFlagSessionId(s.id)}
+                        className="text-amber-500 hover:text-amber-600"
+                      >
+                        <Flag className="w-3.5 h-3.5 mr-1" />
+                        Flag
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -135,6 +173,35 @@ export const AdminSessionsTable = () => {
           </div>
         </div>
       )}
+      {/* Flag dispute dialog */}
+      <Dialog open={!!flagSessionId} onOpenChange={() => { setFlagSessionId(null); setFlagReason(''); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Flag Session for Dispute</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label className="text-sm">Reason</Label>
+              <Textarea
+                placeholder="Describe the issue with this session..."
+                value={flagReason}
+                onChange={(e) => setFlagReason(e.target.value)}
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => { setFlagSessionId(null); setFlagReason(''); }}>
+                Cancel
+              </Button>
+              <Button onClick={handleFlag} disabled={isFlagging || !flagReason.trim()}>
+                {isFlagging ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Flag className="w-4 h-4 mr-2" />}
+                Create Dispute
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

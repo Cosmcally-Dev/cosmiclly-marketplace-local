@@ -90,26 +90,6 @@ Deno.serve(async (req) => {
       }
 
       // ========================
-      // Session hold authorized (for Auth & Capture)
-      // ========================
-      case 'payment_intent.amount_capturable_updated': {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        const sessionId = paymentIntent.metadata?.session_id;
-
-        if (sessionId) {
-          // Update transaction status to authorized
-          await supabase
-            .from('transactions')
-            .update({ status: 'authorized' })
-            .eq('stripe_payment_intent_id', paymentIntent.id)
-            .eq('type', 'session_hold');
-
-          console.log(`Session hold authorized for session ${sessionId}`);
-        }
-        break;
-      }
-
-      // ========================
       // Refund processed
       // ========================
       case 'charge.refunded': {
@@ -117,11 +97,11 @@ Deno.serve(async (req) => {
         const paymentIntentId = charge.payment_intent as string;
 
         if (paymentIntentId) {
+          // Mark the original credit purchase transaction as refunded
           await supabase
             .from('transactions')
             .update({ status: 'refunded' })
-            .eq('stripe_payment_intent_id', paymentIntentId)
-            .eq('type', 'session_capture');
+            .eq('stripe_payment_intent_id', paymentIntentId);
 
           console.log(`Refund processed for payment intent ${paymentIntentId}`);
         }

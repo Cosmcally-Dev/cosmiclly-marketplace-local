@@ -18,6 +18,7 @@ import {
   Camera,
   Loader2,
 } from "lucide-react";
+import StripeConnectCard from "@/components/advisor/StripeConnectCard";
 import {
   LineChart,
   Line,
@@ -111,20 +112,32 @@ const AdvisorPrivateProfile = () => {
   const [isOnline, setIsOnline] = useState(false);
   const [pricePerMinute, setPricePerMinute] = useState("3.50");
 
-  // Fetch current status from DB on mount
+  // Fetch advisor details from DB on mount
   useEffect(() => {
     if (!user?.id) return;
-    const fetchStatus = async () => {
+    const fetchDetails = async () => {
       const { data, error } = await supabase
         .from('advisor_details')
-        .select('status')
+        .select('status, bio_short, bio_long, specialties, price_per_minute, free_minutes, schedule')
         .eq('id', user.id)
         .single();
       if (!error && data) {
         setIsOnline(data.status === 'online');
+        if (data.bio_short || data.bio_long) setBio(data.bio_short || data.bio_long || '');
+        if (data.specialties && data.specialties.length > 0) setSelectedSpecialties(data.specialties);
+        if (data.price_per_minute) setPricePerMinute(data.price_per_minute.toString());
+        if (data.schedule && typeof data.schedule === 'object' && Object.keys(data.schedule).length > 0) {
+          setSchedule(data.schedule as typeof schedule);
+          savedScheduleRef.current = data.schedule as typeof schedule;
+        }
+        savedServiceRef.current = {
+          pricePerMinute: data.price_per_minute?.toString() || '3.50',
+          bio: data.bio_short || data.bio_long || '',
+          selectedSpecialties: data.specialties && data.specialties.length > 0 ? [...data.specialties] : ['Tarot', 'Astrology', 'Love Advice'],
+        };
       }
     };
-    fetchStatus();
+    fetchDetails();
   }, [user?.id]);
 
   // Persist status toggle to DB
@@ -202,7 +215,21 @@ const AdvisorPrivateProfile = () => {
     setServiceChanged(true);
   };
 
-  const handleSaveService = () => {
+  const handleSaveService = async () => {
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from('advisor_details')
+      .update({
+        price_per_minute: parseFloat(pricePerMinute),
+        bio_short: bio,
+        specialties: selectedSpecialties,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Save service error:', error);
+      return;
+    }
     savedServiceRef.current = { pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties] };
     setServiceChanged(false);
   };
@@ -230,7 +257,19 @@ const AdvisorPrivateProfile = () => {
     setScheduleChanged(true);
   };
 
-  const handleSaveSchedule = () => {
+  const handleSaveSchedule = async () => {
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from('advisor_details')
+      .update({
+        schedule: schedule,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Save schedule error:', error);
+      return;
+    }
     savedScheduleRef.current = schedule;
     setScheduleChanged(false);
   };
@@ -352,6 +391,9 @@ const AdvisorPrivateProfile = () => {
           </Card>
         ))}
       </div>
+
+      {/* Stripe Connect Payouts */}
+      <StripeConnectCard />
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -14,9 +14,7 @@ import { useSessionRealtime } from '@/hooks/useSessionRealtime';
 import { useChatMessages } from '@/hooks/useChatMessages';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useChatHistory } from '@/hooks/useChatHistory';
-import { useStripePayment } from '@/hooks/useStripePayment';
 import { useSessionBilling } from '@/hooks/useSessionBilling';
-import { SessionHoldModal } from '@/components/modals/SessionHoldModal';
 import type { ConnectionQuality } from '@/types/session';
 
 const RINGING_TIMEOUT_MS = 60000; // 60 seconds
@@ -47,12 +45,6 @@ const Chat = () => {
   const [showInsufficientCredits, setShowInsufficientCredits] = useState(false);
   const [isSessionEnded, setIsSessionEnded] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [showHoldModal, setShowHoldModal] = useState(false);
-  const [holdError, setHoldError] = useState<string | null>(null);
-  const [stripeSessionId, setStripeSessionId] = useState<string | null>(null);
-
-  const { hasPaymentMethod, isCreatingHold, createSessionHold, captureSessionPayment } = useStripePayment();
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef<Date | null>(null);
   const ringingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -175,14 +167,6 @@ const Chat = () => {
         if (error) throw error;
 
         setSessionId(newSessionId);
-
-        // If user has a Stripe payment method, show hold modal before ringing
-        if (hasPaymentMethod) {
-          setStripeSessionId(newSessionId);
-          setShowHoldModal(true);
-          return; // Don't start ringing yet — wait for hold confirmation
-        }
-
         setChatStatus('ringing');
 
         // Start ringing timeout
@@ -273,11 +257,6 @@ const Chat = () => {
 
       if (error) throw error;
 
-      // Capture Stripe payment if session had a hold
-      await captureSessionPayment(sessionId).catch(err => {
-        console.warn('Stripe capture failed (will retry via webhook):', err);
-      });
-
       setChatStatus('ended');
       setShowReview(true);
     } catch (error) {
@@ -329,58 +308,6 @@ const Chat = () => {
   const handleContinueUntilEnd = () => {
     billing.setShowLowCreditWarning(false);
     billing.setContinueUntilEnd(true);
-  };
-
-  // Handle hold confirmation from SessionHoldModal
-  const handleConfirmHold = async (maxMinutes: number) => {
-    if (!stripeSessionId) return;
-    setHoldError(null);
-
-    const result = await createSessionHold(pricePerMinute, maxMinutes, stripeSessionId);
-    if (!result.success) {
-      setHoldError(result.error || 'Failed to authorize payment.');
-      return;
-    }
-
-    // Hold succeeded — start ringing
-    setShowHoldModal(false);
-    setChatStatus('ringing');
-    ringingTimeoutRef.current = setTimeout(async () => {
-      try {
-        await supabase.rpc('decline_session', { p_session_id: stripeSessionId });
-      } catch (e) {
-        console.warn('Failed to cancel timed-out session:', e);
-      }
-      setChatStatus('ended');
-      setIsSessionEnded(true);
-      toast({
-        variant: "destructive",
-        title: "No Response",
-        description: `${advisor.name} is not available right now. Please try again later.`,
-      });
-      setTimeout(() => navigate(`/advisor/${id}`), 2000);
-    }, RINGING_TIMEOUT_MS);
-  };
-
-  // Skip hold — use credits instead
-  const handleSkipHold = () => {
-    setShowHoldModal(false);
-    setChatStatus('ringing');
-    ringingTimeoutRef.current = setTimeout(async () => {
-      try {
-        if (sessionId) await supabase.rpc('decline_session', { p_session_id: sessionId });
-      } catch (e) {
-        console.warn('Failed to cancel timed-out session:', e);
-      }
-      setChatStatus('ended');
-      setIsSessionEnded(true);
-      toast({
-        variant: "destructive",
-        title: "No Response",
-        description: `${advisor.name} is not available right now. Please try again later.`,
-      });
-      setTimeout(() => navigate(`/advisor/${id}`), 2000);
-    }, RINGING_TIMEOUT_MS);
   };
 
   // Keep endChatRef in sync so billing hook can call it
@@ -713,21 +640,6 @@ const Chat = () => {
         isInsufficientCredits
       />
 
-      {/* Stripe Session Hold Modal */}
-      <SessionHoldModal
-        isOpen={showHoldModal}
-        onClose={() => {
-          setShowHoldModal(false);
-          handleCancelChat();
-        }}
-        advisorName={advisor.name}
-        advisorRate={pricePerMinute}
-        freeMinutes={advisor.freeMinutes || 0}
-        onConfirmHold={handleConfirmHold}
-        onSkipHold={handleSkipHold}
-        isProcessing={isCreatingHold}
-        error={holdError}
-      />
     </div>
   );
 };

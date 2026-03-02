@@ -1,3 +1,5 @@
+// DORMANT: Auth & Capture flow disabled. Credits-only billing is active.
+// This file is kept for potential future use but is not imported anywhere.
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
