@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/layout/Header";
@@ -7,11 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, MessageCircle, Users, Sparkles, ArrowRight } from "lucide-react";
 import { useAdvisors } from "@/hooks/useAdvisors";
 import { AdvisorCard } from "@/components/advisors/AdvisorCard";
 import { zodiacSigns } from "@/data/zodiacSigns";
 import AdvisorPrivateProfile from "@/components/profile/AdvisorPrivateProfile";
+import { useHoroscope, type HoroscopePeriod } from "@/hooks/useHoroscope";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -67,32 +69,45 @@ const Profile = () => {
     (s) => s.name.toLowerCase() === zodiacProfile.sunSign.toLowerCase()
   );
 
-  const horoscopeReadings: Record<string, { dateRange: string; text: string }> = {
-    today: {
-      dateRange: "February 9, 2026",
-      text: "Today brings a wave of clarity to your personal goals. Trust your instincts when making decisions, especially regarding financial matters. A conversation with someone close could reveal an unexpected opportunity. Stay grounded and focus on what truly matters to you.",
-    },
-    tomorrow: {
-      dateRange: "February 10, 2026",
-      text: "Tomorrow favors creative endeavors and self-expression. You may feel a surge of inspiration that leads to a breakthrough in a project you've been working on. Don't be afraid to share your ideas with others — collaboration could amplify your success.",
-    },
-    week: {
-      dateRange: "February 9 - February 15, 2026",
-      text: "This week challenges you to step outside your comfort zone. A professional opportunity may arise mid-week that tests your adaptability. Embrace change and remain open to new perspectives. By the weekend, you'll feel a renewed sense of purpose.",
-    },
-    month: {
-      dateRange: "February 1 - February 28, 2026",
-      text: "February is a month of transformation. Planetary alignments encourage deep reflection on your relationships and career path. Mid-month brings a pivotal moment that could reshape your long-term plans. Stay patient and let things unfold naturally.",
-    },
-    year: {
-      dateRange: "January 1, 2026 - December 31, 2026",
-      text: "In 2026, your ruling planet, Saturn, moves through Aries, bringing a noticeable shift in pace and attitude. You may feel faster, bolder, and more decisive than usual. There is a stronger desire for independence, initiative, and starting something new. This year pushes you out of long planning phases and into action. You are encouraged to take risks, rely on yourself, and actively reshape areas of life that no longer feel aligned.",
-    },
+  const tabToPeriod: Record<string, HoroscopePeriod> = {
+    today: 'daily',
+    tomorrow: 'daily',
+    week: 'weekly',
+    month: 'monthly',
+    year: 'yearly',
   };
+
+  const tomorrowDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  }, []);
+
+  const mappedPeriod = tabToPeriod[horoscopeTab] ?? 'daily';
+  const targetDate = horoscopeTab === 'tomorrow' ? tomorrowDate : undefined;
+
+  const { data: horoscope, isLoading: horoscopeLoading } = useHoroscope(
+    zodiacProfile.sunSign,
+    mappedPeriod,
+    targetDate,
+  );
+
+  const horoscopeDateLabel = useMemo(() => {
+    if (horoscope?.date) {
+      const d = new Date(horoscope.date + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    const now = new Date();
+    if (horoscopeTab === 'tomorrow') {
+      const t = new Date(now);
+      t.setDate(t.getDate() + 1);
+      return t.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    return now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  }, [horoscope?.date, horoscopeTab]);
 
   const matchedAdvisors = advisors.slice(0, 6);
   const affirmation = "I am constantly growing and evolving into a better person.";
-  const currentReading = horoscopeReadings[horoscopeTab];
 
   return (
     <div className="min-h-screen bg-background">
@@ -241,10 +256,14 @@ const Profile = () => {
                   </div>
                 )}
                 <div className="flex-1 space-y-3">
-                  <p className="text-sm font-semibold text-foreground">{currentReading.dateRange}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {currentReading.text}
-                  </p>
+                  <p className="text-sm font-semibold text-foreground">{horoscopeDateLabel}</p>
+                  {horoscopeLoading && !horoscope ? (
+                    <Skeleton className="h-16 w-full" />
+                  ) : (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {horoscope?.content.daily}
+                    </p>
+                  )}
                   <button
                     onClick={() => navigate("/horoscope")}
                     className="inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:text-primary transition-colors"
