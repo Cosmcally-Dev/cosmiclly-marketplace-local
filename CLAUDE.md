@@ -176,8 +176,9 @@ Applied in order:
 14. `20260303000000_twin_ai_infrastructure.sql` — pgvector, knowledge_base_documents, Twin AI columns, AI session RPCs
 15. `20260303100000_seed_dummy_advisors.sql` — 20 dummy advisor accounts
 16. `20260304000000_advisor_contracts_and_stats.sql` — Advisor contracts, dashboard stats RPCs
-17. `20260306000000_transaction_logging_and_favorites.sql` — **NEEDS TO BE APPLIED** — Transaction logging in `deduct_ai_credits` and `end_rtc_session`, `user_favorites` table with RLS
-18. `20260307000000_sessions_created_at_and_rls_fix.sql` — **NEEDS TO BE APPLIED** — Add `created_at` column to sessions table, fix advisor_details RLS to allow public view of all advisors (enables offline status visibility + Realtime)
+17. `20260306000000_transaction_logging_and_favorites.sql` — Transaction logging in `deduct_ai_credits` and `end_rtc_session`, `user_favorites` table with RLS
+18. `20260307000000_sessions_created_at_and_rls_fix.sql` — Add `created_at` column to sessions table, fix advisor_details RLS to allow public view of all advisors (enables offline status visibility + Realtime)
+19. `20260308000000_fix_rls_and_diagnostics.sql` — **NEEDS TO BE APPLIED** — Fix RLS policies on `disputes` and `knowledge_base_documents`, fix NULL string columns in `auth.users` for seeded accounts (GoTrue crash fix)
 
 ### To apply pending migration:
 ```bash
@@ -239,3 +240,4 @@ npx tsc --noEmit     # Type-check without emitting
 - **Transaction logging:** Credit deductions from `deduct_ai_credits` and `end_rtc_session` RPCs automatically insert rows into the `transactions` table. Credit purchases are logged by the `stripe-webhook` edge function.
 - **Online/Offline status:** Stored in `advisor_details.status` ('online'/'offline'/'busy'). The `useAdvisors` hook subscribes to Realtime changes. The RLS policy allows public SELECT on all advisor_details rows (including offline). Default is 'offline'.
 - **AI Twin availability:** AI Twin (text chat + voice call) is available 24/7 regardless of advisor online/offline status. The `AdvisorCard` shows an "AI Twin" button even when advisor is offline. `AdvisorProfile` has Twin Call always enabled.
+- **Seeding auth.users:** When inserting directly into `auth.users`, all string columns that GoTrue scans (e.g., `email_change`, `phone`, `phone_change`, `email_change_token_new`, `email_change_token_current`, `phone_change_token`, `reauthentication_token`) must be set to `''` not `NULL`. GoTrue's Go code uses `string` (not `*string`), so NULL causes `"Scan error... converting NULL to string is unsupported"`.

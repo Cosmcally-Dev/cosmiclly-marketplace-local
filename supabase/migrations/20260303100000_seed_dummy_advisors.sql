@@ -323,6 +323,22 @@ ON CONFLICT (id) DO UPDATE SET
   profile_complete = EXCLUDED.profile_complete;
 
 -- ================================================================
+-- FIX: GoTrue requires string columns to be '' not NULL
+-- Without this, signInWithPassword fails with:
+-- "Scan error on column index 8, name email_change: converting NULL to string is unsupported"
+-- ================================================================
+UPDATE auth.users
+SET
+  email_change = COALESCE(email_change, ''),
+  phone = COALESCE(phone, ''),
+  phone_change = COALESCE(phone_change, ''),
+  email_change_token_new = COALESCE(email_change_token_new, ''),
+  email_change_token_current = COALESCE(email_change_token_current, ''),
+  phone_change_token = COALESCE(phone_change_token, ''),
+  reauthentication_token = COALESCE(reauthentication_token, '')
+WHERE email LIKE '%cosmiclly.test%';
+
+-- ================================================================
 -- MIGRATION COMPLETE
 -- ================================================================
 COMMENT ON TABLE public.advisor_details IS 'Extended details for advisor profiles. 20 test advisors seeded.';

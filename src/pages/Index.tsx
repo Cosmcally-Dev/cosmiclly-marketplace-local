@@ -10,7 +10,7 @@ import { CookieConsent } from '@/components/CookieConsent';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <StickyHeader />
       <main>
         <HeroSection />
