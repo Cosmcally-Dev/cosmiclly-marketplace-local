@@ -147,9 +147,12 @@ export default function StripeConnectCard() {
       if (error) throw error;
       if (!data?.url) throw new Error('No onboarding URL returned');
       window.location.href = data.url;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to start onboarding';
-      setStatus({ state: 'error', message: msg });
+    } catch (err: any) {
+      const msg = err.message || 'Failed to start onboarding';
+      const friendlyMsg = msg.includes('signed up for Connect')
+        ? 'Payout setup is not available yet. Please contact support.'
+        : msg;
+      setStatus({ state: 'error', message: friendlyMsg });
       setIsRedirecting(false);
     }
   };

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Clock, Star, ArrowLeft, X, Check, CheckCheck } from 'lucide-react';
+import { Send, Clock, Star, ArrowLeft, X, Check, CheckCheck, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,10 +34,10 @@ const Chat = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading, credits } = useAuth();
   const { toast } = useToast();
-  const { advisors, getAdvisorById } = useAdvisors();
+  const { advisors, getAdvisorById, isLoading: advisorsLoading } = useAdvisors();
 
   const advisor = getAdvisorById(id) || advisors[0];
-  const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
+  const pricePerMinute = advisor?.discountedPrice ?? advisor?.pricePerMinute ?? 0;
 
   const [chatStatus, setChatStatus] = useState<'connecting' | 'ringing' | 'connected' | 'ended'>('connecting');
   const [inputValue, setInputValue] = useState('');
@@ -56,7 +56,7 @@ const Chat = () => {
     isActive: chatStatus === 'connected' && !isSessionEnded && !showInsufficientCredits,
     credits,
     pricePerMinute,
-    freeMinutes: advisor.freeMinutes || 0,
+    freeMinutes: advisor?.freeMinutes || 0,
     startedAt: sessionStartedAt,
     onSessionEnd: () => {
       endChatRef.current();
@@ -113,7 +113,7 @@ const Chat = () => {
       setSessionStartedAt(ts);
       toast({
         title: "Chat Connected",
-        description: `You're now chatting with ${advisor.name}`,
+        description: `You're now chatting with ${advisor?.name}`,
       });
     } else if (newStatus === 'cancelled') {
       // Advisor declined
@@ -126,7 +126,7 @@ const Chat = () => {
       toast({
         variant: "destructive",
         title: "Chat Declined",
-        description: `${advisor.name} is not available right now.`,
+        description: `${advisor?.name} is not available right now.`,
       });
       setTimeout(() => navigate(`/advisor/${id}`), 2000);
     } else if (newStatus === 'completed') {
@@ -136,10 +136,10 @@ const Chat = () => {
       setShowReview(true);
       toast({
         title: "Chat Ended",
-        description: `${advisor.name} has ended the session.`,
+        description: `${advisor?.name} has ended the session.`,
       });
     }
-  }, [advisor.name, id, navigate, toast]);
+  }, [advisor?.name, id, navigate, toast]);
 
   useSessionRealtime({
     sessionId,
@@ -148,7 +148,7 @@ const Chat = () => {
   });
 
   // Check if user has enough credits to start session
-  const hasMinimumCredits = credits >= pricePerMinute || (advisor.freeMinutes && advisor.freeMinutes > 0);
+  const hasMinimumCredits = credits >= pricePerMinute || (advisor?.freeMinutes && advisor.freeMinutes > 0);
 
   // Redirect to login if not authenticated or show insufficient credits
   useEffect(() => {
@@ -166,7 +166,7 @@ const Chat = () => {
 
   // Create session immediately (pending status) and start ringing
   useEffect(() => {
-    if (chatStatus !== 'connecting' || !user?.id || !hasMinimumCredits) return;
+    if (chatStatus !== 'connecting' || !user?.id || !hasMinimumCredits || !advisor) return;
 
     const createSession = async () => {
       try {
@@ -350,6 +350,14 @@ const Chat = () => {
     setShowReview(false);
     navigate(`/advisor/${advisor.id}`);
   };
+
+  if (advisorsLoading || !advisor) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return null;

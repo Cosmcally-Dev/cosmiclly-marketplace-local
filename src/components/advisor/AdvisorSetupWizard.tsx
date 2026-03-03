@@ -67,7 +67,6 @@ export default function AdvisorSetupWizard({
 
   // Step 4 state
   const [pricePerMinute, setPricePerMinute] = useState("");
-  const [freeMinutes, setFreeMinutes] = useState("0");
 
   const canProceed = (): boolean => {
     switch (currentStep) {
@@ -171,7 +170,7 @@ export default function AdvisorSetupWizard({
         specialties: selectedSpecialties,
         years_experience: parseInt(yearsExperience) || 0,
         price_per_minute: parseFloat(pricePerMinute),
-        free_minutes: parseInt(freeMinutes) || 0,
+        free_minutes: 0,
         status: "offline",
         profile_complete: true,
       });
@@ -372,22 +371,6 @@ export default function AdvisorSetupWizard({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="freeMinutes">
-            Free Minutes for New Clients{" "}
-            <span className="text-muted-foreground font-normal">
-              (optional)
-            </span>
-          </Label>
-          <Input
-            id="freeMinutes"
-            type="number"
-            min={0}
-            placeholder="0"
-            value={freeMinutes}
-            onChange={(e) => setFreeMinutes(e.target.value)}
-          />
-        </div>
       </div>
     </div>
   );

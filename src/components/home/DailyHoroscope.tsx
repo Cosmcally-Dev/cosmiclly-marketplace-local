@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { zodiacSigns, elementColors } from '@/data/zodiacSigns';
+import { useHoroscope } from '@/hooks/useHoroscope';
 
 export const DailyHoroscope = () => {
   const [selectedSign, setSelectedSign] = useState<string | null>(null);
+  const { data: horoscope } = useHoroscope(selectedSign, 'daily');
 
   return (
     <section className="py-16 md:py-24 bg-secondary/30">
@@ -75,15 +78,15 @@ export const DailyHoroscope = () => {
                   {selectedSign} - Today's Reading
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  The stars align to bring you new opportunities today. A chance encounter may lead to something meaningful. Trust your intuition and remain open to unexpected possibilities. Your natural charisma is especially strong—use it wisely in both personal and professional interactions.
+                  {horoscope?.content.daily || 'Select a sign to see your daily reading.'}
                 </p>
-                <a
-                  href="#"
+                <Link
+                  to="/horoscope"
                   className="inline-flex items-center gap-2 mt-4 text-primary hover:underline"
                 >
                   Read full horoscope
                   <ChevronRight className="w-4 h-4" />
-                </a>
+                </Link>
               </div>
             </div>
           </div>
