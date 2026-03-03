@@ -36,8 +36,10 @@ import {
   X,
 } from "lucide-react";
 import StripeConnectCard from "@/components/advisor/StripeConnectCard";
+import { AdvisorSettingsView } from "@/components/advisor/AdvisorSettingsView";
 import TwinSetupCard from "@/components/advisor/TwinSetupCard";
 import VoiceRecordingCard from "@/components/advisor/VoiceRecordingCard";
+import { AvailabilityScheduleCard } from "@/components/advisor/AvailabilityScheduleCard";
 import {
   Tooltip,
   TooltipContent,
@@ -909,85 +911,20 @@ const AdvisorPrivateProfile = () => {
                 SETTINGS
             ──────────────────────────────────────────────────── */}
             {activeTab === "settings" && (
-              <div className="space-y-5 sm:space-y-6">
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">Settings</h1>
-                  <p className="text-xs text-muted-foreground mt-0.5">Manage your service details and profile</p>
-                </div>
-
-                {isLoadingDetails ? (
-                  <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                ) : (
-                  <Card className="bg-card border-border">
-                    <CardHeader className="flex flex-row items-center justify-between pb-3 gap-2">
-                      <CardTitle className="text-base font-heading">Service Management</CardTitle>
-                      {serviceChanged && (
-                        <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 shrink-0">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                          Unsaved changes
-                        </span>
-                      )}
-                    </CardHeader>
-                    <CardContent className="space-y-5">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <label className="text-sm text-muted-foreground sm:w-36 shrink-0">Price per minute</label>
-                        <div className="relative w-full sm:max-w-xs">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            value={pricePerMinute}
-                            onChange={(e) => { setPricePerMinute(e.target.value); setServiceChanged(true); }}
-                            className="pl-8"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="text-sm text-muted-foreground">Bio</label>
-                          <span className={`text-xs ${bio.length > 500 ? "text-destructive" : "text-muted-foreground"}`}>{bio.length}/500</span>
-                        </div>
-                        <Textarea
-                          value={bio}
-                          onChange={(e) => { setBio(e.target.value); setServiceChanged(true); }}
-                          rows={4}
-                          maxLength={500}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm text-muted-foreground">Specialties</label>
-                        <div className="flex flex-wrap gap-2">
-                          {allSpecialties.map((s) => (
-                            <Badge
-                              key={s}
-                              variant={selectedSpecialties.includes(s) ? "default" : "outline"}
-                              className="cursor-pointer select-none"
-                              onClick={() => toggleSpecialty(s)}
-                            >
-                              {s}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      {serviceChanged && (
-                        <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
-                          <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-foreground" onClick={handleDiscardService}>
-                            Discard
-                          </Button>
-                          <Button size="sm" className="h-8 text-xs" onClick={handleSaveService}>
-                            Save Changes
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                <StripeConnectCard />
-              </div>
+              <AdvisorSettingsView
+                pricePerMinute={pricePerMinute}
+                setPricePerMinute={setPricePerMinute}
+                bio={bio}
+                setBio={setBio}
+                selectedSpecialties={selectedSpecialties}
+                allSpecialties={allSpecialties}
+                toggleSpecialty={toggleSpecialty}
+                serviceChanged={serviceChanged}
+                setServiceChanged={setServiceChanged}
+                handleSaveService={handleSaveService}
+                handleDiscardService={handleDiscardService}
+                isLoadingDetails={isLoadingDetails}
+              />
             )}
 
             {/* ────────────────────────────────────────────────────
@@ -1000,57 +937,14 @@ const AdvisorPrivateProfile = () => {
                   <p className="text-xs text-muted-foreground mt-0.5">Set your weekly availability</p>
                 </div>
 
-                <Card className="bg-card border-border">
-                  <CardHeader className="flex flex-row items-center justify-between pb-3 gap-2">
-                    <CardTitle className="text-base font-heading">Availability Schedule</CardTitle>
-                    {scheduleChanged && (
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 shrink-0">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                        Unsaved changes
-                      </span>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-0.5">
-                      {daysOfWeek.map((day) => {
-                        const s = schedule[day];
-                        return (
-                          <div
-                            key={day}
-                            className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-border/50 last:border-0"
-                          >
-                            <div className="flex items-center gap-3 min-w-[120px] shrink-0">
-                              <Switch checked={s.enabled} onCheckedChange={() => toggleDay(day)} />
-                              <span className={`text-sm font-medium transition-colors ${s.enabled ? "text-foreground" : "text-muted-foreground"}`}>
-                                {dayLabels[day]}
-                              </span>
-                            </div>
-                            {s.enabled ? (
-                              <div className="flex items-center gap-2 text-sm flex-wrap pl-10 sm:pl-0">
-                                <TimePicker value={s.start} onChange={(v) => updateTime(day, "start", v)} />
-                                <span className="text-xs text-muted-foreground">to</span>
-                                <TimePicker value={s.end} onChange={(v) => updateTime(day, "end", v)} />
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground/60 pl-10 sm:pl-0">Unavailable</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {scheduleChanged && (
-                      <div className="flex items-center justify-end gap-2 pt-4 mt-3 border-t border-border">
-                        <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-foreground" onClick={handleDiscardSchedule}>
-                          Discard
-                        </Button>
-                        <Button size="sm" className="h-8 text-xs" onClick={handleSaveSchedule}>
-                          Save Schedule
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <AvailabilityScheduleCard
+                  schedule={schedule}
+                  scheduleChanged={scheduleChanged}
+                  onToggleDay={toggleDay}
+                  onUpdateTime={updateTime}
+                  onSave={handleSaveSchedule}
+                  onDiscard={handleDiscardSchedule}
+                />
               </div>
             )}
 
