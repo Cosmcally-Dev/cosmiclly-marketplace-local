@@ -184,7 +184,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
           {/* Free minutes accent badge — always reserves height so price row aligns across cards */}
           <div className="mb-2.5 min-h-[1.75rem] flex items-center justify-center">
-            {advisor.freeMinutes && (
+            {advisor.freeMinutes != null && advisor.freeMinutes > 0 && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 font-sans">
                 ✦ {advisor.freeMinutes} FREE minutes
               </span>
