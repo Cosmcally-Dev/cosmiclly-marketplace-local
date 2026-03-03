@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { formatDate } from '@/utils/formatters';
 
 interface Transaction {
   id: string;
@@ -27,17 +28,6 @@ interface Transaction {
 }
 
 type TypeFilter = 'all' | 'purchase' | 'session_deduction' | 'ai_chat_deduction' | 'refund';
-
-const formatDate = (dateString: string) => {
-  const d = new Date(dateString);
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
 
 const getTypeLabel = (type: string) => {
   switch (type) {

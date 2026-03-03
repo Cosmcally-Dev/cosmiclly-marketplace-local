@@ -16,18 +16,8 @@ import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useChatHistory } from '@/hooks/useChatHistory';
 import { useSessionBilling } from '@/hooks/useSessionBilling';
 import type { ConnectionQuality } from '@/types/session';
-
-const RINGING_TIMEOUT_MS = 60000; // 60 seconds
-
-/** Format timestamp: show date for past days, time-only for today */
-const formatMessageTime = (dateStr: string) => {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  if (isToday) return time;
-  return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${time}`;
-};
+import { formatMessageTime } from '@/utils/formatters';
+import { RINGING_TIMEOUT_MS } from '@/utils/constants';
 
 const Chat = () => {
   const { id } = useParams();

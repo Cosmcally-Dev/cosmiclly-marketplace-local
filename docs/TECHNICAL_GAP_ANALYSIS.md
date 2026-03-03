@@ -10,16 +10,31 @@
 
 | Phase | Description | Completion | Notes |
 |-------|-------------|:----------:|-------|
-| **Phase 1** | MVP Launch (Human-to-Human Marketplace) | **~97%** | Auth (email + Google), RTC core done, credits-only billing with shared hook, Stripe credit purchases + Connect payouts, admin with disputes/refunds + advisor contracts + transactions, advisor setup wizard + schedule + profile persistence, dynamic advisor dashboard stats, advisor activity page, Brevo email integration, 20 DB-backed advisors, transaction history (user + admin), favorite advisors, Help Center differentiation |
+| **Phase 1** | MVP Launch (Human-to-Human Marketplace) | **~98%** | Auth (email + Google), RTC core done, credits-only billing with shared hook, Stripe credit purchases + Connect payouts, admin with disputes/refunds + advisor contracts + transactions, advisor setup wizard + schedule + profile persistence, dynamic advisor dashboard stats, advisor activity page, Brevo email integration, 20 DB-backed advisors, transaction history (user + admin), favorite advisors, Help Center differentiation |
 | **Phase 2** | Twin AI Expansion (Digital Clone) | **~95%** | Code complete: pgvector + knowledge ingestion, AI text chat (RAG), voice clone (Cartesia + Vapi). Needs deployment + API keys. |
 
 ### Quick Stats
 
 - **Edge Functions:** 14 of 14 built (Phase 1: 10 incl. `send-email`, Phase 2: 4 — `ingest-knowledge`, `handle-ai-chat`, `clone-voice`, `vapi-webhook`)
-- **Database Migrations:** 22 (15 applied + 7 pending: `20260304000000` through `20260311000000`)
+- **Database Migrations:** 23 (22 applied + 1 pending: `20260312000000`)
 - **NPM Dependencies:** Core stack + Stripe SDK + LiveKit client + `@vapi-ai/web` installed
 - **Advisors:** 20 defined in static code, all 20 with real DB profiles (auth accounts + advisor_details); `useAdvisors` hook merges DB + static
 - **Environment Variables:** Supabase keys configured; LiveKit + Stripe keys need Supabase secrets; OpenAI, Cartesia, Vapi keys needed for Phase 2 deployment
+
+### What Changed Since Last Review (2026-03-12)
+
+| Area | Before (2026-03-06) | After (2026-03-12) |
+|------|--------|-------|
+| Security | `.env` committed to git, CORS `*` on all edge functions | `.env` gitignored + untracked, CORS restricted to `cosmiclly.com` |
+| Hardcoded Keys | Supabase URL + anon key hardcoded in `client.ts` | Removed fallbacks, fail-fast validation |
+| Security Headers | None (bare `vercel.json`) | CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy |
+| TypeScript | `strict: false`, all linting disabled | `strict: true`, `noUnusedLocals: true`, `noFallthroughCasesInSwitch: true` |
+| Build Script | `vite build` (no type checking) | `tsc --noEmit && vite build` |
+| Console.log | 107+ debug statements in production bundle | Auto-stripped via `esbuild.drop` in production builds |
+| Error Handling | No error boundary | `ErrorBoundary` component wrapping all routes |
+| Dead Code | 22 unused UI components, dead `SessionLog`, duplicate utils | Cleaned up — shared utilities, removed unused files/packages |
+| Documentation | No security audit or upgrade guide | Added `SECURITY_AUDIT.md`, `CODE_CLEANUP_LOG.md`, `PRODUCTION_UPGRADE_GUIDE.md` |
+| `.env.example` | Not present | Created with all required variables documented |
 
 ### What Changed Since Last Review (2026-03-06)
 
@@ -115,6 +130,12 @@
 | DONE | Feature is fully implemented and working |
 | PARTIAL | Some code exists but feature is incomplete or has gaps |
 | NOT STARTED | No implementation exists in the codebase |
+
+### Related Documentation
+
+- **[docs/SECURITY_AUDIT.md](SECURITY_AUDIT.md)** — Full security audit report with manual remediation checklist
+- **[docs/CODE_CLEANUP_LOG.md](CODE_CLEANUP_LOG.md)** — Record of all cleanup changes (for rollback reference)
+- **[docs/PRODUCTION_UPGRADE_GUIDE.md](PRODUCTION_UPGRADE_GUIDE.md)** — Infrastructure upgrade guide for going live
 
 ---
 
@@ -557,3 +578,10 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | 12 | E2E testing: session lifecycle, billing, Stripe checkout, advisor onboarding | QA | Not started |
 | 13 | Mobile responsiveness audit | UI | Not started |
 | 14 | Browser compatibility testing (Chrome, Firefox, Safari, Edge) | QA | Not started |
+| 15 | Set environment variables in Vercel Dashboard (VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, VITE_STRIPE_PUBLISHABLE_KEY, VITE_VAPI_PUBLIC_KEY) | Infra | Manual step |
+| 16 | Set `ALLOWED_ORIGIN` Supabase secret for CORS | Infra | Manual step |
+| 17 | Test CSP headers after deployment (check browser console for violations) | Security | Manual step |
+| 18 | Clean `.env` from git history using BFG Repo-Cleaner (optional, low priority) | Security | Manual step |
+| 19 | Delete or secure 20 dummy advisor accounts before production | Security | Manual step |
+| 20 | Set up Sentry error tracking | Monitoring | Not started |
+| 21 | Set up GitHub Actions CI/CD pipeline | Infra | Not started |
