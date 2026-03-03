@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Phone, PhoneOff, Mic, MicOff, Video, VideoOff,
-  Clock, Star, ArrowLeft, Wifi, WifiOff, X, Minimize2, Maximize2
+  Clock, Star, ArrowLeft, Wifi, WifiOff, X, Minimize2, Maximize2, Loader2
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
@@ -24,10 +24,10 @@ const VideoCall = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading, credits } = useAuth();
   const { toast } = useToast();
-  const { advisors, getAdvisorById } = useAdvisors();
+  const { advisors, getAdvisorById, isLoading: advisorsLoading } = useAdvisors();
 
   const advisor = getAdvisorById(id) || advisors[0];
-  const pricePerMinute = advisor.discountedPrice || advisor.pricePerMinute;
+  const pricePerMinute = advisor?.discountedPrice ?? advisor?.pricePerMinute ?? 0;
 
   const [callStatus, setCallStatus] = useState<'connecting' | 'ringing' | 'connected' | 'ended'>('connecting');
   const [isMuted, setIsMuted] = useState(false);
@@ -49,7 +49,7 @@ const VideoCall = () => {
     isActive: callStatus === 'connected' && !showInsufficientCredits,
     credits,
     pricePerMinute,
-    freeMinutes: advisor.freeMinutes || 0,
+    freeMinutes: advisor?.freeMinutes || 0,
     startedAt: sessionStartedAt,
     onSessionEnd: () => {
       endCallRef.current();
@@ -105,7 +105,7 @@ const VideoCall = () => {
       setWebrtcEnabled(true);
       toast({
         title: "Video Call Connected",
-        description: `You're now connected with ${advisor.name}`,
+        description: `You're now connected with ${advisor?.name}`,
       });
     } else if (newStatus === 'cancelled') {
       // Advisor declined the call
@@ -117,7 +117,7 @@ const VideoCall = () => {
       toast({
         variant: "destructive",
         title: "Call Declined",
-        description: `${advisor.name} is not available right now.`,
+        description: `${advisor?.name} is not available right now.`,
       });
       setTimeout(() => navigate(`/advisor/${id}`), 2000);
     } else if (newStatus === 'completed') {
@@ -127,10 +127,10 @@ const VideoCall = () => {
       setShowReview(true);
       toast({
         title: "Call Ended",
-        description: `${advisor.name} has ended the session.`,
+        description: `${advisor?.name} has ended the session.`,
       });
     }
-  }, [advisor.name, id, navigate, toast]);
+  }, [advisor?.name, id, navigate, toast]);
 
   useSessionRealtime({
     sessionId,
@@ -139,7 +139,7 @@ const VideoCall = () => {
   });
 
   // Check if user has enough credits to start session
-  const hasMinimumCredits = credits >= pricePerMinute || (advisor.freeMinutes && advisor.freeMinutes > 0);
+  const hasMinimumCredits = credits >= pricePerMinute || (advisor?.freeMinutes && advisor.freeMinutes > 0);
 
   // Redirect to login if not authenticated or show insufficient credits
   useEffect(() => {
@@ -156,7 +156,7 @@ const VideoCall = () => {
 
   // Create session immediately (pending status) and start ringing
   useEffect(() => {
-    if (callStatus !== 'connecting' || !user?.id || !hasMinimumCredits) return;
+    if (callStatus !== 'connecting' || !user?.id || !hasMinimumCredits || !advisor) return;
 
     const createSession = async () => {
       try {
@@ -322,6 +322,14 @@ const VideoCall = () => {
     setShowReview(false);
     navigate(`/advisor/${advisor.id}`);
   };
+
+  if (advisorsLoading || !advisor) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return null;
