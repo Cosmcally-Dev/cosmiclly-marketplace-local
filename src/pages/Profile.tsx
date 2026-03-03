@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, MessageCircle, Users, Sparkles, ArrowRight } from "lucide-react";
+import { Settings, MessageCircle, Users, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { useAdvisors } from "@/hooks/useAdvisors";
 import { AdvisorCard } from "@/components/advisors/AdvisorCard";
 import { zodiacSigns } from "@/data/zodiacSigns";
@@ -17,9 +17,21 @@ import { useHoroscope, type HoroscopePeriod } from "@/hooks/useHoroscope";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, credits } = useAuth();
+  const { user, isAuthenticated, isLoading, credits } = useAuth();
   const { advisors } = useAdvisors();
   const [horoscopeTab, setHoroscopeTab] = useState("today");
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

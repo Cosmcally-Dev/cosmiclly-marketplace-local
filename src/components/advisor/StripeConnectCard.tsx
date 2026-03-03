@@ -73,7 +73,11 @@ export default function StripeConnectCard() {
 
       window.location.href = data.url;
     } catch (err: any) {
-      setStatus({ state: 'error', message: err.message || 'Failed to start onboarding' });
+      const msg = err.message || 'Failed to start onboarding';
+      const friendlyMsg = msg.includes('signed up for Connect')
+        ? 'Payout setup is not available yet. Please contact support.'
+        : msg;
+      setStatus({ state: 'error', message: friendlyMsg });
       setIsRedirecting(false);
     }
   };
