@@ -96,10 +96,13 @@ All session types (chat, audio, video) follow the same pattern:
 - `src/hooks/useChatMessages.ts` — fetches existing messages, subscribes to Realtime INSERTs, exposes `sendMessage(content, senderId)`
 - Messages stored in `messages` table, delivered via Supabase Realtime `postgres_changes`
 
-### Advisor Static Data
-- `src/data/advisors.ts` — 58 static advisor profiles for UI display
-- Only **Psychic Luna** (static `id='1'`) has a `dbId: '45dd82c1-c457-480b-af66-4c07bd0a9d01'` mapping to a real Supabase profile
-- To test with other advisors, you need to create profiles in the DB and add their `dbId` to the static data
+### Advisor Data (Database-Driven)
+- Advisors are loaded from Supabase `advisor_details` + `profiles` tables via `useAdvisors()` hook
+- `src/data/advisors.ts` — only exports the `Advisor` TypeScript interface (static array removed)
+- All components use the `useAdvisors()` hook to get advisor data; no static data fallback
+- URLs use database UUIDs (e.g., `/advisor/45dd82c1-...`) instead of sequential IDs
+- Advisor status (`online`/`offline`/`busy`) is updated via Realtime subscriptions
+- **Busy status** is set automatically: `accept_session` RPC sets advisor to 'busy', `end_rtc_session` reverts to 'online' (if no other active sessions)
 
 ## File Map
 
@@ -179,6 +182,7 @@ Applied in order:
 17. `20260306000000_transaction_logging_and_favorites.sql` — Transaction logging in `deduct_ai_credits` and `end_rtc_session`, `user_favorites` table with RLS
 18. `20260307000000_sessions_created_at_and_rls_fix.sql` — Add `created_at` column to sessions table, fix advisor_details RLS to allow public view of all advisors (enables offline status visibility + Realtime)
 19. `20260308000000_fix_rls_and_diagnostics.sql` — **NEEDS TO BE APPLIED** — Fix RLS policies on `disputes` and `knowledge_base_documents`, fix NULL string columns in `auth.users` for seeded accounts (GoTrue crash fix)
+20. `20260309000000_auto_busy_status.sql` — **NEEDS TO BE APPLIED** — Auto-set advisor status to 'busy' in `accept_session`, revert to 'online' in `end_rtc_session` (if no other active sessions)
 
 ### To apply pending migration:
 ```bash
@@ -210,7 +214,7 @@ npx supabase gen types typescript --linked > src/integrations/supabase/types.gen
 - **Credit Purchase** (`/add-credit`) — Stripe checkout for credit purchases
 
 ### Known Limitations:
-- Only Psychic Luna has a real DB profile — other advisors will fail at `start_rtc_session` because their IDs aren't valid UUIDs in `profiles`
+- Advisors must exist in `advisor_details` + `profiles` tables to appear on the site (20 seeded via migration)
 - LiveKit server credentials need to be configured (LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL as Supabase Edge Function secrets)
 - Credit deduction is client-side estimated + server-side atomic at session end — no real-time server-side enforcement during session
 - No payment integration yet (credits are manually set in DB)
@@ -235,7 +239,7 @@ npx tsc --noEmit     # Type-check without emitting
 
 - **Auth callback:** `onAuthStateChange` in `useAuth.tsx` must NOT be async — Supabase deadlocks if the callback is async. Profile fetching is deferred via `setTimeout`. `isLoading` is set to `true` before each deferred profile fetch to prevent role-guarded pages from redirecting during re-auth.
 - **Supabase Realtime:** Tables must be added to the `supabase_realtime` publication. The migration handles this for `sessions`, `messages`, and `user_favorites`.
-- **Static vs DB IDs:** Client pages use static advisor `id` (from URL params) to find the advisor object, then use `advisor.dbId` for database operations. If `dbId` is missing, it falls back to the static `id` (which will fail for non-UUID IDs).
+- **Advisor IDs:** All advisor IDs are Supabase UUIDs. URLs use UUIDs directly (e.g., `/advisor/45dd82c1-...`). The `Advisor.id` and `Advisor.dbId` are the same value for DB-loaded advisors.
 - **AI Chat optimistic updates:** `useAiChat.ts` adds user messages to local state immediately (optimistic). When the Realtime subscription delivers the real DB record, it deduplicates by matching `sender_id + content`.
 - **Transaction logging:** Credit deductions from `deduct_ai_credits` and `end_rtc_session` RPCs automatically insert rows into the `transactions` table. Credit purchases are logged by the `stripe-webhook` edge function.
 - **Online/Offline status:** Stored in `advisor_details.status` ('online'/'offline'/'busy'). The `useAdvisors` hook subscribes to Realtime changes. The RLS policy allows public SELECT on all advisor_details rows (including offline). Default is 'offline'.

@@ -3,11 +3,12 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AdvisorCard } from '@/components/advisors/AdvisorCard';
-import { advisors } from '@/data/advisors';
+import { useAdvisors } from '@/hooks/useAdvisors';
 
 export const FeaturedAdvisorsSection = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+  const { advisors } = useAdvisors();
+
   // Get top-rated advisors for featured section
   const featuredAdvisors = advisors
     .filter(a => a.isTopRated || a.rating >= 4.8)

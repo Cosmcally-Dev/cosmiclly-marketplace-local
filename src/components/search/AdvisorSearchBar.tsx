@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, User, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { advisors } from '@/data/advisors';
+import { useAdvisors } from '@/hooks/useAdvisors';
 import { categories } from '@/data/categories';
 
 interface AdvisorSearchBarProps {
@@ -30,6 +30,7 @@ export const AdvisorSearchBar = ({
   className = '',
 }: AdvisorSearchBarProps) => {
   const navigate = useNavigate();
+  const { advisors } = useAdvisors();
   const [query, setQuery] = useState(initialQuery);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -43,7 +44,7 @@ export const AdvisorSearchBar = ({
       advisor.specialties.forEach(s => specialtySet.add(s));
     });
     return Array.from(specialtySet);
-  }, []);
+  }, [advisors]);
 
   // Generate search results based on query
   const searchResults = useMemo((): SearchResult[] => {
@@ -102,7 +103,7 @@ export const AdvisorSearchBar = ({
     results.push(...matchingSpecialties);
 
     return results.slice(0, 8);
-  }, [query, allSpecialties]);
+  }, [query, advisors, allSpecialties]);
 
   // Handle click outside to close dropdown
   useEffect(() => {

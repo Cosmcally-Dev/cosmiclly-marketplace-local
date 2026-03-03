@@ -27,10 +27,12 @@ CREATE POLICY "Admins view all knowledge base"
 -- 3. Fix NULL string columns in auth.users for seeded dummy accounts
 -- GoTrue (Go) scans these columns as Go `string`, which cannot be NULL.
 -- The seed migration left them as NULL; GoTrue expects empty strings.
+-- NOTE: `phone` is excluded because it has a UNIQUE constraint — multiple
+-- empty strings would violate it. GoTrue handles NULL phone gracefully
+-- since phone auth is optional.
 UPDATE auth.users
 SET
   email_change = COALESCE(email_change, ''),
-  phone = COALESCE(phone, ''),
   phone_change = COALESCE(phone_change, ''),
   email_change_token_new = COALESCE(email_change_token_new, ''),
   email_change_token_current = COALESCE(email_change_token_current, ''),

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, MessageCircle, Users, Sparkles, ArrowRight } from "lucide-react";
-import { advisors } from "@/data/advisors";
+import { useAdvisors } from "@/hooks/useAdvisors";
 import { AdvisorCard } from "@/components/advisors/AdvisorCard";
 import { zodiacSigns } from "@/data/zodiacSigns";
 import AdvisorPrivateProfile from "@/components/profile/AdvisorPrivateProfile";
@@ -16,6 +16,7 @@ import AdvisorPrivateProfile from "@/components/profile/AdvisorPrivateProfile";
 const Profile = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, credits } = useAuth();
+  const { advisors } = useAdvisors();
   const [horoscopeTab, setHoroscopeTab] = useState("today");
 
   if (!isAuthenticated) {
