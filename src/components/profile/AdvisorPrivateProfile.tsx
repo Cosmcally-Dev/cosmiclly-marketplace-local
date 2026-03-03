@@ -14,23 +14,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { TimePicker } from "@/components/ui/time-picker";
 import {
   DollarSign,
+  Users,
   Star,
+  TrendingUp,
+  Clock,
   Camera,
   Loader2,
   Activity,
-  Phone,
-  Clock,
-  Users,
 } from "lucide-react";
 import StripeConnectCard from "@/components/advisor/StripeConnectCard";
 import TwinSetupCard from "@/components/advisor/TwinSetupCard";
 import VoiceRecordingCard from "@/components/advisor/VoiceRecordingCard";
 import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  Cell,
   LineChart,
   Line,
   XAxis,
@@ -38,20 +33,25 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  BarChart,
+  Bar,
 } from "recharts";
 
 const allSpecialties = [
-  "Tarot", "Astrology", "Numerology", "Dream Analysis", "Love Advice",
-  "Career Guidance", "Energy Readings", "Mediumship", "Aura Reading", "Past Lives",
+  "Tarot",
+  "Astrology",
+  "Numerology",
+  "Dream Analysis",
+  "Love Advice",
+  "Career Guidance",
+  "Energy Readings",
+  "Mediumship",
+  "Aura Reading",
+  "Past Lives",
 ];
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const dayLabels: Record<string, string> = {
-  Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday", Thu: "Thursday",
-  Fri: "Friday", Sat: "Saturday", Sun: "Sunday",
-};
 
-// ─── Component ────────────────────────────────────────────────────────────────
 const AdvisorPrivateProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -141,24 +141,24 @@ const AdvisorPrivateProfile = () => {
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
     setIsUploading(true);
-    const fileExt = file.name.split(".").pop();
+    const fileExt = file.name.split('.').pop();
     const filePath = `${user.id}/avatar.${fileExt}`;
     const { error: uploadError } = await supabase.storage
-      .from("avatars")
+      .from('avatars')
       .upload(filePath, file, { upsert: true });
     if (uploadError) {
-      console.error("Avatar upload error:", uploadError);
+      console.error('Avatar upload error:', uploadError);
       setIsUploading(false);
       return;
     }
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
     const { error: updateError } = await supabase
-      .from("profiles")
+      .from('profiles')
       .update({ avatar_url: publicUrl })
-      .eq("id", user.id);
+      .eq('id', user.id);
     if (!updateError) setAvatarUrl(publicUrl);
     setIsUploading(false);
-    e.target.value = "";
+    e.target.value = '';
   };
 
   const toggleSpecialty = (s: string) => {
@@ -235,94 +235,65 @@ const AdvisorPrivateProfile = () => {
   };
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-6">
+      {/* Header / Welcome */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative group cursor-pointer" onClick={() => !isUploading && fileInputRef.current?.click()}>
+            <Avatar className="w-20 h-20 ring-4 ring-primary/30">
+              <AvatarImage src={avatarUrl} alt={user?.firstName || user?.username || "Advisor"} className="object-cover" />
+              <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
+                {getInitials()}
+              </AvatarFallback>
+            </Avatar>
 
-      {/* ═══════════════════════════════════════════════════════
-          A · HERO STRIP
-          ═══════════════════════════════════════════════════════ */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-card via-card to-card/80 border border-border/50 p-4 sm:p-6">
-        {/* Ambient glow blobs */}
-        <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-primary/12 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-36 h-36 rounded-full bg-secondary/18 blur-3xl pointer-events-none" />
-
-        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          {/* Avatar + name */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div
-              className="relative group cursor-pointer flex-shrink-0"
-              onClick={() => !isUploading && fileInputRef.current?.click()}
-            >
-              <Avatar className="w-14 h-14 sm:w-20 sm:h-20 ring-4 ring-primary/25">
-                <AvatarImage
-                  src={avatarUrl}
-                  alt={user?.firstName || user?.username || "Advisor"}
-                  className="object-cover"
-                />
-                <AvatarFallback className="bg-primary/20 text-primary text-lg sm:text-2xl font-bold">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute inset-0 rounded-full bg-black/50 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {isUploading ? (
-                  <Loader2 className="w-4 h-4 text-white animate-spin" />
-                ) : (
-                  <>
-                    <Camera className="w-4 h-4 text-white" />
-                    <span className="text-white text-[9px] font-medium leading-none">Change</span>
-                  </>
-                )}
-              </div>
-              <span className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary border-2 border-card flex items-center justify-center shadow-md">
-                <Camera className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />
-              </span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarUpload}
-              />
+            {/* Hover overlay */}
+            <div className="absolute inset-0 rounded-full bg-black/50 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+              ) : (
+                <>
+                  <Camera className="w-4 h-4 text-white" />
+                  <span className="text-white text-[10px] font-medium font-sans leading-none">Change</span>
+                </>
+              )}
             </div>
 
-            <div>
-              <h1 className="text-lg sm:text-2xl font-bold text-foreground font-heading leading-tight">
-                Welcome back,{" "}
-                <span className="text-primary">
-                  {user?.firstName || user?.username || "Advisor"}
-                </span>
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                {isOnline ? "You're live — clients can book you now." : "You're offline — toggle status to go live."}
-              </p>
-              <button
-                onClick={() => navigate(`/advisor/${user?.id}`)}
-                className="text-xs text-primary/70 hover:text-primary transition-colors mt-1 underline-offset-2 hover:underline"
-              >
-                View public profile →
-              </button>
-            </div>
-          </div>
+            {/* Always-visible camera badge */}
+            <span className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary border-2 border-card flex items-center justify-center shadow-md">
+              <Camera className="w-3 h-3 text-primary-foreground" />
+            </span>
 
-          {/* Status toggle + Live Sessions — pushes to right on mobile too */}
-          <div className="flex items-center gap-2 sm:gap-3 ml-auto sm:ml-0 self-start sm:self-auto flex-wrap justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
-              onClick={() => navigate("/advisor-call")}
-            >
-              <Phone className="w-3.5 h-3.5" />
-              Live Sessions
-            </Button>
-            <span className="text-xs sm:text-sm text-muted-foreground">Status</span>
-            <Switch checked={isOnline} onCheckedChange={handleStatusToggle} />
-            <Badge
-              variant={isOnline ? "default" : "secondary"}
-              className={isOnline ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : ""}
-            >
-              {isOnline ? "Online" : "Offline"}
-            </Badge>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
           </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground font-heading">
+              Welcome back, {user?.firstName || user?.username || "Advisor"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Manage your profile, services, and availability.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">Status</span>
+          <Switch checked={isOnline} onCheckedChange={handleStatusToggle} />
+          <Badge
+            variant={isOnline ? "default" : "secondary"}
+            className={
+              isOnline
+                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                : ""
+            }
+          >
+            {isOnline ? "Online" : "Offline"}
+          </Badge>
         </div>
       </div>
 
@@ -510,111 +481,111 @@ const AdvisorPrivateProfile = () => {
             </div>
           </div>
 
-            {/* Bio */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm text-muted-foreground">Bio</label>
-                <span className={`text-xs ${bio.length > 500 ? "text-destructive" : "text-muted-foreground"}`}>
-                  {bio.length}/500
-                </span>
-              </div>
-              <Textarea
-                value={bio}
-                onChange={(e) => { setBio(e.target.value); setServiceChanged(true); }}
-                rows={3}
-                maxLength={500}
-              />
-            </div>
+          {/* Bio */}
+          <div className="space-y-2">
+            <label className="text-sm text-muted-foreground">Bio</label>
+            <Textarea
+              value={bio}
+              onChange={(e) => { setBio(e.target.value); setServiceChanged(true); }}
+              rows={3}
+            />
+          </div>
 
-            {/* Specialties */}
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Specialties</label>
-              <div className="flex flex-wrap gap-2">
-                {allSpecialties.map((s) => (
-                  <Badge
-                    key={s}
-                    variant={selectedSpecialties.includes(s) ? "default" : "outline"}
-                    className="cursor-pointer select-none"
-                    onClick={() => toggleSpecialty(s)}
-                  >
-                    {s}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {serviceChanged && (
-              <div className="flex items-center justify-end gap-2 pt-4 mt-1 border-t border-border/50">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs font-sans text-muted-foreground hover:text-foreground"
-                  onClick={handleDiscardService}
+          {/* Specialties */}
+          <div className="space-y-2">
+            <label className="text-sm text-muted-foreground">Specialties</label>
+            <div className="flex flex-wrap gap-2">
+              {allSpecialties.map((s) => (
+                <Badge
+                  key={s}
+                  variant={selectedSpecialties.includes(s) ? "default" : "outline"}
+                  className="cursor-pointer select-none"
+                  onClick={() => toggleSpecialty(s)}
                 >
-                  Discard
-                </Button>
-                <Button size="sm" className="h-8 text-xs font-sans" onClick={handleSaveService}>
-                  Save Changes
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-      {/* ═══════════════════════════════════════════════════════
-          SCHEDULE
-          ═══════════════════════════════════════════════════════ */}
-        <Card className="bg-card border-border">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-base font-heading">Availability Schedule</CardTitle>
-            {scheduleChanged && (
-              <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                Unsaved changes
-              </span>
-            )}
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {daysOfWeek.map((day) => {
-                const s = schedule[day];
-                return (
-                  <div
-                    key={day}
-                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-border/50 last:border-0"
-                  >
-                    <div className="flex items-center gap-3 w-28 shrink-0">
-                      <Switch
-                        checked={s.enabled}
-                        onCheckedChange={() => toggleDay(day)}
-                      />
-                      <span
-                        className={`text-sm font-medium ${
-                          s.enabled ? "text-foreground" : "text-muted-foreground"
-                        }`}
-                      >
-                        {dayLabels[day]}
-                      </span>
-                    </div>
-                    {s.enabled ? (
-                      <div className="flex items-center gap-2 text-sm flex-wrap">
-                        <TimePicker
-                          value={s.start}
-                          onChange={(v) => updateTime(day, "start", v)}
-                        />
-                        <span className="text-xs text-muted-foreground">to</span>
-                        <TimePicker
-                          value={s.end}
-                          onChange={(v) => updateTime(day, "end", v)}
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Unavailable</span>
-                    )}
-                  </div>
-                );
-              })}
+                  {s}
+                </Badge>
+              ))}
             </div>
+          </div>
+
+          {serviceChanged && (
+            <div className="flex items-center justify-end gap-2 pt-4 mt-1 border-t border-border/50">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs font-sans text-muted-foreground hover:text-foreground"
+                onClick={handleDiscardService}
+              >
+                Discard
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs font-sans"
+                onClick={handleSaveService}
+              >
+                Save Changes
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Schedule */}
+      <Card className="bg-card border-border">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base font-heading">
+            Availability Schedule
+          </CardTitle>
+          {scheduleChanged && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Unsaved changes
+            </span>
+          )}
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {daysOfWeek.map((day) => {
+              const s = schedule[day];
+              return (
+                <div
+                  key={day}
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-2 border-b border-border last:border-0"
+                >
+                  <div className="flex items-center gap-3 w-28 shrink-0">
+                    <Switch
+                      checked={s.enabled}
+                      onCheckedChange={() => toggleDay(day)}
+                    />
+                    <span
+                      className={`text-sm font-medium ${
+                        s.enabled ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {day}
+                    </span>
+                  </div>
+                  {s.enabled ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <TimePicker
+                        value={s.start}
+                        onChange={(v) => updateTime(day, "start", v)}
+                      />
+                      <span className="text-muted-foreground">to</span>
+                      <TimePicker
+                        value={s.end}
+                        onChange={(v) => updateTime(day, "end", v)}
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      Unavailable
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           {scheduleChanged && (
             <div className="flex items-center justify-end gap-2 pt-4 mt-3 border-t border-border/50">
