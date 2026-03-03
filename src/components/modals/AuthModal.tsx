@@ -35,7 +35,7 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess 
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
 
-  const { login, signup, resetPassword, signInWithGoogle } = useAuth();
+  const { login, signup, resetPassword, signInWithGoogle, signInWithFacebook } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -134,8 +134,13 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess 
     setIsLoading(false);
   };
 
-  const handleFacebookLogin = () => {
-    toast({ title: 'Coming soon', description: 'Facebook login will be available soon.' });
+  const handleFacebookLogin = async () => {
+    setIsLoading(true);
+    const result = await signInWithFacebook();
+    if (!result.success) {
+      setError(result.error || 'Facebook sign-in failed');
+    }
+    setIsLoading(false);
   };
 
   const handleForgotPassword = () => {

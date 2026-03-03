@@ -16,14 +16,20 @@ const AddCreditSuccess = () => {
 
   useEffect(() => {
     // Refresh credits after successful Stripe checkout
+    // Poll up to 3 times in case the webhook hasn't processed yet
     const refresh = async () => {
-      // Small delay to allow webhook to process
-      await new Promise(r => setTimeout(r, 2000));
-      await refreshCredits();
+      const initialCredits = credits;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await new Promise(r => setTimeout(r, 2000));
+        await refreshCredits();
+        // If credits increased, webhook has processed
+        if (credits > initialCredits) break;
+      }
       setIsRefreshing(false);
     };
     refresh();
-  }, [refreshCredits]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

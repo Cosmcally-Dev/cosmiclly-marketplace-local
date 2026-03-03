@@ -9,6 +9,7 @@ export interface ChatMessage {
   content: string;
   created_at: string;
   read_at: string | null;
+  is_ai_generated?: boolean;
 }
 
 /**

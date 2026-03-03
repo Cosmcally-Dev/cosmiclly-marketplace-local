@@ -8,19 +8,23 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAdvisorApplication } from '@/hooks/useAdvisorApplication';
 import { AdvisorApplicationModal } from '@/components/modals/AdvisorApplicationModal';
 import AdvisorPrivateProfile from '@/components/profile/AdvisorPrivateProfile';
+import AdvisorSetupWizard from '@/components/advisor/AdvisorSetupWizard';
 
 const AdvisorPortal = () => {
   const { user, isLoading: authLoading } = useAuth();
-  const { application, hasAdvisorDetails, isLoading: appLoading } = useAdvisorApplication();
+  const { application, hasAdvisorDetails, isProfileComplete, isLoading: appLoading, refetch } = useAdvisorApplication();
   const [showApplyModal, setShowApplyModal] = useState(false);
 
   const isLoading = authLoading || appLoading;
 
   // Determine portal state
   const getPortalState = () => {
-    if (hasAdvisorDetails || user?.isAdvisor) return 'approved';
+    // Advisor with details but profile not yet completed → show wizard
+    if ((hasAdvisorDetails || user?.isAdvisor) && !isProfileComplete) return 'wizard';
+    // Fully set-up advisor → show dashboard
+    if (hasAdvisorDetails && isProfileComplete) return 'approved';
     if (!application) return 'no-application';
-    if (application.status === 'approved') return 'approved';
+    if (application.status === 'approved') return 'wizard'; // approved but no details yet
     if (application.status === 'rejected') return 'rejected';
     return 'pending'; // 'pending' or any other status
   };
@@ -171,6 +175,12 @@ const AdvisorPortal = () => {
                 </Link>
               </div>
             </div>
+          </div>
+        )}
+
+        {portalState === 'wizard' && (
+          <div className="container mx-auto px-4 py-8">
+            <AdvisorSetupWizard onComplete={() => refetch()} />
           </div>
         )}
 

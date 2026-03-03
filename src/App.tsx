@@ -27,8 +27,9 @@ const Profile = React.lazy(() => import("./pages/Profile"));
 const TestGuide = React.lazy(() => import("./pages/TestGuide"));
 const Activity = React.lazy(() => import("./pages/Activity"));
 const AdminPanel = React.lazy(() => import("./pages/admin/AdminPanel"));
-const AdvisorClients = React.lazy(() => import("./pages/AdvisorClients"));
-const AdvisorInsights = React.lazy(() => import("./pages/AdvisorInsights"));
+const ComingSoon = React.lazy(() => import("./pages/ComingSoon"));
+const TwinChat = React.lazy(() => import("./pages/TwinChat"));
+const TwinVoiceCall = React.lazy(() => import("./pages/TwinVoiceCall"));
 
 const queryClient = new QueryClient();
 
@@ -70,8 +71,15 @@ const App = () => (
               <Route path="/activity" element={<Activity />} />
               <Route path="/test-guide" element={<TestGuide />} />
               <Route path="/admin" element={<AdminPanel />} />
-              <Route path="/advisor-clients" element={<AdvisorClients />} />
-              <Route path="/advisor-insights" element={<AdvisorInsights />} />
+              {/* Coming Soon routes for planned but unbuilt features */}
+              <Route path="/about" element={<ComingSoon />} />
+              <Route path="/privacy" element={<ComingSoon />} />
+              <Route path="/terms" element={<ComingSoon />} />
+              <Route path="/cookies" element={<ComingSoon />} />
+              <Route path="/favorites" element={<ComingSoon />} />
+              <Route path="/payment-methods" element={<ComingSoon />} />
+              <Route path="/advisor/:id/ai" element={<TwinChat />} />
+              <Route path="/advisor/:id/ai-voice" element={<TwinVoiceCall />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

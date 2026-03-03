@@ -54,6 +54,7 @@ interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   updateProfile: (data: UpdateProfileData) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInWithFacebook: () => Promise<{ success: boolean; error?: string }>;
   isPasswordRecovery: boolean;
   clearPasswordRecovery: () => void;
   isAuthenticated: boolean;
@@ -400,6 +401,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const signInWithFacebook = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+      return { success: true };
+    } catch (err: any) {
+      console.error('Facebook sign-in error:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
   const clearPasswordRecovery = () => {
     setIsPasswordRecovery(false);
   };
@@ -426,6 +443,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updatePassword,
         updateProfile,
         signInWithGoogle,
+        signInWithFacebook,
         isPasswordRecovery,
         clearPasswordRecovery,
         isAuthenticated: !!user,

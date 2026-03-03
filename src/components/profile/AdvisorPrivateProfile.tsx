@@ -28,6 +28,9 @@ import {
   Sparkles,
   HelpCircle,
 } from "lucide-react";
+import StripeConnectCard from "@/components/advisor/StripeConnectCard";
+import TwinSetupCard from "@/components/advisor/TwinSetupCard";
+import VoiceRecordingCard from "@/components/advisor/VoiceRecordingCard";
 import {
   AreaChart,
   Area,
@@ -146,21 +149,18 @@ const AdvisorPrivateProfile = () => {
   const [activeTab, setActiveTab]       = useState<ActiveTab>("overview");
   const [activePeriod, setActivePeriod] = useState<Period>("30d");
 
-  // Avatar
-  const [avatarUrl, setAvatarUrl]               = useState<string | undefined>(user?.avatarUrl);
-  const [isUploading, setIsUploading]           = useState(false);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
-
-  // Clients + insights data
-  const [clientSessions, setClientSessions]         = useState<SessionWithClient[]>([]);
-  const [isLoadingClients, setIsLoadingClients]     = useState(false);
-  const [insightSessions, setInsightSessions]       = useState<Session[]>([]);
-  const [isLoadingInsights, setIsLoadingInsights]   = useState(false);
+  // Profile state
+  const [isOnline, setIsOnline] = useState(false);
+  const [pricePerMinute, setPricePerMinute] = useState("3.50");
+  const [isUploading, setIsUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [clientSessions, setClientSessions] = useState<SessionWithClient[]>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
+  const [insightSessions, setInsightSessions] = useState<Session[]>([]);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
 
-  // Status + service
-  const [isOnline, setIsOnline]               = useState(false);
-  const [pricePerMinute, setPricePerMinute]   = useState("3.50");
   const [bio, setBio] = useState(
     "Intuitive tarot reader and astrologer with over 8 years of experience guiding seekers on their spiritual journey."
   );
@@ -313,16 +313,16 @@ const AdvisorPrivateProfile = () => {
   const handleSaveService = async () => {
     if (!user?.id) return;
     const { error } = await supabase
-      .from("advisor_details")
+      .from('advisor_details')
       .update({
-        price_per_minute: parseFloat(pricePerMinute) || 0,
-        bio_long: bio,
+        price_per_minute: parseFloat(pricePerMinute),
+        bio_short: bio,
         specialties: selectedSpecialties,
+        updated_at: new Date().toISOString(),
       })
-      .eq("id", user.id);
+      .eq('id', user.id);
     if (error) {
-      console.error("[AdvisorPrivateProfile] Service save error:", error);
-      toast({ title: "Failed to save", description: error.message, variant: "destructive" });
+      console.error('[AdvisorPrivateProfile] Save service error:', error);
       return;
     }
     savedServiceRef.current = { pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties] };
@@ -355,14 +355,16 @@ const AdvisorPrivateProfile = () => {
 
   const handleSaveSchedule = async () => {
     if (!user?.id) return;
-    localStorage.setItem(`advisor_schedule_${user.id}`, JSON.stringify(schedule));
     const { error } = await supabase
-      .from("advisor_details")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update({ schedule } as any)
-      .eq("id", user.id);
+      .from('advisor_details')
+      .update({
+        schedule: schedule,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
     if (error) {
-      console.error("[AdvisorPrivateProfile] Schedule DB save error (localStorage used as fallback):", error);
+      console.error('[AdvisorPrivateProfile] Save schedule error:', error);
+      return;
     }
     savedScheduleRef.current = schedule;
     setScheduleChanged(false);
@@ -530,91 +532,64 @@ const AdvisorPrivateProfile = () => {
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════
-          B · TAB NAV  (Overview / Settings / Schedule)
-          ═══════════════════════════════════════════════════════ */}
-      {activeTab !== "clients" && activeTab !== "insights" && (
-      <div className="flex border-b border-border/50 overflow-x-auto gap-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {(["overview", "settings", "schedule", "reviews"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 sm:px-6 py-2.5 text-sm font-medium capitalize whitespace-nowrap transition-colors border-b-2 -mb-px flex-shrink-0 ${
-              activeTab === tab
-                ? "text-foreground border-primary"
-                : "text-muted-foreground border-transparent hover:text-foreground"
-            }`}
-          >
-            {tab === "overview" ? "Overview"
-              : tab === "settings" ? "Settings"
-              : tab === "schedule" ? "Schedule"
-              : "Reviews"}
-          </button>
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            label: "Total Earnings",
+            value: "$4,280",
+            change: "+12%",
+            icon: DollarSign,
+          },
+          {
+            label: "Pending Balance",
+            value: "$320",
+            change: "",
+            icon: Clock,
+          },
+          {
+            label: "Completed Readings",
+            value: "186",
+            change: "+8%",
+            icon: Users,
+          },
+          {
+            label: "Average Rating",
+            value: "4.8",
+            change: "",
+            icon: Star,
+          },
+        ].map((stat) => (
+          <Card key={stat.label} className="bg-card border-border">
+            <CardContent className="p-5 flex items-start justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
+                  {stat.value}
+                </p>
+                {stat.change && (
+                  <span className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
+                    <TrendingUp className="w-3 h-3" />
+                    {stat.change} this month
+                  </span>
+                )}
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <stat.icon className="w-5 h-5 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
-      )}
 
-      {/* ═══════════════════════════════════════════════════════
-          OVERVIEW TAB
-          ═══════════════════════════════════════════════════════ */}
-      {activeTab === "overview" && (
-        <div className="space-y-5 sm:space-y-6">
+      {/* Stripe Connect Payouts */}
+      <StripeConnectCard />
 
-          {/* C · PERIOD SELECTOR */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <p className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{totalSess}</span> sessions in {periodLabel}
-            </p>
-            <div className="flex items-center gap-1 bg-card border border-border/60 rounded-xl p-1 w-full sm:w-auto">
-              {(["7d", "30d", "90d"] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setActivePeriod(p)}
-                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                    activePeriod === p
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Twin AI Setup */}
+      <TwinSetupCard />
 
-          {/* D · MOCK DATA BANNER */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/8 border border-primary/20 text-sm text-muted-foreground">
-            <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
-            <span>Stats preview — your real earnings and sessions will appear here after your first reading.</span>
-          </div>
-
-          {/* E · STATS ROW */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {[
-              { label: "Total Earnings",  value: stats.earnings,         icon: DollarSign, iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15", change: "+12%" },
-              { label: "Sessions",        value: String(stats.sessions), icon: Users,      iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15",    change: "+8%"  },
-              { label: "Avg Rating",      value: String(stats.rating),   icon: Star,       iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15",   change: ""     },
-              { label: "Pending Balance", value: stats.pending,          icon: Clock,      iconColor: "text-cyan-400", iconBg: "bg-cyan-400/15",  change: ""     },
-            ].map((stat) => (
-              <Card key={stat.label} className="bg-card border-border/50">
-                <CardContent className="p-3.5 sm:p-5 flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] sm:text-xs text-muted-foreground leading-tight">{stat.label}</p>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-                    {stat.change && (
-                      <span className="text-[11px] text-emerald-400 flex items-center gap-1 mt-1">
-                        <TrendingUp className="w-3 h-3 flex-shrink-0" />
-                        {stat.change}
-                      </span>
-                    )}
-                  </div>
-                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${stat.iconBg}`}>
-                    <stat.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${stat.iconColor}`} />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+      {/* Voice Clone */}
+      <VoiceRecordingCard />
 
           {/* F · SESSION BREAKDOWN */}
           <div className="flex-1 h-px bg-border/40" />
