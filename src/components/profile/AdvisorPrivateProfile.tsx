@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdvisorStats } from "@/hooks/useAdvisorStats";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
-import { TimePicker } from "@/components/ui/time-picker";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   DollarSign,
   Users,
@@ -23,12 +24,9 @@ import {
   MessageSquare,
   Mic,
   Video,
-  Users,
   BarChart2,
   ChevronRight,
   ChevronLeft,
-  Clock,
-  TrendingUp,
   Phone,
   Sparkles,
   HelpCircle,
@@ -44,15 +42,16 @@ import TwinSetupCard from "@/components/advisor/TwinSetupCard";
 import VoiceRecordingCard from "@/components/advisor/VoiceRecordingCard";
 import { AvailabilityScheduleCard } from "@/components/advisor/AvailabilityScheduleCard";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as ChartTooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
+  Cell,
 } from "recharts";
 import type { Session } from "@/types/session";
 
@@ -243,7 +242,7 @@ const AdvisorPrivateProfile = () => {
     "Love Advice",
   ]);
   const [schedule, setSchedule] = useState<
-    Record<string, { enabled: boolean; start: string; end: string }>
+    Record<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun", { enabled: boolean; start: string; end: string }>
   >({
     Mon: { enabled: true, start: "09:00", end: "17:00" },
     Tue: { enabled: true, start: "09:00", end: "17:00" },
@@ -1213,6 +1212,7 @@ const AdvisorPrivateProfile = () => {
       </main>
 
     </div>
+    </TooltipProvider>
   );
 };
 
