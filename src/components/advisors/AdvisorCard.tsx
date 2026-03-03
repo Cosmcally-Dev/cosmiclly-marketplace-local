@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Star, MoonStar, MessageCircle, Phone, Video, Award, Heart } from 'lucide-react';
+import { Star, MoonStar, MessageCircle, Phone, Video, Sparkles, Heart } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +8,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { addToRecentlyViewed } from '@/components/home/RecentlyViewedSection';
 import type { Advisor } from '@/data/advisors';
 import aiTwinIcon from '@/assets/ai-twin-icon.png';
+import { Button } from '@/components/ui/button';
 import {
   TooltipProvider,
 } from '@/components/ui/tooltip';
@@ -33,11 +33,8 @@ const getStatusRingClass = (status: Advisor['status']) => {
 
 export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   const navigate = useNavigate();
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'chat' | 'call' | null>(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, openAuthModal } = useAuth();
   const { isFavorite, toggle: toggleFavorite } = useFavorites();
-
   const advisorDbId = advisor.dbId || advisor.id;
   const favorited = isFavorite(advisorDbId);
 
@@ -87,7 +84,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
       <article className="group relative bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 card-shadow h-full flex flex-col">
 
         {/* Avatar header area with subtle gradient background */}
-        <div className="relative bg-gradient-to-b from-secondary/40 to-card pt-5 pb-7 px-5 text-center">
+        <div className="relative bg-gradient-to-b from-secondary/40 to-card pt-3 pb-3 px-5 text-center">
           {/* Favorite heart button — top-right */}
           {isAuthenticated && (
             <button
@@ -183,7 +180,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           <div className="border-t border-border/50 mb-4" />
 
           {/* Free minutes accent badge — always reserves height so price row aligns across cards */}
-          <div className="mb-2.5 min-h-[1.75rem] flex items-center justify-center">
+          <div className="mb-1.5 min-h-[1.5rem] flex items-center justify-center">
             {advisor.freeMinutes != null && advisor.freeMinutes > 0 && (
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 font-sans">
                 ✦ {advisor.freeMinutes} FREE minutes
