@@ -27,7 +27,7 @@ function mapDBToAdvisor(row: DBAdvisorRow): Advisor {
   return {
     id: row.id, // UUID — also serves as dbId
     dbId: row.id,
-    name: row.profiles?.full_name || 'Advisor',
+    name: row.profiles?.full_name || row.title || 'Advisor',
     title: row.title || 'Spiritual Advisor',
     avatar: row.profiles?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop',
     rating: 5.0, // Default — reviews system not built yet

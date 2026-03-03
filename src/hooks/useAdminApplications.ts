@@ -47,14 +47,35 @@ export function useAdminApplications(statusFilter?: string) {
     fetchApplications();
   }, [fetchApplications]);
 
-  const approve = async (applicationId: string, notes?: string) => {
+  const approve = async (
+    applicationId: string,
+    notes?: string,
+    contract?: { advisorShare: number; platformShare: number; adminFee: number }
+  ) => {
     try {
       const { error } = await supabase.rpc('approve_advisor_application', {
         p_application_id: applicationId,
-        p_notes: notes || null,
+        p_admin_notes: notes || null,
+        p_advisor_share: contract?.advisorShare ?? 50,
+        p_platform_share: contract?.platformShare ?? 50,
+        p_admin_fee: contract?.adminFee ?? 5,
       });
       if (error) throw error;
-      toast({ title: 'Application Approved', description: 'The advisor has been activated.' });
+
+      // Send approval email (fire-and-forget)
+      const app = applications.find(a => a.id === applicationId);
+      if (app) {
+        import('@/services/email').then(({ sendEmail }) => {
+          sendEmail({
+            toEmail: app.email,
+            toName: app.full_name,
+            emailType: 'application_approved',
+            templateParams: { advisor_name: app.full_name },
+          });
+        }).catch(() => {});
+      }
+
+      toast({ title: 'Application Approved', description: 'The advisor has been activated with contract terms.' });
       await fetchApplications();
       return true;
     } catch (err: any) {
@@ -71,6 +92,20 @@ export function useAdminApplications(statusFilter?: string) {
         p_notes: notes,
       });
       if (error) throw error;
+
+      // Send rejection email (fire-and-forget)
+      const app = applications.find(a => a.id === applicationId);
+      if (app) {
+        import('@/services/email').then(({ sendEmail }) => {
+          sendEmail({
+            toEmail: app.email,
+            toName: app.full_name,
+            emailType: 'application_rejected',
+            templateParams: { advisor_name: app.full_name },
+          });
+        }).catch(() => {});
+      }
+
       toast({ title: 'Application Rejected' });
       await fetchApplications();
       return true;

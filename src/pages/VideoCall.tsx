@@ -57,7 +57,18 @@ const VideoCall = () => {
         description: "Your credits and free minutes have been used up.",
       });
     },
-    onLowCredits: () => {},
+    onLowCredits: () => {
+      if (user?.email) {
+        import('@/services/email').then(({ sendEmail }) => {
+          sendEmail({
+            toEmail: user.email!,
+            toName: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Client',
+            emailType: 'low_credit_warning',
+            templateParams: { remaining_credits: String(credits) },
+          });
+        }).catch(() => {});
+      }
+    },
   });
 
   // LiveKit WebRTC hook - video mode
@@ -256,6 +267,24 @@ const VideoCall = () => {
       });
 
       if (error) throw error;
+
+      // Send session receipt email (fire-and-forget)
+      if (user?.email) {
+        const cost = (billableMinutes * pricePerMinute).toFixed(2);
+        import('@/services/email').then(({ sendEmail }) => {
+          sendEmail({
+            toEmail: user.email!,
+            toName: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Client',
+            emailType: 'session_receipt',
+            templateParams: {
+              advisor_name: advisor.name,
+              session_type: 'Video Call',
+              duration_minutes: billableMinutes,
+              total_cost: cost,
+            },
+          });
+        }).catch(() => {});
+      }
 
       setCallStatus('ended');
       setShowReview(true);

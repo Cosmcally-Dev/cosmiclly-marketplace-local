@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, MessageCircle, Phone, Video, Clock,
-  CreditCard, Hash,
+  DollarSign, Hash,
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -14,8 +14,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@/types/session';
 
-interface SessionWithAdvisor extends Session {
-  advisor: { full_name: string | null } | null;
+interface SessionWithClient extends Session {
+  client: { full_name: string | null } | null;
 }
 
 type TypeFilter = 'all' | 'chat' | 'audio' | 'video';
@@ -57,40 +57,57 @@ const getTypeColor = (type: string) => {
   }
 };
 
-const Activity = () => {
+const AdvisorActivity = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [sessions, setSessions] = useState<SessionWithAdvisor[]>([]);
+  const [sessions, setSessions] = useState<SessionWithClient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [contractTerms, setContractTerms] = useState({ advisorShare: 50, adminFee: 5 });
 
   useEffect(() => {
-    const fetchSessions = async () => {
+    const fetchData = async () => {
       if (!user?.id) {
         setIsLoading(false);
         return;
       }
 
       try {
+        // Fetch sessions
         const { data, error } = await supabase
           .from('sessions')
-          .select(`*, advisor:profiles!advisor_id(full_name)`)
-          .eq('client_id', user.id)
+          .select(`*, client:profiles!client_id(full_name)`)
+          .eq('advisor_id', user.id)
           .in('status', ['completed', 'cancelled'])
           .order('started_at', { ascending: false })
           .limit(200);
 
         if (error) throw error;
         setSessions(data || []);
+
+        // Fetch contract terms
+        const { data: contractData } = await supabase
+          .from('advisor_details')
+          .select('advisor_share_percent, admin_fee_percent')
+          .eq('id', user.id)
+          .single();
+
+        if (contractData) {
+          const c = contractData as unknown as { advisor_share_percent: number; admin_fee_percent: number };
+          setContractTerms({
+            advisorShare: c.advisor_share_percent ?? 50,
+            adminFee: c.admin_fee_percent ?? 5,
+          });
+        }
       } catch (error) {
-        console.error('Failed to fetch session history:', error);
+        console.error('Failed to fetch advisor activity:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSessions();
+    fetchData();
   }, [user?.id]);
 
   const filteredSessions = useMemo(() => {
@@ -104,8 +121,20 @@ const Activity = () => {
     return result;
   }, [sessions, typeFilter, statusFilter]);
 
-  const totalSpend = useMemo(
-    () => filteredSessions.reduce((sum, s) => sum + (s.cost_total || 0), 0),
+  const calculateIncome = (costTotal: number) => {
+    const afterFee = costTotal - (costTotal * contractTerms.adminFee / 100);
+    return afterFee * contractTerms.advisorShare / 100;
+  };
+
+  const totalIncome = useMemo(
+    () => filteredSessions
+      .filter(s => s.status === 'completed')
+      .reduce((sum, s) => sum + calculateIncome(s.cost_total || 0), 0),
+    [filteredSessions, contractTerms]
+  );
+
+  const completedCount = useMemo(
+    () => filteredSessions.filter(s => s.status === 'completed').length,
     [filteredSessions]
   );
 
@@ -127,11 +156,11 @@ const Activity = () => {
           {/* Page header */}
           <div className="mb-8">
             <h1 className="text-3xl font-heading font-bold text-foreground mb-2">My Activity</h1>
-            <p className="text-muted-foreground">View your session history and spending</p>
+            <p className="text-muted-foreground">View your session history and income</p>
           </div>
 
           {/* Summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
                 <Hash className="w-5 h-5 text-primary" />
@@ -144,11 +173,21 @@ const Activity = () => {
 
             <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-primary" />
+                <DollarSign className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Total Spend</p>
-                <p className="text-2xl font-bold text-foreground">${totalSpend.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Total Income</p>
+                <p className="text-2xl font-bold text-foreground">${totalIncome.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <Hash className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Completed Readings</p>
+                <p className="text-2xl font-bold text-foreground">{completedCount}</p>
               </div>
             </div>
           </div>
@@ -195,7 +234,7 @@ const Activity = () => {
               <h3 className="font-heading font-medium text-foreground mb-2">No sessions found</h3>
               <p className="text-sm text-muted-foreground">
                 {sessions.length === 0
-                  ? 'Your chat and call history will appear here.'
+                  ? 'Your session history will appear here once you complete readings.'
                   : 'No sessions match your current filters.'}
               </p>
             </div>
@@ -208,6 +247,7 @@ const Activity = () => {
                   ? Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000)
                   : 0;
                 const isCancelled = session.status === 'cancelled';
+                const income = isCancelled ? 0 : calculateIncome(session.cost_total || 0);
 
                 return (
                   <div
@@ -221,7 +261,7 @@ const Activity = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-foreground">
-                            {session.advisor?.full_name || 'Unknown Advisor'}
+                            {session.client?.full_name || 'Unknown Client'}
                           </p>
                           <span className="text-xs text-muted-foreground capitalize px-2 py-0.5 rounded-full bg-secondary">
                             {session.type}
@@ -242,9 +282,9 @@ const Activity = () => {
                         <Clock className="w-3.5 h-3.5 text-muted-foreground" />
                         {isCancelled ? 'N/A' : formatDuration(durationSeconds)}
                       </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <CreditCard className="w-3.5 h-3.5" />
-                        {isCancelled ? 'N/A' : `$${(session.cost_total || 0).toFixed(2)}`}
+                      <div className="flex items-center gap-1 text-sm font-medium text-emerald-500">
+                        <DollarSign className="w-3.5 h-3.5" />
+                        {isCancelled ? 'N/A' : `$${income.toFixed(2)}`}
                       </div>
                     </div>
                   </div>
@@ -260,4 +300,4 @@ const Activity = () => {
   );
 };
 
-export default Activity;
+export default AdvisorActivity;

@@ -26,6 +26,7 @@ const AdvisorCall = React.lazy(() => import("./pages/AdvisorCall"));
 const Profile = React.lazy(() => import("./pages/Profile"));
 const TestGuide = React.lazy(() => import("./pages/TestGuide"));
 const Activity = React.lazy(() => import("./pages/Activity"));
+const AdvisorActivity = React.lazy(() => import("./pages/AdvisorActivity"));
 const AdminPanel = React.lazy(() => import("./pages/admin/AdminPanel"));
 const ComingSoon = React.lazy(() => import("./pages/ComingSoon"));
 const TwinChat = React.lazy(() => import("./pages/TwinChat"));
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="/advisor-call" element={<AdvisorCall />} />
               <Route path="/advisor-call/:sessionId" element={<AdvisorCall />} />
               <Route path="/activity" element={<Activity />} />
+              <Route path="/advisor-activity" element={<AdvisorActivity />} />
               <Route path="/test-guide" element={<TestGuide />} />
               <Route path="/admin" element={<AdminPanel />} />
               {/* Coming Soon routes for planned but unbuilt features */}

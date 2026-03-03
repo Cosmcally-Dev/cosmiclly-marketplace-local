@@ -1,17 +1,26 @@
 import { useState } from 'react';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
+import { AdvisorContractModal } from './AdvisorContractModal';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Users } from 'lucide-react';
+import { Search, Users, FileText } from 'lucide-react';
+
+interface SelectedUser {
+  id: string;
+  full_name: string | null;
+  email: string;
+  role: string;
+}
 
 export const AdminUsersTable = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const { users, isLoading } = useAdminUsers(roleFilter, debouncedSearch);
+  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
 
   // Simple debounce for search
   const handleSearchChange = (value: string) => {
@@ -32,6 +41,17 @@ export const AdminUsersTable = () => {
         return <Badge variant="outline">Client</Badge>;
       default:
         return <Badge variant="outline">{role}</Badge>;
+    }
+  };
+
+  const handleRowClick = (u: typeof users[number]) => {
+    if (u.role === 'advisor') {
+      setSelectedUser({
+        id: u.id,
+        full_name: u.full_name,
+        email: u.email,
+        role: u.role,
+      });
     }
   };
 
@@ -84,17 +104,29 @@ export const AdminUsersTable = () => {
                 <TableHead>Role</TableHead>
                 <TableHead className="text-right">Credits</TableHead>
                 <TableHead>Joined</TableHead>
+                <TableHead className="text-center">Contract</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.map((u) => (
-                <TableRow key={u.id}>
+                <TableRow
+                  key={u.id}
+                  className={u.role === 'advisor' ? 'cursor-pointer hover:bg-muted/50' : ''}
+                  onClick={() => handleRowClick(u)}
+                >
                   <TableCell className="font-medium">{u.full_name || u.username || '—'}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
                   <TableCell>{getRoleBadge(u.role)}</TableCell>
                   <TableCell className="text-right font-mono text-sm">${u.credits.toFixed(2)}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(u.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {u.role === 'advisor' ? (
+                      <FileText className="w-4 h-4 mx-auto text-primary cursor-pointer" />
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -105,6 +137,12 @@ export const AdminUsersTable = () => {
           </div>
         </div>
       )}
+
+      <AdvisorContractModal
+        user={selectedUser}
+        isOpen={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+      />
     </div>
   );
 };

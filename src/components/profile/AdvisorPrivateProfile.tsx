@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdvisorStats } from "@/hooks/useAdvisorStats";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,7 @@ import {
   Clock,
   Camera,
   Loader2,
+  Activity,
 } from "lucide-react";
 import StripeConnectCard from "@/components/advisor/StripeConnectCard";
 import TwinSetupCard from "@/components/advisor/TwinSetupCard";
@@ -32,62 +35,6 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-
-// Mock data
-const weeklyEarnings = [
-  { day: "Mon", earnings: 120 },
-  { day: "Tue", earnings: 95 },
-  { day: "Wed", earnings: 180 },
-  { day: "Thu", earnings: 140 },
-  { day: "Fri", earnings: 210 },
-  { day: "Sat", earnings: 260 },
-  { day: "Sun", earnings: 190 },
-];
-
-const monthlyReadings = [
-  { week: "W1", readings: 18 },
-  { week: "W2", readings: 24 },
-  { week: "W3", readings: 20 },
-  { week: "W4", readings: 30 },
-];
-
-const mockReviews = [
-  {
-    id: "1",
-    name: "Sarah M.",
-    rating: 5,
-    date: "Feb 8, 2026",
-    text: "Incredible reading! Everything resonated deeply. Will definitely come back.",
-  },
-  {
-    id: "2",
-    name: "James K.",
-    rating: 4,
-    date: "Feb 7, 2026",
-    text: "Very insightful session. The tarot spread was spot on with my current situation.",
-  },
-  {
-    id: "3",
-    name: "Luna R.",
-    rating: 5,
-    date: "Feb 5, 2026",
-    text: "Best advisor on the platform. So kind and accurate. 10/10 recommend.",
-  },
-  {
-    id: "4",
-    name: "David P.",
-    rating: 4,
-    date: "Feb 3, 2026",
-    text: "Great energy reading. Helped me understand blockages in my career path.",
-  },
-  {
-    id: "5",
-    name: "Mia W.",
-    rating: 5,
-    date: "Feb 1, 2026",
-    text: "Absolutely phenomenal. She knew things I hadn't even mentioned. Truly gifted.",
-  },
-];
 
 const allSpecialties = [
   "Tarot",
@@ -106,6 +53,8 @@ const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const AdvisorPrivateProfile = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { stats, chartData, reviews: dbReviews, isLoading: statsLoading } = useAdvisorStats(user?.id);
 
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user?.avatarUrl);
   const [isUploading, setIsUploading] = useState(false);
@@ -349,26 +298,26 @@ const AdvisorPrivateProfile = () => {
         {[
           {
             label: "Total Earnings",
-            value: "$4,280",
-            change: "+12%",
+            value: `$${stats.monthlyEarnings.toFixed(2)}`,
+            subtitle: "This month",
             icon: DollarSign,
           },
           {
             label: "Pending Balance",
-            value: "$320",
-            change: "",
+            value: `$${stats.pendingBalance.toFixed(2)}`,
+            subtitle: "All time",
             icon: Clock,
           },
           {
             label: "Completed Readings",
-            value: "186",
-            change: "+8%",
+            value: String(stats.completedReadings),
+            subtitle: "",
             icon: Users,
           },
           {
             label: "Average Rating",
-            value: "4.8",
-            change: "",
+            value: stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "N/A",
+            subtitle: "",
             icon: Star,
           },
         ].map((stat) => (
@@ -377,12 +326,11 @@ const AdvisorPrivateProfile = () => {
               <div>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
                 <p className="text-2xl font-bold text-foreground mt-1">
-                  {stat.value}
+                  {statsLoading ? "..." : stat.value}
                 </p>
-                {stat.change && (
-                  <span className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
-                    <TrendingUp className="w-3 h-3" />
-                    {stat.change} this month
+                {stat.subtitle && (
+                  <span className="text-xs text-muted-foreground mt-1">
+                    {stat.subtitle}
                   </span>
                 )}
               </div>
@@ -393,6 +341,16 @@ const AdvisorPrivateProfile = () => {
           </Card>
         ))}
       </div>
+
+      {/* My Activity Link */}
+      <Button
+        variant="outline"
+        className="w-full sm:w-auto"
+        onClick={() => navigate('/advisor-activity')}
+      >
+        <Activity className="w-4 h-4 mr-2" />
+        View My Activity
+      </Button>
 
       {/* Stripe Connect Payouts */}
       <StripeConnectCard />
@@ -413,7 +371,7 @@ const AdvisorPrivateProfile = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={weeklyEarnings}>
+              <LineChart data={chartData.weeklyEarnings.length > 0 ? chartData.weeklyEarnings : [{ day: '-', earnings: 0 }]}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   stroke="hsl(var(--border))"
@@ -457,7 +415,7 @@ const AdvisorPrivateProfile = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={monthlyReadings}>
+              <BarChart data={chartData.monthlyReadings.length > 0 ? chartData.monthlyReadings : [{ week: '-', readings: 0 }]}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   stroke="hsl(var(--border))"
@@ -655,38 +613,42 @@ const AdvisorPrivateProfile = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-styled">
-            {mockReviews.map((review) => (
-              <div
-                key={review.id}
-                className="p-4 rounded-xl bg-secondary/10 border border-border/50 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">
-                      {review.name}
-                    </span>
-                    <div className="flex gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3 h-3 ${
-                            i < review.rating
-                              ? "fill-primary text-primary"
-                              : "text-muted-foreground"
-                          }`}
-                        />
-                      ))}
+          {dbReviews.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No reviews yet. Complete sessions to receive client feedback.</p>
+          ) : (
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-styled">
+              {dbReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="p-4 rounded-xl bg-secondary/10 border border-border/50 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground">
+                        {review.name}
+                      </span>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-3 h-3 ${
+                              i < review.rating
+                                ? "fill-primary text-primary"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </div>
+                    <span className="text-xs text-muted-foreground">
+                      {review.date}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {review.date}
-                  </span>
+                  <p className="text-sm text-muted-foreground">{review.text}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">{review.text}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
