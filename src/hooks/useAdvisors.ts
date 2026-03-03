@@ -60,7 +60,7 @@ export function useAdvisors(): UseAdvisorsResult {
     try {
       const { data, error } = await supabase
         .from('advisor_details')
-        .select('id, title, bio_short, bio_long, specialties, price_per_minute, discounted_price, free_minutes, years_experience, status, is_top_rated, twin_enabled, vapi_agent_id, profiles!advisor_details_id_fkey(full_name, avatar_url)');
+        .select('id, title, bio_short, bio_long, specialties, price_per_minute, discounted_price, free_minutes, years_experience, status, is_top_rated, twin_enabled, vapi_agent_id, profiles(full_name, avatar_url)');
 
       if (error) {
         console.warn('[useAdvisors] DB fetch error:', error.message);

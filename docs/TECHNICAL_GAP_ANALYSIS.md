@@ -16,7 +16,7 @@
 ### Quick Stats
 
 - **Edge Functions:** 14 of 14 built (Phase 1: 10 incl. `send-email`, Phase 2: 4 — `ingest-knowledge`, `handle-ai-chat`, `clone-voice`, `vapi-webhook`)
-- **Database Migrations:** 18 (15 applied + 3 pending: `20260304000000_advisor_contracts_and_stats.sql`, `20260306000000_transaction_logging_and_favorites.sql`, `20260307000000_sessions_created_at_and_rls_fix.sql`)
+- **Database Migrations:** 22 (15 applied + 7 pending: `20260304000000` through `20260311000000`)
 - **NPM Dependencies:** Core stack + Stripe SDK + LiveKit client + `@vapi-ai/web` installed
 - **Advisors:** 20 defined in static code, all 20 with real DB profiles (auth accounts + advisor_details); `useAdvisors` hook merges DB + static
 - **Environment Variables:** Supabase keys configured; LiveKit + Stripe keys need Supabase secrets; OpenAI, Cartesia, Vapi keys needed for Phase 2 deployment
@@ -327,17 +327,24 @@
 
 | Task | Ref | Status | Details |
 |------|-----|:------:|---------|
-| **Daily Horoscope Edge Function** | Task 8.1, FR-3.3 | PARTIAL | Static horoscope page exists (`Horoscope.tsx`) with 12 signs. Static zodiac data in `src/data/zodiacSigns.ts`. Architecture plan created (`docs/DYNAMIC_HOROSCOPE_PLAN.md`) — covers n8n automation, free APIs, Swiss Ephemeris, database schema. **Missing:** `horoscopes` table, n8n workflow, dynamic frontend hook. |
+| **Daily Horoscope Edge Function** | Task 8.1, FR-3.3 | PARTIAL | `horoscopes` table created (migration `20260311000000`). `useHoroscope` react-query hook with static fallback. `Horoscope.tsx`, `DailyHoroscope.tsx`, `Profile.tsx` updated to use dynamic data. Static content in `src/data/horoscopeContent.ts` serves as `placeholderData` + fallback. **Missing:** n8n workflow to populate DB, apply migration. |
 | **PWA Optimization** | Task 8.2 | NOT STARTED | No `manifest.json`, no service worker, no offline support. |
 | **Push Notifications** | Task 8.3 | NOT STARTED | No push notification infrastructure. |
 
+#### What Exists (Milestone 8)
+- `supabase/migrations/20260311000000_horoscopes_table.sql` — `horoscopes` table with sign, period, date, content (JSONB), lucky (JSONB), source, RLS (public read, service-role write)
+- `src/data/horoscopeContent.ts` — Static horoscope fallback data for all 12 signs (extracted from `Horoscope.tsx`)
+- `src/hooks/useHoroscope.ts` — react-query hook: fetches from DB with `maybeSingle()`, falls back to static content, `placeholderData` for instant display
+- `src/pages/Horoscope.tsx` — Updated to use `useHoroscope` hook with loading skeletons, dynamic tab headers, null guards on lucky data
+- `src/components/home/DailyHoroscope.tsx` — Updated to use `useHoroscope` hook, broken `<a href="#">` fixed to `<Link to="/horoscope">`
+- `src/pages/Profile.tsx` — Updated to use `useHoroscope` hook with tab-to-period mapping (today→daily, tomorrow→daily+1, week→weekly, month→monthly, year→yearly)
+
 #### What Needs to Be Built (Milestone 8)
-1. **`horoscopes` table** — sign, period, date, content (JSONB), lucky data
-2. **n8n workflow** — daily cron fetching from free APIs (Aztro, Ohmanda) with GPT-4o fallback
-3. **`useHoroscope` hook** — fetch from Supabase, fallback to static data
-4. **Update `Horoscope.tsx`** — use dynamic data
-5. **PWA manifest + service worker**
-6. **Push notifications** — Web Push subscription, triggers ("advisor is online!")
+1. **n8n workflow** — daily cron fetching from free APIs (Aztro, Ohmanda) with GPT-4o fallback — see `docs/DYNAMIC_HOROSCOPE_PLAN.md` Section 5
+2. **Apply migration** — `npx supabase db push` for `20260311000000_horoscopes_table.sql`
+3. **Regenerate types** — `npx supabase gen types typescript --linked > src/integrations/supabase/types.gen.ts`
+4. **PWA manifest + service worker**
+5. **Push notifications** — Web Push subscription, triggers ("advisor is online!")
 
 ---
 
@@ -405,6 +412,10 @@ All required packages are installed:
 | 16 | `20260304000000_advisor_contracts_and_stats.sql` | Advisor contract columns (share %, admin fee, lock), dashboard stats RPCs, `update_advisor_contract` RPC |
 | 17 | `20260306000000_transaction_logging_and_favorites.sql` | Transaction logging in `deduct_ai_credits` + `end_rtc_session` RPCs, `user_favorites` table with RLS |
 | 18 | `20260307000000_sessions_created_at_and_rls_fix.sql` | Add `created_at` to sessions table, fix `advisor_details` RLS (allow public view of all advisors) |
+| 19 | `20260308000000_fix_rls_and_diagnostics.sql` | Fix RLS policies on disputes + knowledge_base_documents, fix NULL strings in auth.users |
+| 20 | `20260309000000_auto_busy_status.sql` | Auto-set advisor status to 'busy' on accept, revert on end |
+| 21 | `20260310000000_fix_seeded_advisor_status.sql` | Fix seeded dummy advisors status from 'online' to 'offline' |
+| 22 | `20260311000000_horoscopes_table.sql` | Dynamic horoscopes table with RLS (public read, service-role write) |
 
 ---
 
@@ -416,7 +427,7 @@ All required packages are installed:
 |-------|---------|-------|:------:|
 | `knowledge_base_documents` | pgvector embeddings for advisor knowledge (RAG) | Phase 2 | DONE |
 | `user_favorites` | User-advisor favorite bookmarks with RLS | Phase 1 | DONE (pending migration) |
-| `horoscopes` | Dynamic daily/weekly horoscope content | Phase 2 | NOT STARTED |
+| `horoscopes` | Dynamic daily/weekly/monthly/yearly horoscope content | Phase 2 | DONE (pending migration) |
 
 ### Column Additions — Status
 
@@ -480,7 +491,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | ~~2~~ | ~~Database-driven advisor listing~~ | ~~High~~ | 1 | DONE (20 advisors seeded with auth + DB profiles) |
 | ~~3~~ | ~~Auth completion — OAuth~~ | ~~Medium~~ | 1 | DONE (Google only; Facebook removed) |
 | ~~4~~ | ~~Facebook App creation~~ | ~~Low~~ | 1 | Removed — Facebook OAuth no longer used |
-| 5 | **Dynamic horoscopes** — `horoscopes` table + n8n workflow per plan | Medium | 1 | Not started |
+| 5 | **Dynamic horoscopes** — n8n workflow to populate DB (table + hook + frontend done) | Medium | 1 | PARTIAL |
 | 6 | **Render legal pages** — convert markdown drafts to React pages | Low | 1 | Not started |
 | 7 | **E2E QA testing** — session lifecycle, billing edge cases | High | 1 | Not started |
 | 8 | **Deploy all edge functions** — deploy all 13 to Supabase | Low | 1+2 | Manual step |
@@ -510,7 +521,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | FR-2.4 | Token only after payment confirmed | N/A | Credits-only model — credit balance checked at session start |
 | FR-3.1 | Browse advisors with filters | DONE | `AdvisorsListing.tsx` (DB + static merge via `useAdvisors`) |
 | FR-3.2 | Detailed Advisor Profiles | DONE | `AdvisorProfile.tsx`, `AdvisorPrivateProfile.tsx` |
-| FR-3.3 | Daily Horoscope | PARTIAL | Static horoscope UI; dynamic plan documented |
+| FR-3.3 | Daily Horoscope | PARTIAL | DB table + react-query hook + frontend pages updated with static fallback. n8n workflow pending. |
 | FR-4.1 | Unified Live Chat | DONE | Real-time messaging, typing indicators, read receipts, cross-session history |
 | FR-4.2 | Audio & Video Calls (LiveKit) | DONE | `VoiceCall.tsx`, `VideoCall.tsx`, `WebRTCService` |
 | FR-4.3 | Secure Signaling (Edge Function tokens) | DONE | `generate-livekit-token` edge function |

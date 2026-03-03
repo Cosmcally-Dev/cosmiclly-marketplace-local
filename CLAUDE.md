@@ -47,6 +47,13 @@
 - Unique constraint on `(user_id, advisor_id)`
 - RLS: users can only view/insert/delete their own favorites
 
+### `horoscopes`
+- Dynamic horoscope content populated by n8n workflows
+- Fields: `id`, `sign` (lowercase), `period` (daily/weekly/monthly/yearly), `date`, `content` (JSONB: daily/love/career/money/health), `lucky` (JSONB: numbers/color/time), `source`, `created_at`
+- UNIQUE constraint on `(sign, period, date)`
+- RLS: public read, service-role-only write (n8n / edge functions)
+- Frontend reads via `useHoroscope` hook with static fallback from `src/data/horoscopeContent.ts`
+
 ## RPC Functions (Server-Side)
 
 | Function | Purpose |
@@ -145,6 +152,7 @@ All session types (chat, audio, video) follow the same pattern:
 | `useFavorites` | `hooks/useFavorites.ts` | User favorite advisors (toggle, optimistic state) |
 | `useAdvisors` | `hooks/useAdvisors.ts` | Merged static + DB advisor data |
 | `useSessionBilling` | `hooks/useSessionBilling.ts` | Shared per-minute billing (credits first, free minutes fallback) |
+| `useHoroscope` | `hooks/useHoroscope.ts` | Dynamic horoscope data (DB via react-query, static fallback) |
 
 ### Services
 | File | Purpose |
@@ -181,8 +189,11 @@ Applied in order:
 16. `20260304000000_advisor_contracts_and_stats.sql` — Advisor contracts, dashboard stats RPCs
 17. `20260306000000_transaction_logging_and_favorites.sql` — Transaction logging in `deduct_ai_credits` and `end_rtc_session`, `user_favorites` table with RLS
 18. `20260307000000_sessions_created_at_and_rls_fix.sql` — Add `created_at` column to sessions table, fix advisor_details RLS to allow public view of all advisors (enables offline status visibility + Realtime)
-19. `20260308000000_fix_rls_and_diagnostics.sql` — **NEEDS TO BE APPLIED** — Fix RLS policies on `disputes` and `knowledge_base_documents`, fix NULL string columns in `auth.users` for seeded accounts (GoTrue crash fix)
-20. `20260309000000_auto_busy_status.sql` — **NEEDS TO BE APPLIED** — Auto-set advisor status to 'busy' in `accept_session`, revert to 'online' in `end_rtc_session` (if no other active sessions)
+19. `20260308000000_fix_rls_and_diagnostics.sql` — Fix RLS policies on `disputes` and `knowledge_base_documents`, fix NULL string columns in `auth.users` for seeded accounts (GoTrue crash fix)
+20. `20260309000000_auto_busy_status.sql` — Auto-set advisor status to 'busy' in `accept_session`, revert to 'online' in `end_rtc_session` (if no other active sessions)
+21. `20260310000000_fix_seeded_advisor_status.sql` — Fix seeded dummy advisors status from 'online' to 'offline'
+22. `20260311000000_horoscopes_table.sql` — Dynamic horoscopes table with RLS (public read, service-role write)
+23. `20260312000000_public_advisor_profiles_rls.sql` — **NEEDS TO BE APPLIED** — Add anon SELECT policy on `profiles` scoped to advisor profiles (fixes avatars/names not loading when logged out)
 
 ### To apply pending migration:
 ```bash
@@ -219,8 +230,10 @@ npx supabase gen types typescript --linked > src/integrations/supabase/types.gen
 - Credit deduction is client-side estimated + server-side atomic at session end — no real-time server-side enforcement during session
 - No payment integration yet (credits are manually set in DB)
 
+### Partially Built:
+- **Dynamic horoscopes** — DB table + `useHoroscope` react-query hook + frontend pages updated with static fallback. **Pending:** n8n workflow to populate DB, apply migration (`supabase db push`), regenerate types.
+
 ### Not Yet Built:
-- Dynamic horoscopes (n8n workflow, database-driven content)
 - PWA optimization (manifest.json, service worker, offline support)
 - Push notifications for incoming calls
 - Mobile responsiveness improvements
@@ -244,4 +257,5 @@ npx tsc --noEmit     # Type-check without emitting
 - **Transaction logging:** Credit deductions from `deduct_ai_credits` and `end_rtc_session` RPCs automatically insert rows into the `transactions` table. Credit purchases are logged by the `stripe-webhook` edge function.
 - **Online/Offline status:** Stored in `advisor_details.status` ('online'/'offline'/'busy'). The `useAdvisors` hook subscribes to Realtime changes. The RLS policy allows public SELECT on all advisor_details rows (including offline). Default is 'offline'.
 - **AI Twin availability:** AI Twin (text chat + voice call) is available 24/7 regardless of advisor online/offline status. The `AdvisorCard` shows an "AI Twin" button even when advisor is offline. `AdvisorProfile` has Twin Call always enabled.
+- **`@tanstack/react-query`:** Installed and configured (`QueryClientProvider` in `App.tsx`). First usage is `useHoroscope` hook. Uses `placeholderData` for instant static content while DB fetches, `maybeSingle()` for graceful empty-table handling, and `staleTime: 1h` to avoid excessive refetches.
 - **Seeding auth.users:** When inserting directly into `auth.users`, all string columns that GoTrue scans (e.g., `email_change`, `phone`, `phone_change`, `email_change_token_new`, `email_change_token_current`, `phone_change_token`, `reauthentication_token`) must be set to `''` not `NULL`. GoTrue's Go code uses `string` (not `*string`), so NULL causes `"Scan error... converting NULL to string is unsupported"`.

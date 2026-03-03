@@ -30,8 +30,8 @@ const T = {
 
   /* Card chrome */
   cardBg:      "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)",
-  cardBorder:  "linear-gradient(160deg, rgba(139,92,246,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(139,92,246,0.05) 100%)",
-  cardShadow:  "0 0 0 0.5px rgba(139,92,246,0.08), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)",
+  cardBorder:  "linear-gradient(160deg, rgba(6,182,212,0.45) 0%, rgba(6,182,212,0.2) 50%, rgba(6,182,212,0.08) 100%)",
+  cardShadow:  "0 0 0 0.5px rgba(6,182,212,0.08), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)",
 
   /* Surfaces */
   obsidianBg:  "rgba(9,6,26,0.97)",

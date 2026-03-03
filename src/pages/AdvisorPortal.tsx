@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, Clock, Mail, XCircle, Phone, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -14,6 +14,7 @@ const AdvisorPortal = () => {
   const { user, isLoading: authLoading } = useAuth();
   const { application, hasAdvisorDetails, isProfileComplete, isLoading: appLoading, refetch } = useAdvisorApplication();
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [searchParams] = useSearchParams();
 
   const isLoading = authLoading || appLoading;
 
@@ -30,6 +31,13 @@ const AdvisorPortal = () => {
   };
 
   const portalState = isLoading ? 'loading' : getPortalState();
+
+  // Auto-open application modal when navigating from /become-advisor with ?apply=true
+  useEffect(() => {
+    if (!isLoading && portalState === 'no-application' && searchParams.get('apply') === 'true') {
+      setShowApplyModal(true);
+    }
+  }, [isLoading, portalState, searchParams]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col scrollbar-hide">

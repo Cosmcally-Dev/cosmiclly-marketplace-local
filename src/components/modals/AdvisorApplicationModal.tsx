@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { categories } from '@/data/categories';
 
@@ -36,11 +37,12 @@ interface AdvisorApplicationModalProps {
 export const AdvisorApplicationModal = ({ isOpen, onClose }: AdvisorApplicationModalProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [formData, setFormData] = useState<ApplicationFormData>({
-    fullName: '',
-    email: '',
+    fullName: user ? [user.firstName, user.lastName].filter(Boolean).join(' ') : '',
+    email: user?.email ?? '',
     specialty: '',
     socialLink: '',
     extraInfo: '',
@@ -172,7 +174,8 @@ export const AdvisorApplicationModal = ({ isOpen, onClose }: AdvisorApplicationM
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
               className={errors.email ? 'border-destructive' : ''}
-              disabled={isLoading}
+              disabled={isLoading || !!user}
+              readOnly={!!user}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email}</p>

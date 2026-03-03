@@ -85,7 +85,7 @@ export default function BecomeAdvisor() {
             guidance on love, career, life purpose, and more.
           </p>
           <Button asChild size="lg" className="text-base px-8">
-            <Link to="/advisor-portal">
+            <Link to="/advisor-portal?apply=true">
               Apply Now <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
@@ -180,7 +180,7 @@ export default function BecomeAdvisor() {
               Your journey as a Cosmiclly advisor starts with a simple application.
             </p>
             <Button asChild size="lg" className="text-base px-8">
-              <Link to="/advisor-portal">
+              <Link to="/advisor-portal?apply=true">
                 Apply Now <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
