@@ -189,10 +189,11 @@ Applied in order:
 16. `20260304000000_advisor_contracts_and_stats.sql` — Advisor contracts, dashboard stats RPCs
 17. `20260306000000_transaction_logging_and_favorites.sql` — Transaction logging in `deduct_ai_credits` and `end_rtc_session`, `user_favorites` table with RLS
 18. `20260307000000_sessions_created_at_and_rls_fix.sql` — Add `created_at` column to sessions table, fix advisor_details RLS to allow public view of all advisors (enables offline status visibility + Realtime)
-19. `20260308000000_fix_rls_and_diagnostics.sql` — **NEEDS TO BE APPLIED** — Fix RLS policies on `disputes` and `knowledge_base_documents`, fix NULL string columns in `auth.users` for seeded accounts (GoTrue crash fix)
-20. `20260309000000_auto_busy_status.sql` — **NEEDS TO BE APPLIED** — Auto-set advisor status to 'busy' in `accept_session`, revert to 'online' in `end_rtc_session` (if no other active sessions)
-21. `20260310000000_fix_seeded_advisor_status.sql` — **NEEDS TO BE APPLIED** — Fix seeded dummy advisors status from 'online' to 'offline'
-22. `20260311000000_horoscopes_table.sql` — **NEEDS TO BE APPLIED** — Dynamic horoscopes table with RLS (public read, service-role write)
+19. `20260308000000_fix_rls_and_diagnostics.sql` — Fix RLS policies on `disputes` and `knowledge_base_documents`, fix NULL string columns in `auth.users` for seeded accounts (GoTrue crash fix)
+20. `20260309000000_auto_busy_status.sql` — Auto-set advisor status to 'busy' in `accept_session`, revert to 'online' in `end_rtc_session` (if no other active sessions)
+21. `20260310000000_fix_seeded_advisor_status.sql` — Fix seeded dummy advisors status from 'online' to 'offline'
+22. `20260311000000_horoscopes_table.sql` — Dynamic horoscopes table with RLS (public read, service-role write)
+23. `20260312000000_public_advisor_profiles_rls.sql` — **NEEDS TO BE APPLIED** — Add anon SELECT policy on `profiles` scoped to advisor profiles (fixes avatars/names not loading when logged out)
 
 ### To apply pending migration:
 ```bash
