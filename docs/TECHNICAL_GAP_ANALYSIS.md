@@ -16,7 +16,7 @@
 ### Quick Stats
 
 - **Edge Functions:** 14 of 14 built (Phase 1: 10 incl. `send-email`, Phase 2: 4 — `ingest-knowledge`, `handle-ai-chat`, `clone-voice`, `vapi-webhook`)
-- **Database Migrations:** 17 (15 applied + 2 pending: `20260304000000_advisor_contracts_and_stats.sql`, `20260306000000_transaction_logging_and_favorites.sql`)
+- **Database Migrations:** 18 (15 applied + 3 pending: `20260304000000_advisor_contracts_and_stats.sql`, `20260306000000_transaction_logging_and_favorites.sql`, `20260307000000_sessions_created_at_and_rls_fix.sql`)
 - **NPM Dependencies:** Core stack + Stripe SDK + LiveKit client + `@vapi-ai/web` installed
 - **Advisors:** 20 defined in static code, all 20 with real DB profiles (auth accounts + advisor_details); `useAdvisors` hook merges DB + static
 - **Environment Variables:** Supabase keys configured; LiveKit + Stripe keys need Supabase secrets; OpenAI, Cartesia, Vapi keys needed for Phase 2 deployment
@@ -25,7 +25,7 @@
 
 | Area | Before (2026-03-04) | After (2026-03-06) |
 |------|--------|-------|
-| Migrations | 15 applied + 1 pending | 15 applied + 2 pending (+transaction_logging_and_favorites) |
+| Migrations | 15 applied + 1 pending | 15 applied + 3 pending (+transaction_logging_and_favorites, +sessions_created_at_and_rls_fix) |
 | Phase 1 | ~95% | ~97% |
 | Lovable traces | Present (package.json, vite.config.ts, index.html) | Removed entirely, replaced with Cosmiclly branding |
 | AI Chat | Message ordering bug (user msg appeared after AI reply) | Fixed — optimistic updates + Realtime deduplication |
@@ -35,6 +35,11 @@
 | Transaction History | Only credit purchases logged | All deductions logged; user page (/transactions) + admin tab added |
 | Help Center vs Contact | Overlapping content | Differentiated — Help Center focuses on KB/FAQ, links to /contact |
 | Favorites | NOT STARTED | DONE (user_favorites table, useFavorites hook, heart button on AdvisorCard, /favorites page) |
+| Lovable Favicon | Old Lovable icon in browser tab | Replaced with Cosmiclly logo; favicon.ico deleted |
+| Navigation Links | MobileMenu pointed to /settings | Fixed: Activity→/activity, Favorites→/favorites, Transactions added |
+| Sessions Table | No `created_at` column | Added via migration (fixes "Unknown date" on cancelled sessions) |
+| advisor_details RLS | Only allowed status='active' or 'online' | Fixed: allows public SELECT on all rows (enables offline visibility + Realtime) |
+| AI Twin on Cards | Hidden when advisor offline | Shown 24/7 with "AI Twin — Available 24/7" button |
 
 ### What Changed (2026-03-03 → 2026-03-04)
 
@@ -399,6 +404,7 @@ All required packages are installed:
 | 15 | `20260303100000_seed_dummy_advisors.sql` | 20 dummy advisor auth accounts + profiles + advisor_details |
 | 16 | `20260304000000_advisor_contracts_and_stats.sql` | Advisor contract columns (share %, admin fee, lock), dashboard stats RPCs, `update_advisor_contract` RPC |
 | 17 | `20260306000000_transaction_logging_and_favorites.sql` | Transaction logging in `deduct_ai_credits` + `end_rtc_session` RPCs, `user_favorites` table with RLS |
+| 18 | `20260307000000_sessions_created_at_and_rls_fix.sql` | Add `created_at` to sessions table, fix `advisor_details` RLS (allow public view of all advisors) |
 
 ---
 
@@ -482,7 +488,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | 10 | **Create `training_docs` storage bucket** — private bucket in Supabase Dashboard | Low | 2 | Manual step |
 | 11 | **Configure Vapi webhook URL** — set in Vapi dashboard | Low | 2 | Manual step |
 | 12 | **Set `VITE_VAPI_PUBLIC_KEY`** — frontend .env for Vapi Web SDK | Low | 2 | Manual step |
-| 13 | **Apply migration** — `supabase db push` for migrations 14-17 | Low | 1+2 | Manual step |
+| 13 | **Apply migration** — `supabase db push` for migrations 14-18 | Low | 1+2 | Manual step |
 | 14 | **Set `BREVO_API_KEY`** — Brevo API key in Supabase secrets | Low | 1 | Manual step |
 | 15 | **Create Brevo email templates** — 6 templates (welcome client/advisor, receipt, low credit, approved, rejected) | Medium | 1 | Manual step |
 | 16 | **Configure Supabase SMTP** — Use Brevo SMTP relay for password reset emails | Low | 1 | Manual step |
@@ -526,7 +532,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 
 | # | Task | Category | Status |
 |---|------|----------|:------:|
-| 1 | Apply pending migrations (`supabase db push`) — `20260304000000_advisor_contracts_and_stats.sql` + `20260306000000_transaction_logging_and_favorites.sql` | DB | Manual step |
+| 1 | Apply pending migrations (`supabase db push`) — `20260304000000`, `20260306000000`, `20260307000000` | DB | Manual step |
 | 2 | Deploy all 14 edge functions (`supabase functions deploy`) | Infra | Manual step |
 | 3 | Set Supabase secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `BREVO_API_KEY`, `LIVEKIT_*`, `OPENAI_API_KEY`, etc. | Infra | Manual step |
 | 4 | Swap Stripe keys to production (`pk_live_...`, `sk_live_...`) | Payments | Manual step |

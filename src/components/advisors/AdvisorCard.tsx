@@ -254,12 +254,24 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                 </div>
               </>
             ) : (
-              <Link to={profileUrl} onClick={handleProfileClick} className="block">
-                <div className="flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-muted/40 border border-border/50 text-muted-foreground text-sm font-sans font-medium hover:bg-muted/70 hover:text-foreground transition-colors cursor-pointer">
-                  <MoonStar className="w-4 h-4" />
-                  <span>View Profile</span>
-                </div>
-              </Link>
+              <div className="space-y-2">
+                <Link to={profileUrl} onClick={handleProfileClick} className="block">
+                  <div className="flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-muted/40 border border-border/50 text-muted-foreground text-sm font-sans font-medium hover:bg-muted/70 hover:text-foreground transition-colors cursor-pointer">
+                    <MoonStar className="w-4 h-4" />
+                    <span>View Profile</span>
+                  </div>
+                </Link>
+                {advisor.twinEnabled && (
+                  <Button
+                    variant="outline"
+                    onClick={handleAIClick}
+                    className="w-full font-sans border-secondary/60 hover:bg-secondary/30 text-muted-foreground hover:text-foreground text-xs h-9"
+                  >
+                    <img src={aiTwinIcon} alt="" className="w-3.5 h-3.5 mr-1.5 object-contain" />
+                    AI Twin — Available 24/7
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </div>

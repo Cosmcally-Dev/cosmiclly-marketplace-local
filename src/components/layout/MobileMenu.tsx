@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   X, BookOpen, HelpCircle, UserCheck, ChevronRight, ChevronDown,
-  Star, Heart, CreditCard, History, Shield, Layers, Sun
+  Star, Heart, CreditCard, History, Shield, Layers, Sun, Receipt
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { categories } from '@/data/categories';
@@ -31,20 +31,25 @@ const menuItems = [
     href: '/daily-oracle',
     badge: 'New'
   },
-  { 
-    icon: History, 
-    label: 'My Activity', 
-    href: '/settings' 
+  {
+    icon: History,
+    label: 'My Activity',
+    href: '/activity'
   },
-  { 
-    icon: Heart, 
-    label: 'Favorite Advisors', 
-    href: '/settings?tab=favorites' 
+  {
+    icon: Heart,
+    label: 'Favorite Advisors',
+    href: '/favorites'
   },
-  { 
-    icon: CreditCard, 
-    label: 'Add Funds', 
-    href: '/add-credit' 
+  {
+    icon: CreditCard,
+    label: 'Add Funds',
+    href: '/add-credit'
+  },
+  {
+    icon: Receipt,
+    label: 'Transaction History',
+    href: '/transactions'
   },
   { 
     icon: BookOpen, 

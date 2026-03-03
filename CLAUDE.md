@@ -177,6 +177,7 @@ Applied in order:
 15. `20260303100000_seed_dummy_advisors.sql` — 20 dummy advisor accounts
 16. `20260304000000_advisor_contracts_and_stats.sql` — Advisor contracts, dashboard stats RPCs
 17. `20260306000000_transaction_logging_and_favorites.sql` — **NEEDS TO BE APPLIED** — Transaction logging in `deduct_ai_credits` and `end_rtc_session`, `user_favorites` table with RLS
+18. `20260307000000_sessions_created_at_and_rls_fix.sql` — **NEEDS TO BE APPLIED** — Add `created_at` column to sessions table, fix advisor_details RLS to allow public view of all advisors (enables offline status visibility + Realtime)
 
 ### To apply pending migration:
 ```bash
@@ -236,3 +237,5 @@ npx tsc --noEmit     # Type-check without emitting
 - **Static vs DB IDs:** Client pages use static advisor `id` (from URL params) to find the advisor object, then use `advisor.dbId` for database operations. If `dbId` is missing, it falls back to the static `id` (which will fail for non-UUID IDs).
 - **AI Chat optimistic updates:** `useAiChat.ts` adds user messages to local state immediately (optimistic). When the Realtime subscription delivers the real DB record, it deduplicates by matching `sender_id + content`.
 - **Transaction logging:** Credit deductions from `deduct_ai_credits` and `end_rtc_session` RPCs automatically insert rows into the `transactions` table. Credit purchases are logged by the `stripe-webhook` edge function.
+- **Online/Offline status:** Stored in `advisor_details.status` ('online'/'offline'/'busy'). The `useAdvisors` hook subscribes to Realtime changes. The RLS policy allows public SELECT on all advisor_details rows (including offline). Default is 'offline'.
+- **AI Twin availability:** AI Twin (text chat + voice call) is available 24/7 regardless of advisor online/offline status. The `AdvisorCard` shows an "AI Twin" button even when advisor is offline. `AdvisorProfile` has Twin Call always enabled.
