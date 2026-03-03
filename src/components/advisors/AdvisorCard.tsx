@@ -1,4 +1,5 @@
-import { Star, MoonStar, MessageCircle, Phone, Video, Sparkles, Heart } from 'lucide-react';
+import { useState } from 'react';
+import { Star, MoonStar, MessageCircle, Phone, Video, Sparkles, Heart, Award } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +9,6 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { addToRecentlyViewed } from '@/components/home/RecentlyViewedSection';
 import type { Advisor } from '@/data/advisors';
 import aiTwinIcon from '@/assets/ai-twin-icon.png';
-import { Button } from '@/components/ui/button';
 import {
   TooltipProvider,
 } from '@/components/ui/tooltip';
@@ -35,6 +35,8 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   const navigate = useNavigate();
   const { isAuthenticated, openAuthModal } = useAuth();
   const { isFavorite, toggle: toggleFavorite } = useFavorites();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
   const advisorDbId = advisor.dbId || advisor.id;
   const favorited = isFavorite(advisorDbId);
 

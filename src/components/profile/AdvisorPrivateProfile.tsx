@@ -35,6 +35,7 @@ import {
   Calendar,
   Menu,
   X,
+  Activity,
 } from "lucide-react";
 import StripeConnectCard from "@/components/advisor/StripeConnectCard";
 import { AdvisorSettingsView } from "@/components/advisor/AdvisorSettingsView";
@@ -216,6 +217,7 @@ const AdvisorPrivateProfile = () => {
           selectedSpecialties: data.specialties && data.specialties.length > 0 ? [...data.specialties] : ['Tarot', 'Astrology', 'Love Advice'],
         };
       }
+      setIsLoadingDetails(false);
     };
     fetchDetails();
   }, [user?.id]);
@@ -475,7 +477,7 @@ const AdvisorPrivateProfile = () => {
 
   return (
     <TooltipProvider delayDuration={100}>
-    <div className="relative flex h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden">
+    <div className="relative flex min-h-[calc(100vh-56px)] md:min-h-[calc(100vh-64px)]">
 
       {/* ── Mobile backdrop ─────────────────────────────────────────────────── */}
       <div
@@ -490,8 +492,8 @@ const AdvisorPrivateProfile = () => {
           ═══════════════════════════════════════════════════════════════════════ */}
       <aside
         className={`
-          absolute top-0 left-0 z-30 h-full
-          lg:relative lg:translate-x-0
+          fixed top-0 left-0 z-30 h-full
+          lg:sticky lg:top-0 lg:translate-x-0 lg:self-start lg:h-screen
           w-64 shrink-0 flex flex-col
           border-r border-border/50
           transition-[width,transform] duration-300 ease-in-out
@@ -657,6 +659,31 @@ const AdvisorPrivateProfile = () => {
             </p>
           )}
           {toolsNav.map((item) => <NavBtn key={item.id} {...item} />)}
+
+          <div className="my-3 h-px bg-border/40 mx-2" />
+
+          {/* My Activity — direct link to /advisor-activity */}
+          {sidebarCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => { navigate("/advisor-activity"); setSidebarOpen(false); }}
+                  className="w-full flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 px-0 py-2.5 h-10 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                >
+                  <Activity className="w-4 h-4 flex-shrink-0" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8} className="font-medium">My Activity</TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onClick={() => { navigate("/advisor-activity"); setSidebarOpen(false); }}
+              className="w-full flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 text-left group px-3 py-2.5 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+            >
+              <Activity className="w-4 h-4 flex-shrink-0 group-hover:text-foreground" />
+              <span className="flex-1 truncate">My Activity</span>
+            </button>
+          )}
         </nav>
 
         {/* ── Live Sessions CTA ── */}
@@ -692,7 +719,7 @@ const AdvisorPrivateProfile = () => {
       {/* ═══════════════════════════════════════════════════════════════════════
           MAIN CONTENT
           ═══════════════════════════════════════════════════════════════════════ */}
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden bg-background">
+      <main className="flex-1 min-w-0 flex flex-col bg-background">
 
         {/* Mobile top bar */}
         <div className="shrink-0 flex items-center gap-3 px-4 h-14 bg-background/95 backdrop-blur-md border-b border-border/50 lg:hidden">
@@ -718,8 +745,8 @@ const AdvisorPrivateProfile = () => {
           </div>
         </div>
 
-        {/* Scrollable page content */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide">
+        {/* Page content */}
+        <div className="flex-1">
           <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-5 sm:space-y-6">
 
             {/* ────────────────────────────────────────────────────
