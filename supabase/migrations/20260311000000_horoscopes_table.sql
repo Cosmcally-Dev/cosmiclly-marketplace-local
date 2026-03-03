@@ -33,6 +33,7 @@ CREATE INDEX IF NOT EXISTS idx_horoscopes_lookup
 -- ============================================================
 ALTER TABLE public.horoscopes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can read horoscopes" ON public.horoscopes;
 CREATE POLICY "Anyone can read horoscopes"
   ON public.horoscopes FOR SELECT
   USING (true);
