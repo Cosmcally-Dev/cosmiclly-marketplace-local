@@ -290,26 +290,26 @@ UPDATE public.profiles SET full_name = 'Luna Light', avatar_url = 'https://image
 
 INSERT INTO public.advisor_details (id, title, bio_short, specialties, years_experience, price_per_minute, discounted_price, free_minutes, status, is_top_rated, profile_complete)
 VALUES
-  ('45dd82c1-c457-480b-af66-4c07bd0a9d01', '5 Star Love Expert', 'Gifted empath and clairvoyant specializing in matters of the heart. Let me guide you to your true love.', ARRAY['Love Advice','Intuitive Readings','Compatibility'], 13, 3.99, 1.99, 3, 'online', true, true),
-  ('d0000002-0000-4000-a000-000000000002', 'Astrology & Numerology', 'Ancient wisdom meets modern insight. Discover your cosmic destiny through the stars.', ARRAY['Astrology Insights','Numerology','Destiny Insights','Future Predictions'], 11, 4.99, 2.49, 3, 'online', true, true),
-  ('d0000003-0000-4000-a000-000000000003', 'Tarot Card Reader', 'Third-generation tarot reader with intuitive gifts. Every card tells your story.', ARRAY['Tarot Guidance','Intuitive Readings','Career Guidance'], 8, 2.99, NULL, 0, 'online', false, true),
-  ('d0000004-0000-4000-a000-000000000004', 'Psychic Medium', 'Connect with departed loved ones and receive messages from beyond the veil.', ARRAY['Psychic Mediumship','Spiritual Coaching','Emotional Healing','Past Lives'], 7, 5.99, 2.99, 3, 'online', true, true),
-  ('d0000005-0000-4000-a000-000000000005', 'Dream Interpreter', 'Unlock the secrets of your subconscious. Your dreams hold the answers you seek.', ARRAY['Dream Analysis','Intuitive Readings','Past Lives'], 6, 2.49, NULL, 0, 'online', false, true),
-  ('d0000006-0000-4000-a000-000000000006', 'Energy Healer', 'Restore balance and harmony through crystal energy and chakra alignment.', ARRAY['Energy Readings','Aura Reading','Emotional Healing','Spiritual Coaching'], 9, 3.49, 1.99, 3, 'online', false, true),
-  ('d0000007-0000-4000-a000-000000000007', 'Career & Finance', 'Navigate your professional path with clarity. Success is written in the stars.', ARRAY['Career Guidance','Life Coaching','Manifestation','Numerology'], 10, 4.49, 2.49, 0, 'online', false, true),
-  ('d0000008-0000-4000-a000-000000000008', 'Clairvoyant', 'See beyond the veil of time. Your future awaits revelation.', ARRAY['Future Predictions','Destiny Insights','Intuitive Readings'], 12, 5.99, NULL, 0, 'online', true, true),
-  ('d0000009-0000-4000-a000-000000000009', 'Aura Specialist', 'See the colors of your soul. Your aura reveals your deepest truths.', ARRAY['Aura Reading','Energy Readings','Spiritual Coaching','Emotional Healing'], 7, 3.29, 1.79, 3, 'online', false, true),
-  ('d0000010-0000-4000-a000-000000000010', 'Palm Reader', 'Your hands hold the map to your destiny. Let me read the lines of fate.', ARRAY['Palm Reading','Future Predictions','Love Advice','Destiny Insights'], 5, 2.79, NULL, 0, 'online', false, true),
-  ('d0000011-0000-4000-a000-000000000011', 'Past Life Expert', 'Explore the echoes of your soul across lifetimes. Heal the past to embrace the future.', ARRAY['Past Lives','Spiritual Coaching','Emotional Healing','Energy Readings','Aura Reading'], 11, 4.99, NULL, 0, 'online', true, true),
-  ('d0000012-0000-4000-a000-000000000012', 'Relationship Coach', 'Build lasting connections. Find harmony in your relationships and within yourself.', ARRAY['Love Advice','Compatibility','Life Coaching','Emotional Healing'], 8, 3.49, 1.99, 3, 'online', false, true),
-  ('d0000013-0000-4000-a000-000000000013', 'Astrologer', 'The stars speak to those who listen. Let me translate their cosmic messages for you.', ARRAY['Astrology Insights','Numerology','Compatibility','Future Predictions','Destiny Insights'], 10, 4.29, 2.29, 0, 'online', false, true),
-  ('d0000014-0000-4000-a000-000000000014', 'Manifestation Guide', 'Transform your dreams into reality. The universe responds to focused intention.', ARRAY['Manifestation','Life Coaching','Spiritual Coaching','Energy Readings'], 9, 3.99, NULL, 0, 'online', true, true),
-  ('d0000015-0000-4000-a000-000000000015', 'Tarot Master', 'The cards reveal what the heart already knows. Let the Tarot guide your path.', ARRAY['Tarot Guidance','Intuitive Readings','Love Advice','Career Guidance'], 7, 3.29, NULL, 0, 'online', false, true),
-  ('d0000016-0000-4000-a000-000000000016', 'Spiritual Medium', 'Bridge the gap between worlds. Messages from beyond bring comfort and clarity.', ARRAY['Psychic Mediumship','Spiritual Coaching','Emotional Healing','Past Lives','Energy Readings'], 14, 5.99, NULL, 0, 'online', true, true),
-  ('d0000017-0000-4000-a000-000000000017', 'Life Path Advisor', 'Navigate life''s crossroads with confidence. Your path is clearer than you think.', ARRAY['Life Coaching','Numerology','Destiny Insights','Career Guidance'], 8, 3.79, 2.19, 3, 'online', false, true),
-  ('d0000018-0000-4000-a000-000000000018', 'Dream Analyst', 'Your dreams are messages from your higher self. Let me help you decode them.', ARRAY['Dream Analysis','Intuitive Readings','Past Lives','Spiritual Coaching'], 6, 2.99, NULL, 0, 'online', false, true),
-  ('d0000019-0000-4000-a000-000000000019', 'Energy Master', 'Feel the flow of universal energy. Align your vibration with your highest purpose.', ARRAY['Energy Readings','Aura Reading','Emotional Healing','Manifestation','Spiritual Coaching'], 10, 4.49, 2.49, 0, 'online', false, true),
-  ('d0000020-0000-4000-a000-000000000020', 'Love Psychic', 'Love is the greatest adventure. Let me illuminate the path to your heart''s desire.', ARRAY['Love Advice','Compatibility','Tarot Guidance','Future Predictions'], 9, 3.99, NULL, 0, 'online', false, true)
+  ('45dd82c1-c457-480b-af66-4c07bd0a9d01', '5 Star Love Expert', 'Gifted empath and clairvoyant specializing in matters of the heart. Let me guide you to your true love.', ARRAY['Love Advice','Intuitive Readings','Compatibility'], 13, 3.99, 1.99, 3, 'offline', true, true),
+  ('d0000002-0000-4000-a000-000000000002', 'Astrology & Numerology', 'Ancient wisdom meets modern insight. Discover your cosmic destiny through the stars.', ARRAY['Astrology Insights','Numerology','Destiny Insights','Future Predictions'], 11, 4.99, 2.49, 3, 'offline', true, true),
+  ('d0000003-0000-4000-a000-000000000003', 'Tarot Card Reader', 'Third-generation tarot reader with intuitive gifts. Every card tells your story.', ARRAY['Tarot Guidance','Intuitive Readings','Career Guidance'], 8, 2.99, NULL, 0, 'offline', false, true),
+  ('d0000004-0000-4000-a000-000000000004', 'Psychic Medium', 'Connect with departed loved ones and receive messages from beyond the veil.', ARRAY['Psychic Mediumship','Spiritual Coaching','Emotional Healing','Past Lives'], 7, 5.99, 2.99, 3, 'offline', true, true),
+  ('d0000005-0000-4000-a000-000000000005', 'Dream Interpreter', 'Unlock the secrets of your subconscious. Your dreams hold the answers you seek.', ARRAY['Dream Analysis','Intuitive Readings','Past Lives'], 6, 2.49, NULL, 0, 'offline', false, true),
+  ('d0000006-0000-4000-a000-000000000006', 'Energy Healer', 'Restore balance and harmony through crystal energy and chakra alignment.', ARRAY['Energy Readings','Aura Reading','Emotional Healing','Spiritual Coaching'], 9, 3.49, 1.99, 3, 'offline', false, true),
+  ('d0000007-0000-4000-a000-000000000007', 'Career & Finance', 'Navigate your professional path with clarity. Success is written in the stars.', ARRAY['Career Guidance','Life Coaching','Manifestation','Numerology'], 10, 4.49, 2.49, 0, 'offline', false, true),
+  ('d0000008-0000-4000-a000-000000000008', 'Clairvoyant', 'See beyond the veil of time. Your future awaits revelation.', ARRAY['Future Predictions','Destiny Insights','Intuitive Readings'], 12, 5.99, NULL, 0, 'offline', true, true),
+  ('d0000009-0000-4000-a000-000000000009', 'Aura Specialist', 'See the colors of your soul. Your aura reveals your deepest truths.', ARRAY['Aura Reading','Energy Readings','Spiritual Coaching','Emotional Healing'], 7, 3.29, 1.79, 3, 'offline', false, true),
+  ('d0000010-0000-4000-a000-000000000010', 'Palm Reader', 'Your hands hold the map to your destiny. Let me read the lines of fate.', ARRAY['Palm Reading','Future Predictions','Love Advice','Destiny Insights'], 5, 2.79, NULL, 0, 'offline', false, true),
+  ('d0000011-0000-4000-a000-000000000011', 'Past Life Expert', 'Explore the echoes of your soul across lifetimes. Heal the past to embrace the future.', ARRAY['Past Lives','Spiritual Coaching','Emotional Healing','Energy Readings','Aura Reading'], 11, 4.99, NULL, 0, 'offline', true, true),
+  ('d0000012-0000-4000-a000-000000000012', 'Relationship Coach', 'Build lasting connections. Find harmony in your relationships and within yourself.', ARRAY['Love Advice','Compatibility','Life Coaching','Emotional Healing'], 8, 3.49, 1.99, 3, 'offline', false, true),
+  ('d0000013-0000-4000-a000-000000000013', 'Astrologer', 'The stars speak to those who listen. Let me translate their cosmic messages for you.', ARRAY['Astrology Insights','Numerology','Compatibility','Future Predictions','Destiny Insights'], 10, 4.29, 2.29, 0, 'offline', false, true),
+  ('d0000014-0000-4000-a000-000000000014', 'Manifestation Guide', 'Transform your dreams into reality. The universe responds to focused intention.', ARRAY['Manifestation','Life Coaching','Spiritual Coaching','Energy Readings'], 9, 3.99, NULL, 0, 'offline', true, true),
+  ('d0000015-0000-4000-a000-000000000015', 'Tarot Master', 'The cards reveal what the heart already knows. Let the Tarot guide your path.', ARRAY['Tarot Guidance','Intuitive Readings','Love Advice','Career Guidance'], 7, 3.29, NULL, 0, 'offline', false, true),
+  ('d0000016-0000-4000-a000-000000000016', 'Spiritual Medium', 'Bridge the gap between worlds. Messages from beyond bring comfort and clarity.', ARRAY['Psychic Mediumship','Spiritual Coaching','Emotional Healing','Past Lives','Energy Readings'], 14, 5.99, NULL, 0, 'offline', true, true),
+  ('d0000017-0000-4000-a000-000000000017', 'Life Path Advisor', 'Navigate life''s crossroads with confidence. Your path is clearer than you think.', ARRAY['Life Coaching','Numerology','Destiny Insights','Career Guidance'], 8, 3.79, 2.19, 3, 'offline', false, true),
+  ('d0000018-0000-4000-a000-000000000018', 'Dream Analyst', 'Your dreams are messages from your higher self. Let me help you decode them.', ARRAY['Dream Analysis','Intuitive Readings','Past Lives','Spiritual Coaching'], 6, 2.99, NULL, 0, 'offline', false, true),
+  ('d0000019-0000-4000-a000-000000000019', 'Energy Master', 'Feel the flow of universal energy. Align your vibration with your highest purpose.', ARRAY['Energy Readings','Aura Reading','Emotional Healing','Manifestation','Spiritual Coaching'], 10, 4.49, 2.49, 0, 'offline', false, true),
+  ('d0000020-0000-4000-a000-000000000020', 'Love Psychic', 'Love is the greatest adventure. Let me illuminate the path to your heart''s desire.', ARRAY['Love Advice','Compatibility','Tarot Guidance','Future Predictions'], 9, 3.99, NULL, 0, 'offline', false, true)
 ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
   bio_short = EXCLUDED.bio_short,
@@ -321,6 +321,22 @@ ON CONFLICT (id) DO UPDATE SET
   status = EXCLUDED.status,
   is_top_rated = EXCLUDED.is_top_rated,
   profile_complete = EXCLUDED.profile_complete;
+
+-- ================================================================
+-- FIX: GoTrue requires string columns to be '' not NULL
+-- Without this, signInWithPassword fails with:
+-- "Scan error on column index 8, name email_change: converting NULL to string is unsupported"
+-- ================================================================
+-- NOTE: `phone` excluded — has UNIQUE constraint, multiple '' would conflict
+UPDATE auth.users
+SET
+  email_change = COALESCE(email_change, ''),
+  phone_change = COALESCE(phone_change, ''),
+  email_change_token_new = COALESCE(email_change_token_new, ''),
+  email_change_token_current = COALESCE(email_change_token_current, ''),
+  phone_change_token = COALESCE(phone_change_token, ''),
+  reauthentication_token = COALESCE(reauthentication_token, '')
+WHERE email LIKE '%cosmiclly.test%';
 
 -- ================================================================
 -- MIGRATION COMPLETE

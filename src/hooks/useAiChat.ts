@@ -71,7 +71,21 @@ export function useAiChat(
         (payload) => {
           const newMsg = payload.new as AiChatMessage;
           setMessages((prev) => {
+            // Skip if already exists by DB id
             if (prev.some((m) => m.id === newMsg.id)) return prev;
+            // Replace optimistic message (same sender + content, temporary id)
+            const optimisticIdx = prev.findIndex(
+              (m) =>
+                !m.is_ai_generated &&
+                m.sender_id === newMsg.sender_id &&
+                m.content === newMsg.content &&
+                m.id !== newMsg.id
+            );
+            if (optimisticIdx >= 0) {
+              const updated = [...prev];
+              updated[optimisticIdx] = newMsg;
+              return updated;
+            }
             return [...prev, newMsg];
           });
         }
@@ -90,6 +104,17 @@ export function useAiChat(
   const sendMessage = useCallback(
     async (content: string, clientId: string) => {
       if (!sessionId || !advisorId) return;
+
+      // Optimistic: show user message immediately before edge function call
+      const optimisticMsg: AiChatMessage = {
+        id: crypto.randomUUID(),
+        session_id: sessionId,
+        sender_id: clientId,
+        content,
+        created_at: new Date().toISOString(),
+        is_ai_generated: false,
+      };
+      setMessages((prev) => [...prev, optimisticMsg]);
 
       setIsSending(true);
       setError(null);

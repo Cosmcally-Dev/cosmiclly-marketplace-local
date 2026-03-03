@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, ArrowRight } from 'lucide-react';
 import { AdvisorCard } from '@/components/advisors/AdvisorCard';
-import { advisors, Advisor } from '@/data/advisors';
+import { useAdvisors } from '@/hooks/useAdvisors';
+import type { Advisor } from '@/data/advisors';
 
 // Store recently viewed advisor IDs in localStorage
 const STORAGE_KEY = 'recentlyViewedAdvisors';
@@ -29,15 +30,16 @@ export const addToRecentlyViewed = (advisorId: string) => {
 };
 
 export const RecentlyViewedSection = () => {
+  const { advisors, getAdvisorById } = useAdvisors();
   const [recentAdvisors, setRecentAdvisors] = useState<Advisor[]>([]);
 
   useEffect(() => {
     const recentIds = getRecentlyViewed();
     const recent = recentIds
-      .map(id => advisors.find(a => a.id === id))
+      .map(id => getAdvisorById(id))
       .filter((a): a is Advisor => a !== undefined);
     setRecentAdvisors(recent);
-  }, []);
+  }, [advisors, getAdvisorById]);
 
   if (recentAdvisors.length === 0) return null;
 

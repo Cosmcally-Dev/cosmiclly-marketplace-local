@@ -1,14 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { categories } from '@/data/categories';
 
 const footerLinks = {
-  services: [
-    { label: 'Psychic Readings', href: '/advisors?category=intuitive-readings' },
-    { label: 'Tarot Readings', href: '/advisors?category=tarot' },
-    { label: 'Astrology', href: '/advisors?category=astrology' },
-    { label: 'Love & Relationships', href: '/advisors?category=love' },
-    { label: 'Career Guidance', href: '/advisors?category=career' },
-  ],
+  services: categories.map(c => ({ label: c.label, href: `/advisors?category=${c.slug}` })),
   explore: [
     { label: 'Daily Horoscope', href: '/horoscope' },
     { label: 'Articles & Blog', href: '/articles' },
@@ -17,9 +12,9 @@ const footerLinks = {
   ],
   support: [
     { label: 'Help Center', href: '/support' },
-    { label: 'Contact Us', href: '/support#contact' },
-    { label: 'How We Verify Advisors', href: '/support#verification' },
-    { label: 'Become an Advisor', href: '/#apply' },
+    { label: 'Contact Us', href: '/contact' },
+    { label: 'How We Verify Advisors', href: '/how-we-verify' },
+    { label: 'Become an Advisor', href: '/become-advisor' },
   ],
   about: [
     { label: 'About Us', href: '/about' },
@@ -41,7 +36,7 @@ export const Footer = () => {
     <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-4 py-10 md:py-14">
         {/* Main Footer */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-10">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-0 mb-4">
@@ -65,18 +60,16 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Services */}
-          <div>
+          {/* Services — all specialties in 3 columns */}
+          <div className="col-span-2">
             <h4 className="font-semibold text-foreground mb-3 text-sm">Services</h4>
-            <ul className="space-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
               {footerLinks.services.map((link) => (
-                <li key={link.label}>
-                  <Link to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
+                <Link key={link.label} to={link.href} className="text-muted-foreground hover:text-primary text-xs transition-colors whitespace-nowrap">
+                  {link.label}
+                </Link>
               ))}
-            </ul>
+            </div>
           </div>
 
           {/* Explore */}

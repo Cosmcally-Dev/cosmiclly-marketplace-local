@@ -1,17 +1,24 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink } from 'lucide-react';
 import type { AdminApplication } from '@/hooks/useAdminApplications';
 
+interface ContractTerms {
+  advisorShare: number;
+  platformShare: number;
+  adminFee: number;
+}
+
 interface AdminApplicationReviewProps {
   application: AdminApplication | null;
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (id: string, notes?: string) => Promise<boolean>;
+  onApprove: (id: string, notes?: string, contract?: ContractTerms) => Promise<boolean>;
   onReject: (id: string, notes: string) => Promise<boolean>;
 }
 
@@ -24,6 +31,10 @@ export const AdminApplicationReview = ({
 }: AdminApplicationReviewProps) => {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [advisorShare, setAdvisorShare] = useState('50');
+  const [platformShare, setPlatformShare] = useState('50');
+  const [adminFee, setAdminFee] = useState('5');
+  const [contractError, setContractError] = useState('');
 
   if (!application) return null;
 
@@ -42,9 +53,49 @@ export const AdminApplicationReview = ({
     }
   };
 
+  const handleAdvisorShareChange = (val: string) => {
+    setAdvisorShare(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num >= 0 && num <= 100) {
+      setPlatformShare((100 - num).toFixed(0));
+      setContractError('');
+    }
+  };
+
+  const handlePlatformShareChange = (val: string) => {
+    setPlatformShare(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num >= 0 && num <= 100) {
+      setAdvisorShare((100 - num).toFixed(0));
+      setContractError('');
+    }
+  };
+
   const handleApprove = async () => {
+    const aShare = parseFloat(advisorShare);
+    const pShare = parseFloat(platformShare);
+    const fee = parseFloat(adminFee);
+
+    if (isNaN(aShare) || isNaN(pShare) || isNaN(fee)) {
+      setContractError('All contract fields must be valid numbers');
+      return;
+    }
+    if (aShare + pShare !== 100) {
+      setContractError('Advisor + Platform share must equal 100%');
+      return;
+    }
+    if (fee < 0 || fee > 100) {
+      setContractError('Admin fee must be between 0 and 100');
+      return;
+    }
+
+    setContractError('');
     setIsSubmitting(true);
-    const success = await onApprove(application.id, notes || undefined);
+    const success = await onApprove(application.id, notes || undefined, {
+      advisorShare: aShare,
+      platformShare: pShare,
+      adminFee: fee,
+    });
     setIsSubmitting(false);
     if (success) {
       setNotes('');
@@ -148,6 +199,52 @@ export const AdminApplicationReview = ({
           {/* Action area for pending applications */}
           {isPending && (
             <>
+              {/* Contract Terms */}
+              <div className="p-3 bg-muted/50 rounded-lg space-y-3">
+                <Label className="text-foreground font-medium text-sm">Contract Terms</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Advisor Share %</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={advisorShare}
+                      onChange={(e) => handleAdvisorShareChange(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Platform Share %</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={platformShare}
+                      onChange={(e) => handlePlatformShareChange(e.target.value)}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Admin Fee %</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={adminFee}
+                      onChange={(e) => { setAdminFee(e.target.value); setContractError(''); }}
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Example: $100 session → {adminFee}% admin fee (${(100 * parseFloat(adminFee || '0') / 100).toFixed(2)}) → ${(100 - 100 * parseFloat(adminFee || '0') / 100).toFixed(2)} remaining → {advisorShare}% advisor / {platformShare}% platform
+                </p>
+                {contractError && (
+                  <p className="text-xs text-red-500">{contractError}</p>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="reviewNotes">Notes (required for rejection)</Label>
                 <Textarea

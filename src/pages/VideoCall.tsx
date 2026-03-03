@@ -34,6 +34,7 @@ const VideoCall = () => {
   const [showReview, setShowReview] = useState(false);
   const [showInsufficientCredits, setShowInsufficientCredits] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionStartedAt, setSessionStartedAt] = useState<Date | null>(null);
   const [webrtcEnabled, setWebrtcEnabled] = useState(false);
   const [webrtcError, setWebrtcError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(true);
@@ -49,6 +50,7 @@ const VideoCall = () => {
     credits,
     pricePerMinute,
     freeMinutes: advisor.freeMinutes || 0,
+    startedAt: sessionStartedAt,
     onSessionEnd: () => {
       endCallRef.current();
       toast({
@@ -57,7 +59,18 @@ const VideoCall = () => {
         description: "Your credits and free minutes have been used up.",
       });
     },
-    onLowCredits: () => {},
+    onLowCredits: () => {
+      if (user?.email) {
+        import('@/services/email').then(({ sendEmail }) => {
+          sendEmail({
+            toEmail: user.email!,
+            toName: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Client',
+            emailType: 'low_credit_warning',
+            templateParams: { remaining_credits: String(credits) },
+          });
+        }).catch(() => {});
+      }
+    },
   });
 
   // LiveKit WebRTC hook - video mode
@@ -78,7 +91,7 @@ const VideoCall = () => {
   });
 
   // Handle session status changes via Supabase Realtime
-  const handleStatusChange = useCallback((newStatus: string) => {
+  const handleStatusChange = useCallback((newStatus: string, _oldStatus: string, startedAt?: string | null) => {
     if (newStatus === 'active') {
       // Advisor accepted the call
       if (ringingTimeoutRef.current) {
@@ -86,7 +99,9 @@ const VideoCall = () => {
         ringingTimeoutRef.current = null;
       }
       setCallStatus('connected');
-      sessionStartRef.current = new Date();
+      const ts = startedAt ? new Date(startedAt) : new Date();
+      sessionStartRef.current = ts;
+      setSessionStartedAt(ts);
       setWebrtcEnabled(true);
       toast({
         title: "Video Call Connected",
@@ -256,6 +271,24 @@ const VideoCall = () => {
       });
 
       if (error) throw error;
+
+      // Send session receipt email (fire-and-forget)
+      if (user?.email) {
+        const cost = (billableMinutes * pricePerMinute).toFixed(2);
+        import('@/services/email').then(({ sendEmail }) => {
+          sendEmail({
+            toEmail: user.email!,
+            toName: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Client',
+            emailType: 'session_receipt',
+            templateParams: {
+              advisor_name: advisor.name,
+              session_type: 'Video Call',
+              duration_minutes: billableMinutes,
+              total_cost: cost,
+            },
+          });
+        }).catch(() => {});
+      }
 
       setCallStatus('ended');
       setShowReview(true);
