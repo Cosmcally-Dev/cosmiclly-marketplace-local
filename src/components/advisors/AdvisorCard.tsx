@@ -1,15 +1,11 @@
-<<<<<<< HEAD
-import { Star, MoonStar, MessageCircle, Phone, Video, Sparkles } from 'lucide-react';
-=======
-import { useState } from 'react';
-import { Star, MoonStar, MessageCircle, Phone, Video, Award, Heart } from 'lucide-react';
->>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
+import { Star, MoonStar, MessageCircle, Phone, Video, Sparkles, Heart } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavorites } from '@/hooks/useFavorites';
 import { addToRecentlyViewed } from '@/components/home/RecentlyViewedSection';
 import type { Advisor } from '@/data/advisors';
 import aiTwinIcon from '@/assets/ai-twin-icon.png';
+import { Button } from '@/components/ui/button';
 import {
   TooltipProvider,
 } from '@/components/ui/tooltip';
@@ -34,17 +30,10 @@ const getStatusRingClass = (status: Advisor['status']) => {
 
 export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   const navigate = useNavigate();
-<<<<<<< HEAD
   const { isAuthenticated, openAuthModal } = useAuth();
-=======
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'chat' | 'call' | null>(null);
-  const { isAuthenticated } = useAuth();
   const { isFavorite, toggle: toggleFavorite } = useFavorites();
-
   const advisorDbId = advisor.dbId || advisor.id;
   const favorited = isFavorite(advisorDbId);
->>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
 
   const profileUrl = `/advisor/${advisor.id}`;
 
@@ -85,10 +74,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
       <article className="group relative bg-card rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:-translate-y-1 card-shadow h-full flex flex-col">
 
         {/* Avatar header area with subtle gradient background */}
-<<<<<<< HEAD
         <div className="relative bg-gradient-to-b from-secondary/40 to-card pt-3 pb-3 px-5 text-center">
-=======
-        <div className="relative bg-gradient-to-b from-secondary/40 to-card pt-5 pb-7 px-5 text-center">
           {/* Favorite heart button — top-right */}
           {isAuthenticated && (
             <button
@@ -104,7 +90,6 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
             </button>
           )}
 
->>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
           {/* Top-left badges */}
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
             {advisor.isTopRated && (
@@ -187,13 +172,8 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           <div className="border-t border-border/50 mb-2" />
 
           {/* Free minutes accent badge — always reserves height so price row aligns across cards */}
-<<<<<<< HEAD
           <div className="mb-1.5 min-h-[1.5rem] flex items-center justify-center">
-            {advisor.freeMinutes && (
-=======
-          <div className="mb-2.5 min-h-[1.75rem] flex items-center justify-center">
             {advisor.freeMinutes != null && advisor.freeMinutes > 0 && (
->>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 font-sans">
                 ✦ {advisor.freeMinutes} FREE minutes
               </span>
