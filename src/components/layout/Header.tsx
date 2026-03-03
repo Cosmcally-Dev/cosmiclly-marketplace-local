@@ -28,6 +28,8 @@ import {
   Phone,
   Shield,
   Bell,
+  Receipt,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileMenu } from "./MobileMenu";
@@ -329,6 +331,13 @@ export const Header = () => {
                       Add Funds
                     </DropdownMenuItem>
                     <DropdownMenuItem
+                      onClick={() => navigate("/transactions")}
+                      className="cursor-pointer flex items-center gap-2 p-2.5"
+                    >
+                      <Receipt className="w-4 h-4" />
+                      Transaction History
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       onClick={() => navigate("/payment-methods")}
                       className="cursor-pointer flex items-center gap-2 p-2.5"
                     >
@@ -349,6 +358,13 @@ export const Header = () => {
                               {incomingSessions.length}
                             </span>
                           )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/advisor-activity")}
+                          className="cursor-pointer flex items-center gap-2 p-2.5"
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                          Advisor Activity
                         </DropdownMenuItem>
                       </>
                     )}

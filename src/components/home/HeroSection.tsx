@@ -19,7 +19,11 @@ export const HeroSection = () => {
   };
 
   return (
+<<<<<<< HEAD
     <section className="relative overflow-hidden bg-hero-gradient pt-5 pb-4 md:pt-8 md:pb-6">
+=======
+    <section className="relative bg-hero-gradient pt-6 pb-8 md:pt-10 md:pb-12 overflow-hidden">
+>>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
       {/* Animated Stars Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(12)].map((_, i) => (

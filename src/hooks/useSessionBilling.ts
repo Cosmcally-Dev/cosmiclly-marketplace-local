@@ -7,6 +7,7 @@ interface UseSessionBillingOptions {
   freeMinutes: number;
   onSessionEnd: () => void;
   onLowCredits: () => void;
+  startedAt?: Date | null;
 }
 
 interface UseSessionBillingReturn {
@@ -38,6 +39,7 @@ export function useSessionBilling({
   freeMinutes,
   onSessionEnd,
   onLowCredits,
+  startedAt,
 }: UseSessionBillingOptions): UseSessionBillingReturn {
   const [sessionTime, setSessionTime] = useState(0);
   const [creditsUsed, setCreditsUsed] = useState(0);
@@ -61,7 +63,9 @@ export function useSessionBilling({
 
     const interval = setInterval(() => {
       setSessionTime((prev) => {
-        const newTime = prev + 1;
+        const newTime = startedAt
+          ? Math.max(0, Math.floor((Date.now() - startedAt.getTime()) / 1000))
+          : prev + 1;
 
         // --- Phase 1: credits being consumed ---
         if (newTime <= creditSecondsCapacity) {
@@ -140,6 +144,7 @@ export function useSessionBilling({
     continueUntilEnd,
     onSessionEnd,
     onLowCredits,
+    startedAt,
   ]);
 
   const inFreePhase = sessionTime > creditSecondsCapacity;

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdvisorStats } from "@/hooks/useAdvisorStats";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import {
   Star,
   Camera,
   Loader2,
+<<<<<<< HEAD
   MessageSquare,
   Mic,
   Video,
@@ -33,6 +35,9 @@ import {
   Calendar,
   Menu,
   X,
+=======
+  Activity,
+>>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
 } from "lucide-react";
 import StripeConnectCard from "@/components/advisor/StripeConnectCard";
 import TwinSetupCard from "@/components/advisor/TwinSetupCard";
@@ -57,6 +62,7 @@ import {
 } from "recharts";
 import type { Session } from "@/types/session";
 
+<<<<<<< HEAD
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Period = "7d" | "30d" | "90d";
 type ActiveTab = "overview" | "settings" | "schedule" | "reviews" | "clients" | "insights";
@@ -139,6 +145,8 @@ const mockReviews = [
   { id: "5", name: "Mia W.",   rating: 5, date: "Feb 1, 2026",  text: "Absolutely phenomenal. She knew things I hadn't even mentioned. Truly gifted." },
 ];
 
+=======
+>>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
 const allSpecialties = [
   "Tarot", "Astrology", "Numerology", "Dream Analysis", "Love Advice",
   "Career Guidance", "Energy Readings", "Mediumship", "Aura Reading", "Past Lives",
@@ -162,8 +170,13 @@ const pageTitles: Record<ActiveTab, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 const AdvisorPrivateProfile = () => {
   const { user } = useAuth();
+<<<<<<< HEAD
   const { toast } = useToast();
   const navigate = useNavigate();
+=======
+  const navigate = useNavigate();
+  const { stats, chartData, reviews: dbReviews, isLoading: statsLoading } = useAdvisorStats(user?.id);
+>>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
 
   // UI state
   const [activeTab, setActiveTab]           = useState<ActiveTab>("overview");
@@ -538,6 +551,7 @@ const AdvisorPrivateProfile = () => {
           }
         </button>
 
+<<<<<<< HEAD
         {/* ── Profile block ── */}
         <div className={`relative overflow-hidden transition-all duration-300 ${sidebarCollapsed ? "px-2 pt-5 pb-3" : "px-4 pt-6 pb-4"}`}>
           {/* Ambient glow */}
@@ -556,6 +570,188 @@ const AdvisorPrivateProfile = () => {
                     : "bg-gradient-to-br from-border/60 to-muted/40"
                 }`}
                 style={isOnline ? { boxShadow: "0 0 18px rgba(16,185,129,0.4)" } : {}}
+=======
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            label: "Total Earnings",
+            value: `$${stats.monthlyEarnings.toFixed(2)}`,
+            subtitle: "This month",
+            icon: DollarSign,
+          },
+          {
+            label: "Pending Balance",
+            value: `$${stats.pendingBalance.toFixed(2)}`,
+            subtitle: "All time",
+            icon: Clock,
+          },
+          {
+            label: "Completed Readings",
+            value: String(stats.completedReadings),
+            subtitle: "",
+            icon: Users,
+          },
+          {
+            label: "Average Rating",
+            value: stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "N/A",
+            subtitle: "",
+            icon: Star,
+          },
+        ].map((stat) => (
+          <Card key={stat.label} className="bg-card border-border">
+            <CardContent className="p-5 flex items-start justify-between">
+              <div>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
+                  {statsLoading ? "..." : stat.value}
+                </p>
+                {stat.subtitle && (
+                  <span className="text-xs text-muted-foreground mt-1">
+                    {stat.subtitle}
+                  </span>
+                )}
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                <stat.icon className="w-5 h-5 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* My Activity Link */}
+      <Button
+        variant="outline"
+        className="w-full sm:w-auto"
+        onClick={() => navigate('/advisor-activity')}
+      >
+        <Activity className="w-4 h-4 mr-2" />
+        View My Activity
+      </Button>
+
+      {/* Stripe Connect Payouts */}
+      <StripeConnectCard />
+
+      {/* Twin AI Setup */}
+      <TwinSetupCard />
+
+      {/* Voice Clone */}
+      <VoiceRecordingCard />
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-heading">
+              Weekly Earnings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={chartData.weeklyEarnings.length > 0 ? chartData.weeklyEarnings : [{ day: '-', earnings: 0 }]}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--border))"
+                />
+                <XAxis
+                  dataKey="day"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickFormatter={(v) => `$${v}`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                  formatter={(value: number) => [`$${value}`, "Earnings"]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="earnings"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-heading">
+              Monthly Readings
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={chartData.monthlyReadings.length > 0 ? chartData.monthlyReadings : [{ week: '-', readings: 0 }]}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--border))"
+                />
+                <XAxis
+                  dataKey="week"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    color: "hsl(var(--foreground))",
+                  }}
+                />
+                <Bar
+                  dataKey="readings"
+                  fill="hsl(var(--secondary))"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Service Management */}
+      <Card className="bg-card border-border">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-base font-heading">
+            Service Management
+          </CardTitle>
+          {serviceChanged && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-amber-400 font-sans">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Unsaved changes
+            </span>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Price */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <label className="text-sm text-muted-foreground w-36 shrink-0">
+              Price per minute
+            </label>
+            <div className="relative w-full max-w-xs">
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={pricePerMinute}
+                onChange={(e) => { setPricePerMinute(e.target.value); setServiceChanged(true); }}
+                className="pl-8"
+>>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
               />
               <Avatar className={`relative z-10 ring-[3px] ring-card transition-all duration-300 ${sidebarCollapsed ? "w-10 h-10" : "w-[68px] h-[68px]"}`}>
                 <AvatarImage src={avatarUrl} alt={user?.firstName || user?.username || "Advisor"} className="object-cover" />
@@ -1164,6 +1360,7 @@ const AdvisorPrivateProfile = () => {
               </div>
             )}
 
+<<<<<<< HEAD
             {/* ────────────────────────────────────────────────────
                 INSIGHTS
             ──────────────────────────────────────────────────── */}
@@ -1308,6 +1505,54 @@ const AdvisorPrivateProfile = () => {
         </div>
       </main>
 
+=======
+      {/* Reviews */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-base font-heading">
+            Recent Reviews
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {dbReviews.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No reviews yet. Complete sessions to receive client feedback.</p>
+          ) : (
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-styled">
+              {dbReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="p-4 rounded-xl bg-secondary/10 border border-border/50 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-foreground">
+                        {review.name}
+                      </span>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-3 h-3 ${
+                              i < review.rating
+                                ? "fill-primary text-primary"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {review.date}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{review.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+>>>>>>> 43bbd47afa4ea426e73f4b57f4135e83d654e17f
     </div>
     </TooltipProvider>
   );

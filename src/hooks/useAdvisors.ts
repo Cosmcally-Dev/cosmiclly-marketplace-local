@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { advisors as staticAdvisors, type Advisor } from '@/data/advisors';
+import type { Advisor } from '@/data/advisors';
 
 interface DBAdvisorRow {
   id: string;
@@ -27,7 +27,7 @@ function mapDBToAdvisor(row: DBAdvisorRow): Advisor {
   return {
     id: row.id, // UUID — also serves as dbId
     dbId: row.id,
-    name: row.profiles?.full_name || 'Advisor',
+    name: row.profiles?.full_name || row.title || 'Advisor',
     title: row.title || 'Spiritual Advisor',
     avatar: row.profiles?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop',
     rating: 5.0, // Default — reviews system not built yet
@@ -112,43 +112,13 @@ export function useAdvisors(): UseAdvisorsResult {
     };
   }, []);
 
-  // Merge: DB advisors take priority, then static advisors that aren't already in DB
-  const mergedAdvisors = useMemo(() => {
-    const dbIds = new Set(dbAdvisors.map(a => a.id));
-    // Also check static advisors whose dbId matches a DB advisor
-    const staticWithDbMatch = new Set(
-      staticAdvisors
-        .filter(a => a.dbId && dbIds.has(a.dbId))
-        .map(a => a.id)
-    );
-
-    const staticOnly = staticAdvisors.filter(
-      a => !dbIds.has(a.id) && !staticWithDbMatch.has(a.id)
-    );
-
-    return [...dbAdvisors, ...staticOnly];
-  }, [dbAdvisors]);
-
   const getAdvisorById = useCallback((id: string | undefined): Advisor | undefined => {
     if (!id) return undefined;
-
-    // Check DB advisors first (by UUID)
-    const dbMatch = dbAdvisors.find(a => a.id === id);
-    if (dbMatch) return dbMatch;
-
-    // Check static advisors by id
-    const staticMatch = staticAdvisors.find(a => a.id === id);
-    if (staticMatch) return staticMatch;
-
-    // Check static advisors by dbId
-    const staticByDbId = staticAdvisors.find(a => a.dbId === id);
-    if (staticByDbId) return staticByDbId;
-
-    return undefined;
+    return dbAdvisors.find(a => a.id === id);
   }, [dbAdvisors]);
 
   return {
-    advisors: mergedAdvisors,
+    advisors: dbAdvisors,
     isLoading,
     getAdvisorById,
   };

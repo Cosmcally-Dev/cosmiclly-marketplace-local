@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, MessageCircle, Phone, Video, Clock,
-  CreditCard, Hash, Timer,
+  CreditCard, Hash, Bot,
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -18,7 +18,7 @@ interface SessionWithAdvisor extends Session {
   advisor: { full_name: string | null } | null;
 }
 
-type TypeFilter = 'all' | 'chat' | 'audio' | 'video';
+type TypeFilter = 'all' | 'chat' | 'ai_chat' | 'audio' | 'video';
 type StatusFilter = 'all' | 'completed' | 'cancelled';
 
 const formatDuration = (seconds: number) => {
@@ -39,7 +39,8 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const getTypeIcon = (type: string) => {
+const getTypeIcon = (type: string, isAi: boolean) => {
+  if (isAi) return <Bot className="w-5 h-5" />;
   switch (type) {
     case 'chat': return <MessageCircle className="w-5 h-5" />;
     case 'audio': return <Phone className="w-5 h-5" />;
@@ -48,12 +49,23 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-const getTypeColor = (type: string) => {
+const getTypeColor = (type: string, isAi: boolean) => {
+  if (isAi) return 'bg-purple-500/20 text-purple-500';
   switch (type) {
     case 'chat': return 'bg-primary/20 text-primary';
     case 'audio': return 'bg-mystic-purple/20 text-mystic-purple';
     case 'video': return 'bg-green-500/20 text-green-500';
     default: return 'bg-primary/20 text-primary';
+  }
+};
+
+const getTypeLabel = (type: string, isAi: boolean) => {
+  if (isAi) return 'AI Chat';
+  switch (type) {
+    case 'chat': return 'Chat';
+    case 'audio': return 'Voice Call';
+    case 'video': return 'Video Call';
+    default: return type;
   }
 };
 
@@ -78,7 +90,7 @@ const Activity = () => {
           .select(`*, advisor:profiles!advisor_id(full_name)`)
           .eq('client_id', user.id)
           .in('status', ['completed', 'cancelled'])
-          .order('started_at', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(200);
 
         if (error) throw error;
@@ -95,8 +107,10 @@ const Activity = () => {
 
   const filteredSessions = useMemo(() => {
     let result = sessions;
-    if (typeFilter !== 'all') {
-      result = result.filter(s => s.type === typeFilter);
+    if (typeFilter === 'ai_chat') {
+      result = result.filter(s => (s.session_metadata as any)?.ai === true);
+    } else if (typeFilter !== 'all') {
+      result = result.filter(s => s.type === typeFilter && !(s.session_metadata as any)?.ai);
     }
     if (statusFilter !== 'all') {
       result = result.filter(s => s.status === statusFilter);
@@ -108,17 +122,6 @@ const Activity = () => {
     () => filteredSessions.reduce((sum, s) => sum + (s.cost_total || 0), 0),
     [filteredSessions]
   );
-
-  const averageDuration = useMemo(() => {
-    const completedSessions = filteredSessions.filter(s => s.started_at && s.ended_at);
-    if (completedSessions.length === 0) return 0;
-    const totalSeconds = completedSessions.reduce((sum, s) => {
-      const start = new Date(s.started_at!).getTime();
-      const end = new Date(s.ended_at!).getTime();
-      return sum + Math.floor((end - start) / 1000);
-    }, 0);
-    return Math.floor(totalSeconds / completedSessions.length);
-  }, [filteredSessions]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -142,7 +145,7 @@ const Activity = () => {
           </div>
 
           {/* Summary cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
             <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
                 <Hash className="w-5 h-5 text-primary" />
@@ -162,18 +165,6 @@ const Activity = () => {
                 <p className="text-2xl font-bold text-foreground">${totalSpend.toFixed(2)}</p>
               </div>
             </div>
-
-            <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                <Timer className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Avg Duration</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {averageDuration > 0 ? formatDuration(averageDuration) : 'N/A'}
-                </p>
-              </div>
-            </div>
           </div>
 
           {/* Filters bar */}
@@ -185,6 +176,7 @@ const Activity = () => {
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="chat">Chat</SelectItem>
+                <SelectItem value="ai_chat">AI Chat</SelectItem>
                 <SelectItem value="audio">Voice Call</SelectItem>
                 <SelectItem value="video">Video Call</SelectItem>
               </SelectContent>
@@ -231,6 +223,8 @@ const Activity = () => {
                   ? Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000)
                   : 0;
                 const isCancelled = session.status === 'cancelled';
+                const isAi = (session.session_metadata as any)?.ai === true;
+                const displayDate = session.started_at || session.created_at;
 
                 return (
                   <div
@@ -238,16 +232,16 @@ const Activity = () => {
                     className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border"
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getTypeColor(session.type)}`}>
-                        {getTypeIcon(session.type)}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getTypeColor(session.type, isAi)}`}>
+                        {getTypeIcon(session.type, isAi)}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-foreground">
                             {session.advisor?.full_name || 'Unknown Advisor'}
                           </p>
-                          <span className="text-xs text-muted-foreground capitalize px-2 py-0.5 rounded-full bg-secondary">
-                            {session.type}
+                          <span className="text-xs text-muted-foreground px-2 py-0.5 rounded-full bg-secondary">
+                            {getTypeLabel(session.type, isAi)}
                           </span>
                           {isCancelled && (
                             <Badge variant="destructive" className="text-xs">
@@ -256,7 +250,7 @@ const Activity = () => {
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {session.started_at ? formatDate(session.started_at) : 'Unknown date'}
+                          {displayDate ? formatDate(displayDate) : 'Unknown date'}
                         </p>
                       </div>
                     </div>

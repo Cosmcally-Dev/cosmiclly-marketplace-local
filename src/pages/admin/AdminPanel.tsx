@@ -7,6 +7,7 @@ import { AdminAdvisorApprovals } from '@/components/admin/AdminAdvisorApprovals'
 import { AdminUsersTable } from '@/components/admin/AdminUsersTable';
 import { AdminSessionsTable } from '@/components/admin/AdminSessionsTable';
 import { AdminDisputeCenter } from '@/components/admin/AdminDisputeCenter';
+import { AdminTransactionsTable } from '@/components/admin/AdminTransactionsTable';
 import { useAdminStats } from '@/hooks/useAdminStats';
 
 const AdminPanel = () => {
@@ -51,6 +52,7 @@ const AdminPanel = () => {
         {activeSection === 'users' && <AdminUsersTable />}
         {activeSection === 'sessions' && <AdminSessionsTable />}
         {activeSection === 'disputes' && <AdminDisputeCenter />}
+        {activeSection === 'transactions' && <AdminTransactionsTable />}
       </main>
     </div>
   );

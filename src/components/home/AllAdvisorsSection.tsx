@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Users, ArrowRight, Filter, ChevronDown, Sliders } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AdvisorCard } from '@/components/advisors/AdvisorCard';
-import { advisors } from '@/data/advisors';
+import { useAdvisors } from '@/hooks/useAdvisors';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,7 @@ type SortOption = 'top-rated' | 'price-low' | 'price-high' | 'reviews';
 type CommType = 'any' | 'chat' | 'call' | 'video';
 
 export const AllAdvisorsSection = () => {
+  const { advisors } = useAdvisors();
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('top-rated');
   const [priceRange, setPriceRange] = useState([0.99, 24.99]);
