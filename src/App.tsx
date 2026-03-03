@@ -34,6 +34,8 @@ const TwinVoiceCall = React.lazy(() => import("./pages/TwinVoiceCall"));
 const ContactUs = React.lazy(() => import("./pages/ContactUs"));
 const BecomeAdvisor = React.lazy(() => import("./pages/BecomeAdvisor"));
 const HowWeVerify = React.lazy(() => import("./pages/HowWeVerify"));
+const Transactions = React.lazy(() => import("./pages/Transactions"));
+const Favorites = React.lazy(() => import("./pages/Favorites"));
 
 const queryClient = new QueryClient();
 
@@ -81,11 +83,12 @@ const App = () => (
               <Route path="/privacy" element={<ComingSoon />} />
               <Route path="/terms" element={<ComingSoon />} />
               <Route path="/cookies" element={<ComingSoon />} />
-              <Route path="/favorites" element={<ComingSoon />} />
+              <Route path="/favorites" element={<Favorites />} />
               <Route path="/payment-methods" element={<ComingSoon />} />
               <Route path="/advisor/:id/ai" element={<TwinChat />} />
               <Route path="/advisor/:id/ai-voice" element={<TwinVoiceCall />} />
               <Route path="/contact" element={<ContactUs />} />
+              <Route path="/transactions" element={<Transactions />} />
               <Route path="/become-advisor" element={<BecomeAdvisor />} />
               <Route path="/how-we-verify" element={<HowWeVerify />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Star, MoonStar, MessageCircle, Phone, Video, Award } from 'lucide-react';
+import { Star, MoonStar, MessageCircle, Phone, Video, Award, Heart } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AuthModal } from '@/components/modals/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
+import { useFavorites } from '@/hooks/useFavorites';
 import { addToRecentlyViewed } from '@/components/home/RecentlyViewedSection';
 import type { Advisor } from '@/data/advisors';
 import aiTwinIcon from '@/assets/ai-twin-icon.png';
@@ -35,6 +36,10 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'chat' | 'call' | null>(null);
   const { isAuthenticated } = useAuth();
+  const { isFavorite, toggle: toggleFavorite } = useFavorites();
+
+  const advisorDbId = advisor.dbId || advisor.id;
+  const favorited = isFavorite(advisorDbId);
 
   const profileUrl = `/advisor/${advisor.id}`;
 
@@ -83,6 +88,21 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
         {/* Avatar header area with subtle gradient background */}
         <div className="relative bg-gradient-to-b from-secondary/40 to-card pt-5 pb-7 px-5 text-center">
+          {/* Favorite heart button — top-right */}
+          {isAuthenticated && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(advisorDbId); }}
+              className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-background/80 transition-colors"
+              aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Heart
+                className={`w-5 h-5 transition-colors ${
+                  favorited ? 'fill-red-500 text-red-500' : 'text-muted-foreground hover:text-red-400'
+                }`}
+              />
+            </button>
+          )}
+
           {/* Top-left badges */}
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
             {advisor.isTopRated && (

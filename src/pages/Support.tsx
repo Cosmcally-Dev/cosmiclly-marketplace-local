@@ -2,16 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { 
-  Search, 
-  MessageSquarePlus, 
-  Users, 
-  BookOpen, 
-  HelpCircle, 
+import {
+  Search,
+  MessageSquarePlus,
+  Users,
+  BookOpen,
+  HelpCircle,
   ChevronRight,
-  Mail,
-  Phone,
-  Clock,
   FileText,
   CreditCard,
   Shield,
@@ -64,10 +61,11 @@ const supportCategories = [
 const quickActions = [
   {
     icon: MessageSquarePlus,
-    title: 'Create a Ticket',
-    description: 'Contact our customer service team when you need help or have feedback',
+    title: 'Contact Support',
+    description: 'Submit a request or send us a message through our contact form',
     color: 'from-emerald-500 to-teal-600',
-    action: 'Submit Request',
+    action: 'Contact Us',
+    href: '/contact',
   },
   {
     icon: Users,
@@ -75,6 +73,7 @@ const quickActions = [
     description: 'Resources and support exclusively for Cosmiclly advisors',
     color: 'from-amber-500 to-orange-600',
     action: 'Advisor Portal',
+    href: '/advisor-portal',
   },
 ];
 
@@ -156,8 +155,9 @@ const Support = () => {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {quickActions.map((action) => (
-                <div
+                <Link
                   key={action.title}
+                  to={action.href}
                   className="group relative overflow-hidden rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-xl transition-all duration-300 p-6"
                 >
                   <div className="flex items-start gap-4">
@@ -177,7 +177,7 @@ const Support = () => {
                       </Button>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
@@ -302,65 +302,20 @@ const Support = () => {
         </section>
 
         {/* Contact CTA */}
-        <section className="py-16 bg-gradient-to-b from-primary/5 to-background">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-10">
-                <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2">
-                  Didn't find what you were looking for?
-                </h2>
-                <p className="text-muted-foreground">
-                  Our support team is here to help
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-6 rounded-xl bg-card border border-border">
-                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Mail className="w-7 h-7 text-primary" />
-                  </div>
-                  <h3 className="font-heading text-lg font-semibold text-foreground mb-2">
-                    Email Us
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Get a response within 24 hours
-                  </p>
-                  <a href="mailto:support@mystica.com" className="text-primary hover:underline text-sm">
-                    support@mystica.com
-                  </a>
-                </div>
-
-                <div className="text-center p-6 rounded-xl bg-card border border-border">
-                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <MessageSquarePlus className="w-7 h-7 text-primary" />
-                  </div>
-                  <h3 className="font-heading text-lg font-semibold text-foreground mb-2">
-                    Live Chat
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Chat with our support team
-                  </p>
-                  <Button variant="outline" size="sm">
-                    Start Chat
-                  </Button>
-                </div>
-
-                <div className="text-center p-6 rounded-xl bg-card border border-border">
-                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Clock className="w-7 h-7 text-primary" />
-                  </div>
-                  <h3 className="font-heading text-lg font-semibold text-foreground mb-2">
-                    Support Hours
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-1">
-                    Monday - Friday
-                  </p>
-                  <p className="text-sm text-foreground">
-                    9:00 AM - 6:00 PM EST
-                  </p>
-                </div>
-              </div>
-            </div>
+        <section className="py-12 bg-gradient-to-b from-primary/5 to-background">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-3">
+              Didn't find what you were looking for?
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Our support team is here to help
+            </p>
+            <Link to="/contact">
+              <Button size="lg">
+                Contact Support
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
           </div>
         </section>
       </main>

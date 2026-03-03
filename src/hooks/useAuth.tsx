@@ -132,6 +132,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Set user immediately from JWT metadata (no await needed)
         setUser(buildUserFromSession(session.user, null));
 
+        // Mark as loading while profile fetch is in progress
+        // This prevents guarded pages (admin, advisor) from redirecting
+        // before we know the user's actual role from the profile.
+        setIsLoading(true);
+
         // Defer profile fetch to avoid blocking the auth callback
         const userId = session.user.id;
         setTimeout(() => {

@@ -1,6 +1,6 @@
 # Cosmiclly — Technical Gap Analysis
 
-> **Updated:** 2026-03-04
+> **Updated:** 2026-03-06
 > **Source Documents:** PRD v1.0, Project Roadmap v1.0, SDD v1.1, Twin AI Technical Specification v1.1
 > **Codebase Commit:** latest (main)
 
@@ -10,18 +10,33 @@
 
 | Phase | Description | Completion | Notes |
 |-------|-------------|:----------:|-------|
-| **Phase 1** | MVP Launch (Human-to-Human Marketplace) | **~95%** | Auth (email + Google), RTC core done, credits-only billing with shared hook, Stripe credit purchases + Connect payouts, admin with disputes/refunds + advisor contracts, advisor setup wizard + schedule + profile persistence, dynamic advisor dashboard stats, advisor activity page, Brevo email integration, 20 DB-backed advisors |
+| **Phase 1** | MVP Launch (Human-to-Human Marketplace) | **~97%** | Auth (email + Google), RTC core done, credits-only billing with shared hook, Stripe credit purchases + Connect payouts, admin with disputes/refunds + advisor contracts + transactions, advisor setup wizard + schedule + profile persistence, dynamic advisor dashboard stats, advisor activity page, Brevo email integration, 20 DB-backed advisors, transaction history (user + admin), favorite advisors, Help Center differentiation |
 | **Phase 2** | Twin AI Expansion (Digital Clone) | **~95%** | Code complete: pgvector + knowledge ingestion, AI text chat (RAG), voice clone (Cartesia + Vapi). Needs deployment + API keys. |
 
 ### Quick Stats
 
 - **Edge Functions:** 14 of 14 built (Phase 1: 10 incl. `send-email`, Phase 2: 4 — `ingest-knowledge`, `handle-ai-chat`, `clone-voice`, `vapi-webhook`)
-- **Database Migrations:** 16 (15 applied + 1 pending: `20260304000000_advisor_contracts_and_stats.sql`)
+- **Database Migrations:** 17 (15 applied + 2 pending: `20260304000000_advisor_contracts_and_stats.sql`, `20260306000000_transaction_logging_and_favorites.sql`)
 - **NPM Dependencies:** Core stack + Stripe SDK + LiveKit client + `@vapi-ai/web` installed
 - **Advisors:** 20 defined in static code, all 20 with real DB profiles (auth accounts + advisor_details); `useAdvisors` hook merges DB + static
 - **Environment Variables:** Supabase keys configured; LiveKit + Stripe keys need Supabase secrets; OpenAI, Cartesia, Vapi keys needed for Phase 2 deployment
 
-### What Changed Since Last Review (2026-03-04)
+### What Changed Since Last Review (2026-03-06)
+
+| Area | Before (2026-03-04) | After (2026-03-06) |
+|------|--------|-------|
+| Migrations | 15 applied + 1 pending | 15 applied + 2 pending (+transaction_logging_and_favorites) |
+| Phase 1 | ~95% | ~97% |
+| Lovable traces | Present (package.json, vite.config.ts, index.html) | Removed entirely, replaced with Cosmiclly branding |
+| AI Chat | Message ordering bug (user msg appeared after AI reply) | Fixed — optimistic updates + Realtime deduplication |
+| Admin Panel | Tab-switch caused redirect to homepage | Fixed — `isLoading` reset during re-auth prevents premature redirect |
+| Advisor Dashboard | Brief flash of user dashboard on tab switch | Fixed — same useAuth isLoading fix |
+| Activity Page | AI chats not shown; cancelled sessions first with "Unknown date" | AI sessions labeled distinctly; sorted by created_at; date fallback |
+| Transaction History | Only credit purchases logged | All deductions logged; user page (/transactions) + admin tab added |
+| Help Center vs Contact | Overlapping content | Differentiated — Help Center focuses on KB/FAQ, links to /contact |
+| Favorites | NOT STARTED | DONE (user_favorites table, useFavorites hook, heart button on AdvisorCard, /favorites page) |
+
+### What Changed (2026-03-03 → 2026-03-04)
 
 | Area | Before (2026-03-03) | After (2026-03-04) |
 |------|--------|-------|
@@ -196,7 +211,7 @@
 
 | Task | Ref | Status | Details |
 |------|-----|:------:|---------|
-| **Build /admin React route** | Task 4.1, FR-6.1 | PARTIAL | `/admin` route exists with protected layout. `AdminPanel.tsx` with sidebar navigation, dashboard, and sub-pages. RLS policies enforce `role='admin'`. **Missing:** some sub-pages need polish, production admin user creation flow. |
+| **Build /admin React route** | Task 4.1, FR-6.1 | DONE | `/admin` route exists with protected layout. `AdminPanel.tsx` with sidebar navigation (dashboard, approvals, users, sessions, disputes, transactions). RLS policies enforce `role='admin'`. `AdminTransactionsTable` shows all platform credit movements with search + filter. |
 | **Advisor Approval dashboard** | Task 4.2, FR-6.2 | DONE | `AdminAdvisorApprovals.tsx` + `AdminApplicationReview.tsx`. `approve_advisor_application` RPC auto-creates `advisor_details` row with contract terms and updates role to 'advisor'. `reject_advisor_application` RPC. Notification emails sent via Brevo on approve/reject. Contract terms (advisor share %, platform share %, admin fee %) set before approval. |
 | **Advisor Contracts/Deals** | — | DONE | `AdvisorContractModal.tsx` for per-advisor revenue shares. Admin can set advisor_share_percent, platform_share_percent, admin_fee_percent per advisor. Contract lock mechanism prevents edits. `update_advisor_contract` RPC with admin-only access. Clickable advisor rows in `AdminUsersTable`. |
 | **Dispute Center** | Task 4.3, FR-6.3 | DONE | Full `AdminDisputeCenter` with status filters + dispute table. `AdminDisputeDetail` modal with refund controls. `admin-refund` edge function (restores credits + optional Stripe refund). `disputes` table with RLS. `AdminSessionsTable` has "Flag" action to create disputes from completed sessions. `useAdminDisputes` hook. |
@@ -216,8 +231,12 @@
 - `src/hooks/useAdminStats.ts` — Admin dashboard statistics hook
 - `src/hooks/useAdminUsers.ts` — User management data hook
 - `src/components/admin/AdvisorContractModal.tsx` — Per-advisor contract management (share %, admin fee, lock)
+- `src/components/admin/AdminTransactionsTable.tsx` — Platform-wide transaction history with search + type filter
 - `src/hooks/useAdvisorStats.ts` — Advisor dashboard stats via RPCs (pending balance, earnings, readings, rating)
 - `src/pages/AdvisorActivity.tsx` — Advisor session history + income page at `/advisor-activity`
+- `src/pages/Transactions.tsx` — User-facing credit transaction history at `/transactions`
+- `src/pages/Favorites.tsx` — User favorite advisors page at `/favorites`
+- `src/hooks/useFavorites.ts` — Favorite advisors hook (toggle, optimistic state, isFavorite check)
 - `src/services/email.ts` — Brevo email trigger utility (welcome, receipt, low credit, approval, rejection)
 - `supabase/functions/send-email/index.ts` — Brevo transactional email edge function
 - RLS policies: admin-only access enforced via `role='admin'` check
@@ -379,6 +398,7 @@ All required packages are installed:
 | 14 | `20260303000000_twin_ai_infrastructure.sql` | pgvector extension, `knowledge_base_documents` table, Twin AI columns on `advisor_details`, `is_ai_generated` on `messages`, AI session RPCs |
 | 15 | `20260303100000_seed_dummy_advisors.sql` | 20 dummy advisor auth accounts + profiles + advisor_details |
 | 16 | `20260304000000_advisor_contracts_and_stats.sql` | Advisor contract columns (share %, admin fee, lock), dashboard stats RPCs, `update_advisor_contract` RPC |
+| 17 | `20260306000000_transaction_logging_and_favorites.sql` | Transaction logging in `deduct_ai_credits` + `end_rtc_session` RPCs, `user_favorites` table with RLS |
 
 ---
 
@@ -389,6 +409,7 @@ All required packages are installed:
 | Table | Purpose | Phase | Status |
 |-------|---------|-------|:------:|
 | `knowledge_base_documents` | pgvector embeddings for advisor knowledge (RAG) | Phase 2 | DONE |
+| `user_favorites` | User-advisor favorite bookmarks with RLS | Phase 1 | DONE (pending migration) |
 | `horoscopes` | Dynamic daily/weekly horoscope content | Phase 2 | NOT STARTED |
 
 ### Column Additions — Status
@@ -431,7 +452,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 
 ### Coming Soon Pages
 - Created themed `ComingSoon.tsx` page for unbuilt routes
-- 7 routes now show Coming Soon instead of 404: `/about`, `/privacy`, `/terms`, `/cookies`, `/favorites`, `/payment-methods`, `/advisor/:id/ai`
+- 5 routes now show Coming Soon instead of 404: `/about`, `/privacy`, `/terms`, `/cookies`, `/payment-methods`
 - Fixed broken `/chat` link in Profile.tsx → redirects to `/advisors`
 
 ### Legal/Content Pages (Drafts)
@@ -461,7 +482,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | 10 | **Create `training_docs` storage bucket** — private bucket in Supabase Dashboard | Low | 2 | Manual step |
 | 11 | **Configure Vapi webhook URL** — set in Vapi dashboard | Low | 2 | Manual step |
 | 12 | **Set `VITE_VAPI_PUBLIC_KEY`** — frontend .env for Vapi Web SDK | Low | 2 | Manual step |
-| 13 | **Apply migration** — `supabase db push` for migrations 14-16 | Low | 1+2 | Manual step |
+| 13 | **Apply migration** — `supabase db push` for migrations 14-17 | Low | 1+2 | Manual step |
 | 14 | **Set `BREVO_API_KEY`** — Brevo API key in Supabase secrets | Low | 1 | Manual step |
 | 15 | **Create Brevo email templates** — 6 templates (welcome client/advisor, receipt, low credit, approved, rejected) | Medium | 1 | Manual step |
 | 16 | **Configure Supabase SMTP** — Use Brevo SMTP relay for password reset emails | Low | 1 | Manual step |
@@ -505,7 +526,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 
 | # | Task | Category | Status |
 |---|------|----------|:------:|
-| 1 | Apply pending migration (`supabase db push`) — `20260304000000_advisor_contracts_and_stats.sql` | DB | Manual step |
+| 1 | Apply pending migrations (`supabase db push`) — `20260304000000_advisor_contracts_and_stats.sql` + `20260306000000_transaction_logging_and_favorites.sql` | DB | Manual step |
 | 2 | Deploy all 14 edge functions (`supabase functions deploy`) | Infra | Manual step |
 | 3 | Set Supabase secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `BREVO_API_KEY`, `LIVEKIT_*`, `OPENAI_API_KEY`, etc. | Infra | Manual step |
 | 4 | Swap Stripe keys to production (`pk_live_...`, `sk_live_...`) | Payments | Manual step |
