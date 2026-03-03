@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Settings, MessageCircle, Users, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { useAdvisors } from "@/hooks/useAdvisors";
 import { AdvisorCard } from "@/components/advisors/AdvisorCard";
-import { zodiacSigns } from "@/data/zodiacSigns";
+import { zodiacSigns, getZodiacFromBirthday } from "@/data/zodiacSigns";
 import AdvisorPrivateProfile from "@/components/profile/AdvisorPrivateProfile";
 import { useHoroscope, type HoroscopePeriod } from "@/hooks/useHoroscope";
 
@@ -67,19 +67,7 @@ const Profile = () => {
     return "?";
   };
 
-  const zodiacProfile = {
-    sunSign: "Capricorn",
-    moonSign: "Aquarius",
-    ascendant: "Libra",
-    planet: "Saturn",
-    element: "Earth",
-    modality: "Cardinal",
-    luckyNumbers: "6, 8, 15",
-  };
-
-  const zodiacSign = zodiacSigns.find(
-    (s) => s.name.toLowerCase() === zodiacProfile.sunSign.toLowerCase()
-  );
+  const zodiacSign = user?.dateOfBirth ? getZodiacFromBirthday(user.dateOfBirth) : undefined;
 
   const tabToPeriod: Record<string, HoroscopePeriod> = {
     today: 'daily',
@@ -99,7 +87,7 @@ const Profile = () => {
   const targetDate = horoscopeTab === 'tomorrow' ? tomorrowDate : undefined;
 
   const { data: horoscope, isLoading: horoscopeLoading } = useHoroscope(
-    zodiacProfile.sunSign,
+    zodiacSign?.name ?? null,
     mappedPeriod,
     targetDate,
   );
@@ -201,22 +189,21 @@ const Profile = () => {
           {/* Zodiac Profile */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <h2 className="text-lg font-bold text-foreground font-heading mb-5">Your zodiac profile</h2>
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="space-y-3 text-sm flex-1">
-                {[
-                  { label: "Sun sign", value: zodiacProfile.sunSign, symbol: zodiacSign?.symbol },
-                  { label: "Moon sign", value: zodiacProfile.moonSign, symbol: "♒" },
-                  { label: "Ascendant", value: zodiacProfile.ascendant, symbol: "♎" },
-                  { label: "Planet", value: zodiacProfile.planet, symbol: "♄" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-4">
-                    <span className="text-muted-foreground w-24">{item.label}</span>
-                    <span className="font-semibold text-foreground">{item.value}</span>
-                    <span className="text-primary text-lg">{item.symbol}</span>
-                  </div>
-                ))}
-              </div>
-              {zodiacSign && (
+            {zodiacSign ? (
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="space-y-3 text-sm flex-1">
+                  {[
+                    { label: "Sun sign", value: zodiacSign.name, symbol: zodiacSign.symbol },
+                    { label: "Planet", value: zodiacSign.ruling, symbol: "" },
+                    { label: "Dates", value: zodiacSign.dates, symbol: "" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-4">
+                      <span className="text-muted-foreground w-24">{item.label}</span>
+                      <span className="font-semibold text-foreground">{item.value}</span>
+                      {item.symbol && <span className="text-primary text-lg">{item.symbol}</span>}
+                    </div>
+                  ))}
+                </div>
                 <div className="w-32 h-32 md:w-40 md:h-40 shrink-0">
                   <img
                     src={zodiacSign.image}
@@ -224,41 +211,48 @@ const Profile = () => {
                     className="w-full h-full object-contain drop-shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
                   />
                 </div>
-              )}
-              <div className="space-y-3 text-sm flex-1">
-                {[
-                  { label: "Element", value: zodiacProfile.element, symbol: "▽" },
-                  { label: "Modality", value: zodiacProfile.modality, symbol: "∧" },
-                  { label: "Lucky Numbers", value: zodiacProfile.luckyNumbers, symbol: "#" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-4">
-                    <span className="text-muted-foreground w-28">{item.label}</span>
-                    <span className="font-semibold text-foreground">{item.value}</span>
-                    <span className="text-primary text-lg">{item.symbol}</span>
-                  </div>
-                ))}
+                <div className="space-y-3 text-sm flex-1">
+                  {[
+                    { label: "Element", value: zodiacSign.element, symbol: "▽" },
+                    { label: "Modality", value: zodiacSign.modality, symbol: "∧" },
+                    { label: "Lucky Numbers", value: horoscope?.lucky?.numbers?.join(', ') || '—', symbol: "#" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-4">
+                      <span className="text-muted-foreground w-28">{item.label}</span>
+                      <span className="font-semibold text-foreground">{item.value}</span>
+                      <span className="text-primary text-lg">{item.symbol}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground mb-3">Add your date of birth to see your zodiac profile and personalized horoscopes.</p>
+                <Button variant="outline" size="sm" onClick={() => navigate("/settings")}>
+                  <Settings className="w-4 h-4 mr-2" /> Go to Settings
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Horoscope */}
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-foreground font-heading mb-4">Your horoscope</h2>
-            <Tabs value={horoscopeTab} onValueChange={setHoroscopeTab}>
-              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0">
-                {["today", "tomorrow", "week", "month", "year"].map((tab) => (
-                  <TabsTrigger
-                    key={tab}
-                    value={tab}
-                    className="capitalize rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2 text-sm"
-                  >
-                    {tab}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+          {zodiacSign && (
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <h2 className="text-lg font-bold text-foreground font-heading mb-4">Your horoscope</h2>
+              <Tabs value={horoscopeTab} onValueChange={setHoroscopeTab}>
+                <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0">
+                  {["today", "tomorrow", "week", "month", "year"].map((tab) => (
+                    <TabsTrigger
+                      key={tab}
+                      value={tab}
+                      className="capitalize rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2 text-sm"
+                    >
+                      {tab}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
 
-              <div className="mt-5 flex flex-col md:flex-row gap-6">
-                {zodiacSign && (
+                <div className="mt-5 flex flex-col md:flex-row gap-6">
                   <div className="w-40 h-40 shrink-0 mx-auto md:mx-0">
                     <img
                       src={zodiacSign.image}
@@ -266,26 +260,26 @@ const Profile = () => {
                       className="w-full h-full object-contain opacity-80"
                     />
                   </div>
-                )}
-                <div className="flex-1 space-y-3">
-                  <p className="text-sm font-semibold text-foreground">{horoscopeDateLabel}</p>
-                  {horoscopeLoading && !horoscope ? (
-                    <Skeleton className="h-16 w-full" />
-                  ) : (
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {horoscope?.content.daily}
-                    </p>
-                  )}
-                  <button
-                    onClick={() => navigate("/horoscope")}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:text-primary transition-colors"
-                  >
-                    Learn more <ArrowRight className="w-4 h-4" />
-                  </button>
+                  <div className="flex-1 space-y-3">
+                    <p className="text-sm font-semibold text-foreground">{horoscopeDateLabel}</p>
+                    {horoscopeLoading && !horoscope ? (
+                      <Skeleton className="h-16 w-full" />
+                    ) : (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {horoscope?.content.daily}
+                      </p>
+                    )}
+                    <button
+                      onClick={() => navigate("/horoscope")}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:text-primary transition-colors"
+                    >
+                      Learn more <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </Tabs>
-          </div>
+              </Tabs>
+            </div>
+          )}
 
           {/* Matched Psychics */}
           <div>
