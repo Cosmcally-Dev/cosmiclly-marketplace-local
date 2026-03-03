@@ -6,7 +6,7 @@ const POLL_INTERVAL_MS = 3000; // Poll every 3 seconds as fallback
 
 interface UseSessionRealtimeOptions {
   sessionId: string | null;
-  onStatusChange?: (newStatus: string, oldStatus: string) => void;
+  onStatusChange?: (newStatus: string, oldStatus: string, startedAt?: string | null) => void;
   enabled?: boolean;
 }
 
@@ -34,7 +34,7 @@ export function useSessionRealtime({
 
     const { data, error } = await supabase
       .from('sessions')
-      .select('status')
+      .select('status, started_at')
       .eq('id', sessionId)
       .single();
 
@@ -45,7 +45,7 @@ export function useSessionRealtime({
 
     if (oldStatus !== null && newStatus !== oldStatus) {
       console.log(`[useSessionRealtime] Status changed: ${oldStatus} → ${newStatus}`);
-      callbackRef.current?.(newStatus, oldStatus);
+      callbackRef.current?.(newStatus, oldStatus, data.started_at);
     }
 
     lastKnownStatusRef.current = newStatus;

@@ -12,9 +12,9 @@ const footerLinks = {
   ],
   support: [
     { label: 'Help Center', href: '/support' },
-    { label: 'Contact Us', href: '/support#contact' },
-    { label: 'How We Verify Advisors', href: '/support#verification' },
-    { label: 'Become an Advisor', href: '/#apply' },
+    { label: 'Contact Us', href: '/contact' },
+    { label: 'How We Verify Advisors', href: '/how-we-verify' },
+    { label: 'Become an Advisor', href: '/become-advisor' },
   ],
   about: [
     { label: 'About Us', href: '/about' },

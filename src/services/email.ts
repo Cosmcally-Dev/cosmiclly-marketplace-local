@@ -6,7 +6,8 @@ type EmailType =
   | 'session_receipt'
   | 'low_credit_warning'
   | 'application_approved'
-  | 'application_rejected';
+  | 'application_rejected'
+  | 'contact_form';
 
 interface SendEmailParams {
   toEmail: string;

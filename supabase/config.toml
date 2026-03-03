@@ -17,3 +17,27 @@ verify_jwt = false
 
 [functions.delete-account]
 verify_jwt = false
+
+[functions.handle-ai-chat]
+verify_jwt = false
+
+[functions.ingest-knowledge]
+verify_jwt = false
+
+[functions.clone-voice]
+verify_jwt = false
+
+[functions.vapi-webhook]
+verify_jwt = false
+
+[functions.check-connect-status]
+verify_jwt = false
+
+[functions.admin-refund]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.create-connect-account]
+verify_jwt = false

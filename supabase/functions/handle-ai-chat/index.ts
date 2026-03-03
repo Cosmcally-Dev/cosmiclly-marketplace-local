@@ -137,20 +137,16 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Insufficient credits', code: 'INSUFFICIENT_CREDITS' }, 402);
     }
 
-    // 8. Deduct credits atomically
-    const { data: updateResult, error: deductError } = await supabaseAdmin
-      .from('profiles')
-      .update({ credits: clientProfile.credits - ratePerMsg })
-      .eq('id', client_id)
-      .gte('credits', ratePerMsg)
-      .select('id');
+    // 8. Deduct credits atomically via RPC
+    const { data: newBalance, error: deductError } = await supabaseAdmin
+      .rpc('deduct_ai_credits', { p_client_id: client_id, p_amount: ratePerMsg });
 
     if (deductError) {
       console.error('Failed to deduct credits:', deductError);
       return jsonResponse({ error: 'Failed to deduct credits', code: 'INTERNAL_ERROR' }, 500);
     }
 
-    if (!updateResult || updateResult.length === 0) {
+    if (newBalance < 0) {
       return jsonResponse({ error: 'Insufficient credits', code: 'INSUFFICIENT_CREDITS' }, 402);
     }
 

@@ -18,7 +18,8 @@ type EmailType =
   | 'session_receipt'
   | 'low_credit_warning'
   | 'application_approved'
-  | 'application_rejected';
+  | 'application_rejected'
+  | 'contact_form';
 
 // Map email types to Brevo template IDs
 // These should be set up in Brevo dashboard and IDs updated here
@@ -29,6 +30,7 @@ const TEMPLATE_IDS: Record<EmailType, number> = {
   low_credit_warning: 4,
   application_approved: 5,
   application_rejected: 6,
+  contact_form: 7,
 };
 
 interface SendEmailRequest {
