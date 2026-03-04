@@ -20,6 +20,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { type Advisor } from "@/data/advisors";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { useAuth } from "@/hooks/useAuth";
@@ -179,17 +180,13 @@ const AdvisorProfile = () => {
         {/* Breadcrumb */}
         <div className="bg-secondary/30 border-b border-border">
           <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center gap-2 text-sm">
-              <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                Home
-              </Link>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                Psychic Readings
-              </Link>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              <span className="text-foreground">{advisor.name}</span>
-            </div>
+            <Breadcrumb>
+              <BreadcrumbItem href="/">Home</BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem href="/advisors">Psychic Readings</BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem active>{advisor.name}</BreadcrumbItem>
+            </Breadcrumb>
           </div>
         </div>
 

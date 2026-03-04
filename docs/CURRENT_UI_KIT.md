@@ -184,13 +184,13 @@ All use `bg-clip-text text-transparent` pattern.
 
 ---
 
-## 6. Shadcn UI Components (28 installed)
+## 6. Shadcn UI Components (46 installed)
 
 Located in `src/components/ui/`.
 
 ### 6.1 Button (`button.tsx`)
 
-**Variants (9):**
+**Variants (11):**
 
 | Variant | Styles |
 |---------|--------|
@@ -203,6 +203,8 @@ Located in `src/components/ui/`.
 | `hero` | Purple gradient (`from-[hsl(252,85%,60%)]` to `[hsl(280,70%,55%)]`) + glow shadow |
 | `gold` | `bg-[hsl(45,90%,55%)]` gold with dark text |
 | `mystical` | Violet border + translucent bg + glow hover |
+| `success` | `bg-emerald-600 text-white hover:bg-emerald-500` |
+| `warning` | `bg-amber-500 text-[hsl(260,45%,7%)] hover:bg-amber-400` |
 
 **Sizes (5):**
 
@@ -214,11 +216,13 @@ Located in `src/components/ui/`.
 | `xl` | `h-14 rounded-xl px-10 text-lg` |
 | `icon` | `h-10 w-10` |
 
+**Loading prop:** `loading?: boolean` — when true, prepends `<Loader2 className="animate-spin" />`, sets `disabled`, adds `opacity-80`. Usage: `<Button loading={isSubmitting}>Submit</Button>`. For buttons with icons, hide the icon when loading: `{!isLoading && <Icon />}`.
+
 **Base classes:** `rounded-lg text-sm font-medium transition-all duration-300 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50`
 
 ### 6.2 Badge (`badge.tsx`)
 
-**Variants (4):**
+**Variants (10):**
 
 | Variant | Styles |
 |---------|--------|
@@ -226,6 +230,12 @@ Located in `src/components/ui/`.
 | `secondary` | `bg-secondary text-secondary-foreground` |
 | `destructive` | `bg-destructive text-destructive-foreground` |
 | `outline` | `text-foreground` (border only) |
+| `accent` | `bg-accent/20 text-accent border-accent/30` |
+| `success` | `bg-emerald-500/20 text-emerald-400 border-emerald-500/30` |
+| `warning` | `bg-amber-500/20 text-amber-400 border-amber-500/30` |
+| `online` | Green dot + `bg-emerald-500/15 text-emerald-400 border-emerald-500/30` |
+| `busy` | Amber dot + `bg-amber-500/15 text-amber-400 border-amber-500/30` |
+| `offline` | Gray dot + `bg-muted text-muted-foreground` |
 
 **Base:** `rounded-full border px-2.5 py-0.5 text-xs font-semibold`
 
@@ -235,24 +245,42 @@ Located in `src/components/ui/`.
 |-----------|------|-----------------|-----------|
 | Accordion | `accordion.tsx` | `@radix-ui/react-accordion` | Animated height transition |
 | Avatar | `avatar.tsx` | `@radix-ui/react-avatar` | `h-10 w-10 rounded-full` default |
-| Badge | `badge.tsx` | — (CVA) | 4 variants, `rounded-full` |
-| Button | `button.tsx` | `@radix-ui/react-slot` | 9 variants, 5 sizes |
+| Alert | `alert.tsx` | — (CVA) | 5 variants: default, info, success, warning, destructive |
+| Avatar Group | `avatar-group.tsx` | — | Overlapping avatars with "+N" overflow |
+| Badge | `badge.tsx` | — (CVA) | 10 variants, `rounded-full` |
+| Breadcrumb | `breadcrumb.tsx` | — | `<nav aria-label>` + `<ol>` semantics, chevron separators |
+| Button | `button.tsx` | `@radix-ui/react-slot` | 11 variants, 5 sizes, `loading` prop |
+| Button Group | `button-group.tsx` | — | Flex wrapper, rounds first/last child only |
 | Card | `card.tsx` | — | Card/Header/Title/Description/Content/Footer |
 | Checkbox | `checkbox.tsx` | `@radix-ui/react-checkbox` | `h-4 w-4 rounded-sm` |
 | Collapsible | `collapsible.tsx` | `@radix-ui/react-collapsible` | Trigger + Content |
+| Confirm Dialog | `confirm-dialog.tsx` | `@radix-ui/react-alert-dialog` | Standardized confirm/cancel, `confirmVariant`, `loading` |
 | Date Picker | `date-picker.tsx` | Custom | `react-day-picker` with dropdown year/month |
 | Dialog | `dialog.tsx` | `@radix-ui/react-dialog` | Overlay + zoom-in/out animation |
 | Dropdown Menu | `dropdown-menu.tsx` | `@radix-ui/react-dropdown-menu` | Focus: `cyan-500/10` |
+| Empty State | `empty-state.tsx` | — | Icon + title + description + optional action button |
 | Form | `form.tsx` | — | `react-hook-form` + Zod integration |
 | Input | `input.tsx` | — | `h-10 rounded-md border-input bg-background` |
 | Label | `label.tsx` | `@radix-ui/react-label` | `text-sm font-medium` |
+| Notification Badge | `notification-badge.tsx` | — | Red circle, absolute positioned, caps at "99+" |
+| Page Loader | `page-loader.tsx` | — | Full-page centered spinner + message, Suspense fallback |
+| Pagination | `pagination.tsx` | — | Page numbers, prev/next arrows, `onPageChange` |
+| Password Input | `password-input.tsx` | — | Input + Eye/EyeOff toggle for show/hide password |
 | Popover | `popover.tsx` | `@radix-ui/react-popover` | Floating panel |
+| Price Display | `price-display.tsx` | — | Original/discounted price with strikethrough |
+| Progress | `progress.tsx` | `@radix-ui/react-progress` | Bar with `bg-muted` track + `bg-primary` fill |
+| Radio Group | `radio-group.tsx` | `@radix-ui/react-radio-group` | Northern Lights themed circle indicator |
+| Search Input | `search-input.tsx` | — | Search icon + clear X button + Escape to clear |
 | Select | `select.tsx` | `@radix-ui/react-select` | Focus: `cyan-500/10` |
 | Separator | `separator.tsx` | `@radix-ui/react-separator` | `bg-border` |
 | Sheet | `sheet.tsx` | `@radix-ui/react-dialog` | Side drawer, top/right/bottom/left |
 | Skeleton | `skeleton.tsx` | — | `animate-pulse rounded-md bg-muted` |
 | Slider | `slider.tsx` | `@radix-ui/react-slider` | `h-5 w-5` thumb, primary track |
 | Sonner | `sonner.tsx` | Sonner library | Themed toast wrapper |
+| Spinner | `spinner.tsx` | — | Loader2 + animate-spin, sm/md/lg, `role="status"` |
+| Star Rating | `star-rating.tsx` | — | Filled/half/empty stars, `value` + `count` props |
+| Stat Card | `stat-card.tsx` | — | Icon + label + value + change/trend for dashboards |
+| Step Indicator | `step-indicator.tsx` | — | Horizontal dots + connecting lines, 3 states |
 | Switch | `switch.tsx` | `@radix-ui/react-switch` | `h-6 w-11` |
 | Table | `table.tsx` | — | Responsive with `overflow-auto` wrapper |
 | Tabs | `tabs.tsx` | `@radix-ui/react-tabs` | `bg-muted` list, `shadow-sm` active |
@@ -341,12 +369,14 @@ Located in `src/components/ui/`.
 
 | Component | File | Purpose |
 |-----------|------|---------|
+| RouteAnnouncer | `RouteAnnouncer.tsx` | Screen reader route change announcements (`aria-live`) |
 | ErrorBoundary | `ErrorBoundary.tsx` | Full-screen error state with refresh button |
 | CookieConsent | `CookieConsent.tsx` | Fixed bottom cookie banner |
 | LowCreditWarning | `session/LowCreditWarning.tsx` | Low balance dialog |
 | SessionHistory | `settings/SessionHistory.tsx` | Session history list |
 | NavLink | `NavLink.tsx` | Navigation link wrapper |
 | AdvisorPrivateProfile | `profile/AdvisorPrivateProfile.tsx` | Advisor's own profile view |
+| Skeletons | `skeletons/index.tsx` | 5 variants: ProfileHeader, SessionPage, ActivityRow, TransactionRow, StatCard |
 
 ---
 

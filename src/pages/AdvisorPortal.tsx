@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Clock, Mail, XCircle, Phone, Loader2 } from 'lucide-react';
+import { Sparkles, Clock, Mail, XCircle, Phone } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/layout/Header';
@@ -46,7 +47,7 @@ const AdvisorPortal = () => {
       <main className={`flex-1 ${portalState !== 'approved' ? 'pt-14 md:pt-16' : ''}`}>
         {portalState === 'loading' && (
           <div className="flex items-center justify-center py-32">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <Spinner size="lg" className="text-primary" />
           </div>
         )}
 

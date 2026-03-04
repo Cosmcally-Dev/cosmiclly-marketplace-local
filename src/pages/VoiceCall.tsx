@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX,
-  Clock, Star, ArrowLeft, MessageCircle, Wifi, WifiOff, X, Loader2
+  Clock, Star, ArrowLeft, MessageCircle, Wifi, WifiOff, X
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -331,7 +332,7 @@ const VoiceCall = () => {
   if (advisorsLoading || !advisor) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Clock, Star, ArrowLeft, X, Check, CheckCheck, Loader2 } from 'lucide-react';
+import { Send, Clock, Star, ArrowLeft, X, Check, CheckCheck } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -344,7 +345,7 @@ const Chat = () => {
   if (advisorsLoading || !advisor) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }

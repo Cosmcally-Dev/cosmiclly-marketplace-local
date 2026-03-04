@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ChevronRight, Calendar, Sparkles, ArrowRight, Sun, Moon, Heart, Briefcase, DollarSign, Users } from 'lucide-react';
+import { Star, Calendar, Sparkles, ArrowRight, Sun, Heart, Briefcase, DollarSign } from 'lucide-react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -59,11 +60,13 @@ const Horoscope = () => {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {/* Breadcrumb */}
-            <nav className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
-              <Link to="/" className="hover:text-accent transition-colors">Home</Link>
-              <ChevronRight className="w-4 h-4" />
-              <span className="text-foreground">Horoscopes</span>
-            </nav>
+            <div className="flex justify-center mb-6">
+              <Breadcrumb>
+                <BreadcrumbItem href="/">Home</BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem active>Horoscopes</BreadcrumbItem>
+              </Breadcrumb>
+            </div>
 
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border mb-6">
               <Calendar className="w-4 h-4 text-accent" />

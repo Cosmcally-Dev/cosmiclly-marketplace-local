@@ -56,6 +56,7 @@ export const CategoriesStrip = () => {
           onClick={() => scroll('left')}
           disabled={!canScrollLeft}
           className="flex-shrink-0 w-9 h-9 rounded-full bg-card shadow-md border-border/50 hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Scroll categories left"
         >
           <ChevronLeft className="w-5 h-5" />
         </Button>
@@ -95,6 +96,7 @@ export const CategoriesStrip = () => {
           onClick={() => scroll('right')}
           disabled={!canScrollRight}
           className="flex-shrink-0 w-9 h-9 rounded-full bg-card shadow-md border-border/50 hover:bg-primary hover:text-primary-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Scroll categories right"
         >
           <ChevronRight className="w-5 h-5" />
         </Button>

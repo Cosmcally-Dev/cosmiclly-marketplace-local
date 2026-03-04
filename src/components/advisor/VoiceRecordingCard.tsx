@@ -11,10 +11,10 @@ import {
   Play,
   Pause,
   Upload,
-  Loader2,
   CheckCircle2,
   RotateCcw,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 type RecordingState = 'idle' | 'recording' | 'recorded' | 'uploading' | 'cloned';
 
@@ -418,6 +418,7 @@ export default function VoiceRecordingCard() {
                   size="icon"
                   onClick={handleTogglePlayback}
                   className="h-10 w-10 flex-shrink-0"
+                  aria-label={isPlaying ? 'Pause recording' : 'Play recording'}
                 >
                   {isPlaying ? (
                     <Pause className="w-4 h-4" />
@@ -457,7 +458,7 @@ export default function VoiceRecordingCard() {
         {/* ── Uploading State ──────────────────────────────────── */}
         {recordingState === 'uploading' && (
           <div className="flex flex-col items-center justify-center gap-3 py-8">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <Spinner size="lg" className="text-primary" />
             <div className="text-center">
               <p className="text-sm font-medium text-foreground">Processing your voice sample...</p>
               <p className="text-xs text-muted-foreground mt-1">

@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { RouteAnnouncer } from "./components/RouteAnnouncer";
+import { PageLoader } from "./components/ui/page-loader";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -40,15 +42,6 @@ const Favorites = React.lazy(() => import("./pages/Favorites"));
 
 const queryClient = new QueryClient();
 
-const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
-      <p className="text-sm text-muted-foreground">Loading...</p>
-    </div>
-  </div>
-);
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -56,8 +49,16 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:text-sm focus:font-medium focus:shadow-lg focus:outline-none"
+          >
+            Skip to content
+          </a>
+          <RouteAnnouncer />
           <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<PageLoader />}>
+              <div id="main-content">
               <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/advisors" element={<AdvisorsListing />} />
@@ -96,6 +97,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
               </Routes>
+              </div>
             </Suspense>
           </ErrorBoundary>
         </BrowserRouter>

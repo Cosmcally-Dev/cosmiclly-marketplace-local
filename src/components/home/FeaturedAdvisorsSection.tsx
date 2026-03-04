@@ -41,6 +41,7 @@ export const FeaturedAdvisorsSection = () => {
               size="icon"
               onClick={() => scroll('left')}
               className="rounded-full w-8 h-8"
+              aria-label="Scroll advisors left"
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -49,6 +50,7 @@ export const FeaturedAdvisorsSection = () => {
               size="icon"
               onClick={() => scroll('right')}
               className="rounded-full w-8 h-8"
+              aria-label="Scroll advisors right"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Sparkles, Star, Heart, Briefcase, Sun, Moon, 
-  ChevronRight, Shuffle, RotateCcw, Eye, Calendar,
+import {
+  Sparkles, Star, Heart, Briefcase, Sun, Moon,
+  Shuffle, RotateCcw, Eye, Calendar,
   ArrowRight
 } from 'lucide-react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -312,13 +313,11 @@ const DailyOracle = () => {
         {/* Breadcrumb */}
         <div className="bg-secondary/30 border-b border-border">
           <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center gap-2 text-sm">
-              <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                Home
-              </Link>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              <span className="text-foreground">Daily Oracle</span>
-            </div>
+            <Breadcrumb>
+              <BreadcrumbItem href="/">Home</BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem active>Daily Oracle</BreadcrumbItem>
+            </Breadcrumb>
           </div>
         </div>
 
