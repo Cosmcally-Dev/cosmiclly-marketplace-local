@@ -37,17 +37,33 @@ export const CategoriesStrip = () => {
   }, []);
 
   const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = 300;
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth',
-      });
-    }
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const items = container.querySelectorAll<HTMLElement>('button');
+    if (!items.length) return;
+
+    const itemWidth = items[0].offsetWidth;
+    const gap = 12; // gap-3 = 12px
+    const step = itemWidth + gap;
+
+    // How many full items fit in the visible area
+    const visibleCount = Math.floor(container.clientWidth / step);
+    // Max scroll index so the last screen shows only complete items
+    const maxIndex = Math.max(0, items.length - visibleCount);
+
+    const currentIndex = Math.round(container.scrollLeft / step);
+    const targetIndex = direction === 'left'
+      ? Math.max(0, currentIndex - 1)
+      : Math.min(maxIndex, currentIndex + 1);
+
+    container.scrollTo({
+      left: targetIndex * step,
+      behavior: 'smooth',
+    });
   };
 
   return (
-    <div className="relative flex items-center gap-2">
+    <div className="relative flex items-center gap-[0.3rem]">
       {/* Desktop Left Chevron - Outside the scroll container */}
       {!isMobile && (
         <Button
@@ -62,7 +78,7 @@ export const CategoriesStrip = () => {
         </Button>
       )}
 
-      {/* Scrollable Container - overflow-hidden clips partial cards at edges */}
+      {/* Scrollable Container */}
       <div className="flex-1 min-w-0 overflow-hidden">
       <div
         ref={scrollRef}

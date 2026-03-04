@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, ArrowRight, Star } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AdvisorCard } from '@/components/advisors/AdvisorCard';
@@ -8,11 +8,20 @@ import { useAdvisors } from '@/hooks/useAdvisors';
 export const FeaturedAdvisorsSection = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { advisors } = useAdvisors();
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   // Get top-rated advisors for featured section
   const featuredAdvisors = advisors
     .filter(a => a.isTopRated || a.rating >= 4.8)
     .slice(0, 12);
+
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -40,6 +49,7 @@ export const FeaturedAdvisorsSection = () => {
               variant="outline"
               size="icon"
               onClick={() => scroll('left')}
+              disabled={!canScrollLeft}
               className="rounded-full w-8 h-8"
               aria-label="Scroll advisors left"
             >
@@ -49,6 +59,7 @@ export const FeaturedAdvisorsSection = () => {
               variant="outline"
               size="icon"
               onClick={() => scroll('right')}
+              disabled={!canScrollRight}
               className="rounded-full w-8 h-8"
               aria-label="Scroll advisors right"
             >
@@ -67,7 +78,8 @@ export const FeaturedAdvisorsSection = () => {
         <div className="relative">
           <div
             ref={scrollRef}
-            className="grid grid-flow-col auto-cols-[280px] md:auto-cols-[300px] gap-4 overflow-x-auto py-2 scrollbar-hide snap-x snap-mandatory"
+            onScroll={updateScrollState}
+            className="grid grid-flow-col auto-cols-[280px] md:auto-cols-[320px] gap-6 overflow-x-auto py-2 scrollbar-hide snap-x snap-mandatory"
           >
             {featuredAdvisors.map((advisor, index) => (
               <div
