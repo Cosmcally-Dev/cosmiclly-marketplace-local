@@ -11,6 +11,8 @@ import {
   Loader2,
   Save,
   X,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 
 interface KnowledgeDoc {
@@ -347,15 +349,38 @@ export default function TwinSetupCard() {
                   <div key={field.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{field.label}</span>
                     <div style={{ borderRadius: 10, padding: "1.5px", background: "linear-gradient(135deg, rgba(6,182,212,0.28) 0%, rgba(139,92,246,0.15) 100%)", display: "inline-flex" }}>
-                      <input
-                        id={field.id}
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        style={{ width: "100%", padding: "9px 14px", borderRadius: 8.5, background: "rgba(12,5,28,0.93)", border: "none", outline: "none", color: "rgba(255,255,255,0.88)", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600 }}
-                      />
+                      <div style={{ display: "flex", alignItems: "center", width: "100%", borderRadius: 8.5, background: "rgba(12,5,28,0.93)", overflow: "hidden" }}>
+                        <input
+                          id={field.id}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          style={{ flex: 1, padding: "9px 14px", background: "transparent", border: "none", outline: "none", color: "rgba(255,255,255,0.88)", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600, MozAppearance: "textfield", WebkitAppearance: "none" } as React.CSSProperties}
+                        />
+                        <div style={{ display: "flex", flexDirection: "column", borderLeft: "1px solid rgba(255,255,255,0.07)", flexShrink: 0 }}>
+                          {[
+                            { dir: "up", icon: <ChevronUp size={11} />, delta: 0.5 },
+                            { dir: "down", icon: <ChevronDown size={11} />, delta: -0.5 },
+                          ].map(({ dir, icon, delta }) => (
+                            <button
+                              key={dir}
+                              type="button"
+                              tabIndex={-1}
+                              onClick={() => {
+                                const next = Math.max(0, parseFloat(field.value || "0") + delta);
+                                field.onChange(next.toFixed(2));
+                              }}
+                              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 19, background: "transparent", border: "none", cursor: "pointer", color: "rgba(139,92,246,0.6)", transition: "color 0.15s, background 0.15s", borderBottom: dir === "up" ? "1px solid rgba(255,255,255,0.07)" : "none" }}
+                              onMouseOver={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "#06b6d4"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(6,182,212,0.08)"; }}
+                              onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(139,92,246,0.6)"; (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                            >
+                              {icon}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

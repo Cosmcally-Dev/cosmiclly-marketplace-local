@@ -503,7 +503,7 @@ const AdvisorPrivateProfile = () => {
 
       {/* ── Mobile backdrop ─────────────────────────────────────────────────── */}
       <div
-        className={`absolute inset-0 z-20 bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 z-[59] bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
           sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setSidebarOpen(false)}
@@ -514,8 +514,8 @@ const AdvisorPrivateProfile = () => {
           ═══════════════════════════════════════════════════════════════════════ */}
       <aside
         className={`
-          fixed top-0 left-0 z-30 h-full
-          lg:sticky lg:top-0 lg:translate-x-0 lg:self-start lg:h-screen
+          fixed top-0 left-0 z-[60] h-full
+          lg:sticky lg:top-16 lg:translate-x-0 lg:self-start lg:h-[calc(100vh-4rem)]
           w-64 shrink-0 flex flex-col
           border-r border-border/50
           transition-[width,transform] duration-300 ease-in-out
@@ -746,11 +746,11 @@ const AdvisorPrivateProfile = () => {
         {/* Mobile top bar */}
         <div className="shrink-0 flex items-center gap-3 px-4 h-14 bg-background/95 backdrop-blur-md border-b border-border/50 lg:hidden">
           <button
-            onClick={() => setSidebarOpen(true)}
+            onClick={() => setSidebarOpen((v) => !v)}
             className="flex items-center justify-center w-9 h-9 rounded-lg border border-border/60 bg-card/60 hover:bg-card transition-colors flex-shrink-0"
-            aria-label="Open menu"
+            aria-label={sidebarOpen ? "Close menu" : "Open menu"}
           >
-            <Menu className="w-4 h-4 text-foreground" />
+            {sidebarOpen ? <X className="w-4 h-4 text-foreground" /> : <Menu className="w-4 h-4 text-foreground" />}
           </button>
           <h2 className="text-sm font-semibold text-foreground flex-1 truncate">
             {pageTitles[activeTab]}
