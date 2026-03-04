@@ -22,7 +22,16 @@ interface DBAdvisorRow {
   } | null;
 }
 
-function mapDBToAdvisor(row: DBAdvisorRow): Advisor {
+interface AdvisorPublicStats {
+  advisor_id: string;
+  completed_readings: number;
+  average_rating: number;
+  review_count: number;
+  positive_reviews: number;
+  negative_reviews: number;
+}
+
+function mapDBToAdvisor(row: DBAdvisorRow, stats?: AdvisorPublicStats): Advisor {
   const currentYear = new Date().getFullYear();
   return {
     id: row.id, // UUID — also serves as dbId
@@ -30,16 +39,19 @@ function mapDBToAdvisor(row: DBAdvisorRow): Advisor {
     name: row.profiles?.full_name || row.title || 'Advisor',
     title: row.title || 'Spiritual Advisor',
     avatar: row.profiles?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop',
-    rating: 5.0, // Default — reviews system not built yet
-    reviewCount: 0,
-    readingsCount: 0,
+    rating: stats?.average_rating || 0,
+    reviewCount: stats?.review_count || 0,
+    readingsCount: stats?.completed_readings || 0,
+    positiveReviews: stats?.positive_reviews || 0,
+    negativeReviews: stats?.negative_reviews || 0,
     yearStarted: row.years_experience ? currentYear - row.years_experience : currentYear,
     status: (row.status as Advisor['status']) || 'offline',
     pricePerMinute: row.price_per_minute,
     discountedPrice: row.discounted_price ?? undefined,
     freeMinutes: row.free_minutes ?? undefined,
     specialties: row.specialties || [],
-    description: row.bio_short || row.bio_long || '',
+    description: row.bio_short || '',
+    descriptionLong: row.bio_long ?? undefined,
     isTopRated: row.is_top_rated ?? false,
     twinEnabled: row.twin_enabled ?? false,
     vapiAgentId: row.vapi_agent_id ?? undefined,
@@ -58,18 +70,36 @@ export function useAdvisors(): UseAdvisorsResult {
 
   const fetchAdvisors = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('advisor_details')
-        .select('id, title, bio_short, bio_long, specialties, price_per_minute, discounted_price, free_minutes, years_experience, status, is_top_rated, twin_enabled, vapi_agent_id, profiles(full_name, avatar_url)');
+      // Fetch advisor details and public stats in parallel
+      const [advisorResult, statsResult] = await Promise.all([
+        supabase
+          .from('advisor_details')
+          .select('id, title, bio_short, bio_long, specialties, price_per_minute, discounted_price, free_minutes, years_experience, status, is_top_rated, twin_enabled, vapi_agent_id, profiles(full_name, avatar_url)'),
+        supabase.rpc('get_all_advisor_public_stats'),
+      ]);
 
-      if (error) {
-        console.warn('[useAdvisors] DB fetch error:', error.message);
+      if (advisorResult.error) {
+        console.warn('[useAdvisors] DB fetch error:', advisorResult.error.message);
         setDbAdvisors([]);
         return;
       }
 
+      // Build stats lookup map
+      const statsMap = new Map<string, AdvisorPublicStats>();
+      if (!statsResult.error && statsResult.data) {
+        const parsed: AdvisorPublicStats[] = typeof statsResult.data === 'string'
+          ? JSON.parse(statsResult.data)
+          : statsResult.data;
+        if (Array.isArray(parsed)) {
+          parsed.forEach(s => statsMap.set(s.advisor_id, s));
+        }
+      }
+
+      const data = advisorResult.data;
       if (data && data.length > 0) {
-        const mapped = (data as unknown as DBAdvisorRow[]).map(mapDBToAdvisor);
+        const mapped = (data as unknown as DBAdvisorRow[]).map(row =>
+          mapDBToAdvisor(row, statsMap.get(row.id))
+        );
         setDbAdvisors(mapped);
       }
     } catch (err) {

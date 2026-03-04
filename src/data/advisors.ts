@@ -7,6 +7,8 @@ export interface Advisor {
   rating: number;
   reviewCount: number;
   readingsCount: number;
+  positiveReviews?: number;
+  negativeReviews?: number;
   yearStarted: number;
   status: 'online' | 'busy' | 'offline';
   pricePerMinute: number;
@@ -14,6 +16,7 @@ export interface Advisor {
   freeMinutes?: number;
   specialties: string[];
   description: string;
+  descriptionLong?: string;
   isTopRated?: boolean;
   isNew?: boolean;
   twinEnabled?: boolean;

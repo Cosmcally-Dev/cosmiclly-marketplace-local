@@ -147,23 +147,33 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
           {/* Rating + reviews — single row */}
           <div className="flex items-center justify-center gap-1.5 mb-3">
-            <div className="flex items-center gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-3.5 h-3.5 ${
-                    i < Math.floor(advisor.rating)
-                      ? 'text-primary fill-primary'
-                      : 'text-muted-foreground'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm font-semibold text-foreground font-sans">{advisor.rating}</span>
-            <span className="text-muted-foreground/60 text-xs">·</span>
-            <span className="text-xs text-muted-foreground font-sans">
-              {advisor.readingsCount.toLocaleString()} readings
-            </span>
+            {advisor.rating > 0 ? (
+              <>
+                <div className="flex items-center gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-3.5 h-3.5 ${
+                        i < Math.floor(advisor.rating)
+                          ? 'text-primary fill-primary'
+                          : 'text-muted-foreground'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm font-semibold text-foreground font-sans">{advisor.rating}</span>
+                <span className="text-muted-foreground/60 text-xs">·</span>
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground font-sans">No reviews yet</span>
+            )}
+            {advisor.rating > 0 && (
+              <span className="text-xs text-muted-foreground font-sans">
+                {advisor.readingsCount > 0
+                  ? `${advisor.readingsCount.toLocaleString()} readings`
+                  : 'New'}
+              </span>
+            )}
           </div>
 
           {/* Specialty pills — nowrap + flex-1 forces both pills onto one row always */}

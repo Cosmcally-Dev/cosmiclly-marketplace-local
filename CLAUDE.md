@@ -150,7 +150,7 @@ All session types (chat, audio, video) follow the same pattern:
 | `useChatMessages` | `hooks/useChatMessages.ts` | Realtime chat messages |
 | `useAiChat` | `hooks/useAiChat.ts` | AI chat messaging with optimistic updates + Realtime dedup |
 | `useFavorites` | `hooks/useFavorites.ts` | User favorite advisors (toggle, optimistic state) |
-| `useAdvisors` | `hooks/useAdvisors.ts` | Merged static + DB advisor data |
+| `useAdvisors` | `hooks/useAdvisors.ts` | DB advisor data + batch public stats (readings, rating, reviews) |
 | `useSessionBilling` | `hooks/useSessionBilling.ts` | Shared per-minute billing (credits first, free minutes fallback) |
 | `useHoroscope` | `hooks/useHoroscope.ts` | Dynamic horoscope data (DB via react-query, static fallback) |
 
@@ -194,8 +194,9 @@ Applied in order:
 21. `20260310000000_fix_seeded_advisor_status.sql` — Fix seeded dummy advisors status from 'online' to 'offline'
 22. `20260311000000_horoscopes_table.sql` — Dynamic horoscopes table with RLS (public read, service-role write)
 23. `20260312000000_public_advisor_profiles_rls.sql` — **NEEDS TO BE APPLIED** — Add anon SELECT policy on `profiles` scoped to advisor profiles (fixes avatars/names not loading when logged out)
+24. `20260313000000_advisor_public_stats_rpc.sql` — **NEEDS TO BE APPLIED** — Batch `get_all_advisor_public_stats()` RPC (readings, rating, review counts per advisor), anon SELECT on reviews
 
-### To apply pending migration:
+### To apply pending migrations:
 ```bash
 npx supabase db push
 ```

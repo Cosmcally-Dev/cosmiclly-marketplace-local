@@ -14,7 +14,6 @@ import {
   Shield,
   Award,
   ChevronRight,
-  Play,
   Video,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -225,19 +224,25 @@ const AdvisorProfile = () => {
                   </div>
                 </div>
 
-                {/* Rating - Updated to Primary Color */}
+                {/* Rating */}
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="flex gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < Math.floor(advisor.rating) ? "text-primary fill-primary" : "text-muted-foreground"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-lg font-bold text-foreground">{advisor.rating}</span>
+                  {advisor.rating > 0 ? (
+                    <>
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-5 h-5 ${
+                              i < Math.floor(advisor.rating) ? "text-primary fill-primary" : "text-muted-foreground"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-lg font-bold text-foreground">{advisor.rating}</span>
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No reviews yet</span>
+                  )}
                 </div>
 
                 {/* Name & Title */}
@@ -341,7 +346,7 @@ const AdvisorProfile = () => {
                   <div className="flex items-center gap-2">
                     <ThumbsUp className="w-5 h-5 text-green-500" />
                     <div>
-                      <div className="text-lg font-bold text-foreground">10,000+</div>
+                      <div className="text-lg font-bold text-foreground">{(advisor.positiveReviews ?? 0).toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">positive reviews</div>
                     </div>
                   </div>
@@ -349,24 +354,9 @@ const AdvisorProfile = () => {
                   <div className="flex items-center gap-2">
                     <ThumbsDown className="w-5 h-5 text-muted-foreground" />
                     <div>
-                      <div className="text-lg font-bold text-foreground">195</div>
+                      <div className="text-lg font-bold text-foreground">{(advisor.negativeReviews ?? 0).toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">negative</div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Promo Banner - Updated to Primary/Secondary Gradient */}
-                <div className="p-4 rounded-xl bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <div className="font-semibold text-foreground">🎉 Special Offer!</div>
-                      <div className="text-sm text-muted-foreground">
-                        Get 50% off your first reading + 3 free minutes
-                      </div>
-                    </div>
-                    <Button variant="default" size="sm">
-                      Claim Now
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -380,47 +370,43 @@ const AdvisorProfile = () => {
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Main Content */}
               <div className="lg:col-span-2 space-y-8">
-                {/* AI Summary */}
+                {/* Client Summary */}
                 <div className="p-6 rounded-xl bg-card border border-border">
                   <h3 className="font-heading text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
                     <Award className="w-5 h-5 text-primary" />
                     What clients are saying
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Clients praise the advisor's insightful, detailed, and caring approach, noting their clarity,
-                    accuracy, and ability to bring comfort during difficult times. Many highlight their genuine
-                    connection and warm personality.
+                    {advisor.reviewCount > 0
+                      ? `Clients have shared ${advisor.reviewCount.toLocaleString()} review${advisor.reviewCount !== 1 ? 's' : ''} about ${advisor.name}. Average rating: ${advisor.rating}/5.`
+                      : `${advisor.name} is a new advisor. Be the first to leave a review!`
+                    }
                   </p>
                 </div>
 
                 {/* About Services */}
-                <div className="p-6 rounded-xl bg-card border border-border">
-                  <h3 className="font-heading text-xl font-semibold text-foreground mb-4">About my services</h3>
-                  <p className="text-muted-foreground leading-relaxed mb-4">{advisor.description}</p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    I can tell you about your love life - present, past and future. I will tell you what is coming for
-                    you and what's good for you. Together we can talk and walk into the light to correct your stumbling
-                    blocks and issues.
-                  </p>
-                  {!showFullBio && (
-                    <button
-                      onClick={() => setShowFullBio(true)}
-                      className="mt-4 text-primary hover:underline text-sm font-medium"
-                    >
-                      Show more
-                    </button>
-                  )}
-                  {showFullBio && (
-                    <div className="mt-4 pt-4 border-t border-border">
-                      <h4 className="font-semibold text-foreground mb-2">About me</h4>
-                      <p className="text-muted-foreground leading-relaxed">
-                        Renowned Psychic reader, Spiritualist, Love advisor. Inherited gifts from ancestors and served
-                        people for over two decades. I share my esoteric knowledge in the field of clairvoyance. I give
-                        you clear, effective and personalized service to meet all your requirements.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                {(advisor.description || advisor.descriptionLong) && (
+                  <div className="p-6 rounded-xl bg-card border border-border">
+                    <h3 className="font-heading text-xl font-semibold text-foreground mb-4">About my services</h3>
+                    {advisor.description && (
+                      <p className="text-muted-foreground leading-relaxed">{advisor.description}</p>
+                    )}
+                    {advisor.descriptionLong && !showFullBio && (
+                      <button
+                        onClick={() => setShowFullBio(true)}
+                        className="mt-4 text-primary hover:underline text-sm font-medium"
+                      >
+                        Show more
+                      </button>
+                    )}
+                    {advisor.descriptionLong && showFullBio && (
+                      <div className="mt-4 pt-4 border-t border-border">
+                        <h4 className="font-semibold text-foreground mb-2">About me</h4>
+                        <p className="text-muted-foreground leading-relaxed">{advisor.descriptionLong}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Specialties */}
                 <div className="p-6 rounded-xl bg-card border border-border">
@@ -446,11 +432,11 @@ const AdvisorProfile = () => {
                     <div className="flex items-center gap-4 text-sm">
                       <span className="flex items-center gap-1 text-green-500">
                         <ThumbsUp className="w-4 h-4" />
-                        10,000+
+                        {(advisor.positiveReviews ?? 0).toLocaleString()}
                       </span>
                       <span className="flex items-center gap-1 text-muted-foreground">
                         <ThumbsDown className="w-4 h-4" />
-                        195
+                        {(advisor.negativeReviews ?? 0).toLocaleString()}
                       </span>
                     </div>
                   </div>

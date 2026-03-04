@@ -4,7 +4,7 @@ const steps = [
   {
     icon: UserPlus,
     title: 'Create Free Account',
-    description: 'Sign up in seconds and get 3 free minutes with your first advisor.',
+    description: 'Sign up in seconds and start your first reading.',
     color: 'from-violet-600 to-purple-500',
   },
   {

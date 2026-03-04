@@ -418,18 +418,6 @@ const AdvisorsListing = () => {
           </div>
         </div>
 
-        {/* Promo Banner */}
-        <div className="bg-accent/10 border-y border-accent/20">
-          <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center justify-center gap-2 text-center">
-              <span className="text-accent font-medium">🎉 New members get 3 FREE minutes + 70% off!</span>
-              <Button variant="gold" size="sm" className="ml-2">
-                Claim Now
-              </Button>
-            </div>
-          </div>
-        </div>
-
         {/* Filters & Grid */}
         <section className="py-8">
           <div className="container mx-auto px-4">
