@@ -1,5 +1,5 @@
 import { Sparkles, PartyPopper } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,6 +20,7 @@ export const WelcomeModal = ({ isOpen, onClose, userName }: WelcomeModalProps) =
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border p-0 overflow-hidden">
+        <DialogTitle className="sr-only">Welcome to the Community</DialogTitle>
         {/* Celebratory Header */}
         <div className="bg-hero-gradient p-8 text-center relative">
           {/* Animated particles */}
