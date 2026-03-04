@@ -1126,7 +1126,7 @@ const AdvisorPrivateProfile = () => {
                   <p style={{ margin: "4px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Your complete client history</p>
                 </div>
 
-                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(139,92,246,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(139,92,246,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(139,92,246,0.08), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
+                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(6,182,212,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.08), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
                   <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", overflow: "hidden" }}>
 
                     {/* Card header */}
@@ -1370,13 +1370,13 @@ const AdvisorPrivateProfile = () => {
                   <p style={{ margin: "4px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Configure your AI clone and voice model</p>
                 </div>
 
-                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(139,92,246,0.5) 0%, rgba(6,182,212,0.15) 50%, rgba(139,92,246,0.08) 100%)", boxShadow: "0 0 0 0.5px rgba(139,92,246,0.1), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
+                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(6,182,212,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.1), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
                   <div style={{ borderRadius: "18.5px", overflow: "hidden" }}>
                     <TwinSetupCard />
                   </div>
                 </div>
 
-                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(139,92,246,0.5) 0%, rgba(6,182,212,0.15) 50%, rgba(139,92,246,0.08) 100%)", boxShadow: "0 0 0 0.5px rgba(139,92,246,0.1), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
+                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(6,182,212,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.1), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
                   <div style={{ borderRadius: "18.5px", overflow: "hidden" }}>
                     <VoiceRecordingCard />
                   </div>
