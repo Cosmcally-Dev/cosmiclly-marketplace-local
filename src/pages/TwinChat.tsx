@@ -11,11 +11,7 @@ import { useAiChat } from '@/hooks/useAiChat';
 import { ReviewModal } from '@/components/modals/ReviewModal';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
-const formatMessageTime = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
+import { formatMessageTime } from '@/utils/formatters';
 
 const TwinChat = () => {
   const { id } = useParams();

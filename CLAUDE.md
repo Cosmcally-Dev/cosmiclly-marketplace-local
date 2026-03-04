@@ -228,7 +228,7 @@ npx supabase gen types typescript --linked > src/integrations/supabase/types.gen
 - Advisors must exist in `advisor_details` + `profiles` tables to appear on the site (20 seeded via migration)
 - LiveKit server credentials need to be configured (LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL as Supabase Edge Function secrets)
 - Credit deduction is client-side estimated + server-side atomic at session end — no real-time server-side enforcement during session
-- No payment integration yet (credits are manually set in DB)
+- **Stripe Connect** must be enabled on the Stripe account before advisors can set up payouts. Go to Stripe Dashboard > Settings > Connect to activate. Without it, `create-connect-account` edge function returns "signed up for Connect" error.
 
 ### Partially Built:
 - **Dynamic horoscopes** — DB table + `useHoroscope` react-query hook + frontend pages updated with static fallback. **Pending:** n8n workflow to populate DB, apply migration (`supabase db push`), regenerate types.
@@ -259,3 +259,4 @@ npx tsc --noEmit     # Type-check without emitting
 - **AI Twin availability:** AI Twin (text chat + voice call) is available 24/7 regardless of advisor online/offline status. The `AdvisorCard` shows an "AI Twin" button even when advisor is offline. `AdvisorProfile` has Twin Call always enabled.
 - **`@tanstack/react-query`:** Installed and configured (`QueryClientProvider` in `App.tsx`). First usage is `useHoroscope` hook. Uses `placeholderData` for instant static content while DB fetches, `maybeSingle()` for graceful empty-table handling, and `staleTime: 1h` to avoid excessive refetches.
 - **Seeding auth.users:** When inserting directly into `auth.users`, all string columns that GoTrue scans (e.g., `email_change`, `phone`, `phone_change`, `email_change_token_new`, `email_change_token_current`, `phone_change_token`, `reauthentication_token`) must be set to `''` not `NULL`. GoTrue's Go code uses `string` (not `*string`), so NULL causes `"Scan error... converting NULL to string is unsupported"`.
+- **Role-guarded pages:** Any page that renders different views based on `user?.isAdvisor` or `user?.isAdmin` must check `isLoading` from `useAuth()` first and show a spinner. Without this, the page briefly renders the wrong view (or blank) during auth state resolution. See `Profile.tsx` and `AdminPanel.tsx` for the correct pattern.

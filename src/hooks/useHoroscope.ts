@@ -76,9 +76,20 @@ export function useHoroscope(
         return getStaticFallback(sign);
       }
 
+      // Merge DB content with static fallback per-field.
+      // Uses || so empty strings ("") trigger the fallback.
+      const fallback = getStaticFallback(sign);
+      const dbContent = data.content as Record<string, string> | null;
+
       return {
-        content: data.content as HoroscopeData['content'],
-        lucky: data.lucky as HoroscopeData['lucky'],
+        content: {
+          daily:  dbContent?.daily  || fallback?.content.daily  || '',
+          love:   dbContent?.love   || fallback?.content.love   || '',
+          career: dbContent?.career || fallback?.content.career || '',
+          money:  dbContent?.money  || fallback?.content.money  || '',
+          health: dbContent?.health || fallback?.content.health || '',
+        },
+        lucky: (data.lucky as HoroscopeData['lucky']) ?? fallback?.lucky ?? null,
         source: (data.source as string) || 'api',
         date: data.date as string,
       };

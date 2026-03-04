@@ -78,7 +78,7 @@ export const DailyHoroscope = () => {
                   {selectedSign} - Today's Reading
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  {horoscope?.content.daily ?? 'Select a sign to see your daily reading.'}
+                  {horoscope?.content.daily || 'Select a sign to see your daily reading.'}
                 </p>
                 <Link
                   to="/horoscope"
