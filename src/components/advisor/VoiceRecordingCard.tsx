@@ -2,9 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import {
   Mic,
   Square,
@@ -34,7 +31,7 @@ export default function VoiceRecordingCard() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [cartesiaVoiceId, setCartesiaVoiceId] = useState<string | null>(null);
+  const [, setCartesiaVoiceId] = useState<string | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -247,36 +244,6 @@ export default function VoiceRecordingCard() {
     setRecordingState('idle');
   };
 
-  // ── Status badge ───────────────────────────────────────────────────
-  const renderStatusBadge = () => {
-    switch (recordingState) {
-      case 'recording':
-        return (
-          <Badge
-            variant="outline"
-            className="border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/10"
-          >
-            Recording
-          </Badge>
-        );
-      case 'cloned':
-        return (
-          <Badge
-            variant="outline"
-            className="border-green-500/30 text-green-600 dark:text-green-400 bg-green-500/10"
-          >
-            Voice Cloned
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="text-muted-foreground">
-            Not Set
-          </Badge>
-        );
-    }
-  };
-
   // ── Render ─────────────────────────────────────────────────────────
   return (
     <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", overflow: "hidden", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
@@ -312,79 +279,74 @@ export default function VoiceRecordingCard() {
         </div>
       </div>
 
-      <div className="space-y-6" style={{ padding: "20px 24px 24px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 20, padding: "20px 24px 24px" }}>
         {/* ── Cloned State ──────────────────────────────────────── */}
         {recordingState === 'cloned' && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-lg border border-green-500/20 bg-green-500/5 p-4">
-              <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, borderRadius: 12, border: "1px solid rgba(34,197,94,0.22)", background: "rgba(34,197,94,0.06)", padding: 16 }}>
+              <CheckCircle2 size={22} style={{ color: "rgba(34,197,94,0.9)", flexShrink: 0 }} />
               <div>
-                <p className="text-sm font-medium text-foreground">Voice sample processed</p>
-                <p className="text-xs text-muted-foreground">
-                  Your Twin AI will use your cloned voice for voice sessions.
-                </p>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>Voice sample processed</p>
+                <p style={{ margin: "4px 0 0", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Your Twin AI will use your cloned voice for voice sessions.</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={handleReRecord}
-              className="gap-2"
+              style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 9, background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif", transition: "all 0.2s ease" }}
+              onMouseOver={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(6,182,212,0.4)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(6,182,212,0.9)"; }}
+              onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.12)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.6)"; }}
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw size={13} />
               Re-record Voice Sample
-            </Button>
+            </button>
           </div>
         )}
 
         {/* ── Idle State — Show script and record button ────────── */}
         {recordingState === 'idle' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">
-                Please read the following passage naturally in your normal speaking voice, as if you
-                were speaking to a client:
-              </Label>
-              <div className="rounded-lg border border-border bg-secondary/10 p-4">
-                <p className="text-sm text-foreground italic leading-relaxed">
-                  "{SCRIPT_TEXT}"
-                </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
+                Please read the following passage naturally in your normal speaking voice, as if you were speaking to a client:
+              </span>
+              <div style={{ borderRadius: 12, border: "1px solid rgba(139,92,246,0.2)", background: "rgba(139,92,246,0.06)", padding: 16 }}>
+                <p style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.75)", fontStyle: "italic", lineHeight: 1.75 }}>"{SCRIPT_TEXT}"</p>
               </div>
             </div>
-
-            <Button onClick={handleStartRecording} className="gap-2">
-              <Mic className="w-4 h-4" />
+            <button
+              onClick={handleStartRecording}
+              style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 7, padding: "9px 20px", borderRadius: 9, background: "linear-gradient(135deg, rgba(139,92,246,0.22) 0%, rgba(6,182,212,0.18) 100%)", border: "1px solid rgba(139,92,246,0.45)", color: "rgba(139,92,246,0.95)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: "0 0 18px rgba(139,92,246,0.25)", transition: "all 0.2s ease" }}
+              onMouseOver={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.1)"; }}
+              onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "none"; }}
+            >
+              <Mic size={14} />
               Start Recording
-            </Button>
+            </button>
           </div>
         )}
 
         {/* ── Recording State ──────────────────────────────────── */}
         {recordingState === 'recording' && (
-          <div className="space-y-4">
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {/* Script reference */}
-            <div className="rounded-lg border border-border bg-secondary/10 p-4">
-              <p className="text-sm text-foreground italic leading-relaxed">
-                "{SCRIPT_TEXT}"
-              </p>
+            <div style={{ borderRadius: 12, border: "1px solid rgba(139,92,246,0.2)", background: "rgba(139,92,246,0.06)", padding: 16 }}>
+              <p style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.75)", fontStyle: "italic", lineHeight: 1.75 }}>"{SCRIPT_TEXT}"</p>
             </div>
 
             {/* Recording indicator + timer */}
-            <div className="flex items-center justify-between rounded-lg border border-red-500/20 bg-red-500/5 p-4">
-              <div className="flex items-center gap-3">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: 12, border: "1px solid rgba(239,68,68,0.22)", background: "rgba(239,68,68,0.06)", padding: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ position: "relative", display: "flex", width: 12, height: 12, flexShrink: 0 }}>
+                  <span className="animate-ping" style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(239,68,68,0.6)" }} />
+                  <span style={{ position: "relative", width: 12, height: 12, borderRadius: "50%", background: "rgba(239,68,68,0.9)", boxShadow: "0 0 8px rgba(239,68,68,0.8)" }} />
                 </span>
-                <span className="text-sm font-medium text-foreground">Recording...</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>Recording...</span>
               </div>
-              <span className="font-mono text-lg tabular-nums text-foreground">
-                {formatTime(recordingTime)}
-              </span>
+              <span style={{ fontFamily: "'SF Mono', monospace", fontSize: 18, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "0.05em" }}>{formatTime(recordingTime)}</span>
             </div>
 
             {/* Progress info */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>
               <span>
                 {recordingTime < MIN_RECORDING_SECONDS
                   ? `Minimum ${MIN_RECORDING_SECONDS - recordingTime}s remaining`
@@ -394,75 +356,76 @@ export default function VoiceRecordingCard() {
             </div>
 
             {/* Stop button */}
-            <Button
-              variant="destructive"
+            <button
               onClick={handleStopRecording}
               disabled={recordingTime < MIN_RECORDING_SECONDS}
-              className="gap-2"
+              style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 7, padding: "9px 20px", borderRadius: 9, background: recordingTime < MIN_RECORDING_SECONDS ? "rgba(239,68,68,0.08)" : "rgba(239,68,68,0.18)", border: "1px solid rgba(239,68,68,0.35)", color: recordingTime < MIN_RECORDING_SECONDS ? "rgba(239,68,68,0.4)" : "rgba(239,68,68,0.9)", fontSize: 13, fontWeight: 700, cursor: recordingTime < MIN_RECORDING_SECONDS ? "not-allowed" : "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif", transition: "all 0.2s ease" }}
             >
-              <Square className="w-4 h-4" />
+              <Square size={13} />
               Stop Recording
-            </Button>
+            </button>
           </div>
         )}
 
         {/* ── Recorded State — Playback + Submit ───────────────── */}
         {recordingState === 'recorded' && (
-          <div className="space-y-4">
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {/* Playback */}
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Preview your recording</Label>
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary/10 p-4">
-                <Button
-                  variant="outline"
-                  size="icon"
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.45)" }}>Preview your recording</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, borderRadius: 12, border: "1px solid rgba(6,182,212,0.2)", background: "rgba(6,182,212,0.05)", padding: 14 }}>
+                <button
                   onClick={handleTogglePlayback}
-                  className="h-10 w-10 flex-shrink-0"
+                  style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, color: "rgba(6,182,212,0.9)", transition: "all 0.15s ease" }}
+                  onMouseOver={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(6,182,212,0.22)"; }}
+                  onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(6,182,212,0.12)"; }}
                 >
-                  {isPlaying ? (
-                    <Pause className="w-4 h-4" />
-                  ) : (
-                    <Play className="w-4 h-4" />
-                  )}
-                </Button>
+                  {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                </button>
                 {audioUrl && (
                   <audio
                     ref={audioRef}
                     src={audioUrl}
                     onEnded={handleAudioEnded}
                     controls
-                    className="flex-1 h-10"
+                    style={{ flex: 1, height: 40 }}
                   />
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Duration: {formatTime(recordingTime)}
-              </p>
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Duration: {formatTime(recordingTime)}</span>
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-3">
-              <Button onClick={handleSubmit} className="gap-2">
-                <Upload className="w-4 h-4" />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                onClick={handleSubmit}
+                style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 20px", borderRadius: 9, background: "linear-gradient(135deg, rgba(6,182,212,0.2) 0%, rgba(139,92,246,0.18) 100%)", border: "1px solid rgba(6,182,212,0.42)", color: "rgba(6,182,212,0.95)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: "0 0 18px rgba(6,182,212,0.3)", transition: "all 0.2s ease" }}
+                onMouseOver={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.1)"; }}
+                onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "none"; }}
+              >
+                <Upload size={13} />
                 Submit Voice Sample
-              </Button>
-              <Button variant="outline" onClick={handleReRecord} className="gap-2">
-                <RotateCcw className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleReRecord}
+                style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.55)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif", transition: "all 0.2s ease" }}
+                onMouseOver={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.25)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.8)"; }}
+                onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.12)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)"; }}
+              >
+                <RotateCcw size={13} />
                 Re-record
-              </Button>
+              </button>
             </div>
           </div>
         )}
 
         {/* ── Uploading State ──────────────────────────────────── */}
         {recordingState === 'uploading' && (
-          <div className="flex flex-col items-center justify-center gap-3 py-8">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <div className="text-center">
-              <p className="text-sm font-medium text-foreground">Processing your voice sample...</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                This may take a minute. Please don't close this page.
-              </p>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "32px 0" }}>
+            <Loader2 size={30} className="animate-spin" style={{ color: "#06b6d4" }} />
+            <div style={{ textAlign: "center" }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>Processing your voice sample...</p>
+              <p style={{ margin: "5px 0 0", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>This may take a minute. Please don't close this page.</p>
             </div>
           </div>
         )}

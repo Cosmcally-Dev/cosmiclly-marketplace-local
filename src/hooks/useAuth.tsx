@@ -410,6 +410,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsPasswordRecovery(false);
   };
 
+  const openAuthModal = (mode: 'signin' | 'signup' = 'signin') => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setAuthModalOpen(false);
+  };
+
   const addSessionLog = (log: Omit<SessionLog, "id">) => {
     const newLog: SessionLog = {
       ...log,

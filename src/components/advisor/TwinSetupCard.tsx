@@ -3,11 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import {
   Bot,
   Upload,
@@ -296,19 +291,17 @@ export default function TwinSetupCard() {
         )}
       </div>
 
-      <div className="space-y-6" style={{ padding: "20px 24px 24px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 22, padding: "20px 24px 24px" }}>
         {isLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Loader2 className="w-4 h-4 animate-spin" />
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,0.4)", fontSize: 13 }}>
+            <Loader2 size={16} className="animate-spin" style={{ color: "#06b6d4" }} />
             Loading Twin AI settings...
           </div>
         ) : (
           <>
             {/* ── Enable / Disable Toggle ────────────────────────── */}
-            <div className="flex items-center justify-between">
-              <Label htmlFor="twin-toggle" className="text-sm font-medium">
-                Enable Twin AI
-              </Label>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>Enable Twin AI</span>
               <Switch
                 id="twin-toggle"
                 checked={twinEnabled}
@@ -316,79 +309,88 @@ export default function TwinSetupCard() {
               />
             </div>
 
-            {/* ── System Prompt ───────────────────────────────────── */}
-            <div className="space-y-2">
-              <Label htmlFor="system-prompt" className="text-sm text-muted-foreground">
-                System Prompt
-              </Label>
-              <Textarea
-                id="system-prompt"
-                value={systemPrompt}
-                onChange={(e) => handleSystemPromptChange(e.target.value)}
-                placeholder="You are a compassionate spiritual advisor specializing in..."
-                rows={5}
-              />
-              <p className="text-xs text-muted-foreground text-right">
-                {systemPrompt.length} characters
-              </p>
-            </div>
+            {/* Divider */}
+            <div style={{ height: 1, background: "rgba(139,92,246,0.1)" }} />
 
-            {/* ── AI Pricing ──────────────────────────────────────── */}
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">AI Pricing</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="text-rate" className="text-xs text-muted-foreground">
-                    Credits per message (text)
-                  </Label>
-                  <Input
-                    id="text-rate"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={textRate}
-                    onChange={(e) => handleTextRateChange(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="voice-rate" className="text-xs text-muted-foreground">
-                    Credits per minute (voice)
-                  </Label>
-                  <Input
-                    id="voice-rate"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={voiceRate}
-                    onChange={(e) => handleVoiceRateChange(e.target.value)}
-                  />
-                </div>
+            {/* ── System Prompt ───────────────────────────────────── */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>System Prompt</span>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", fontFamily: "'SF Mono', monospace" }}>{systemPrompt.length} chars</span>
+              </div>
+              <div style={{ position: "relative" }}>
+                <div style={{ position: "absolute", inset: 0, borderRadius: 12, boxShadow: "0 0 0 1px rgba(139,92,246,0.22)", pointerEvents: "none", zIndex: 1 }} />
+                <textarea
+                  id="system-prompt"
+                  value={systemPrompt}
+                  onChange={(e) => handleSystemPromptChange(e.target.value)}
+                  placeholder="You are a compassionate spiritual advisor specializing in..."
+                  rows={5}
+                  style={{ width: "100%", padding: "13px 16px", borderRadius: 12, background: "rgba(9,6,26,0.97)", border: "none", outline: "none", color: "rgba(255,255,255,0.85)", fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif", fontSize: 13, lineHeight: 1.75, resize: "vertical", boxSizing: "border-box", position: "relative", zIndex: 0 }}
+                  onFocus={(e) => { (e.currentTarget.parentElement?.querySelector("div") as HTMLElement).style.boxShadow = "0 0 0 1.5px #06b6d4, 0 0 22px rgba(6,182,212,0.09)"; }}
+                  onBlur={(e) => { (e.currentTarget.parentElement?.querySelector("div") as HTMLElement).style.boxShadow = "0 0 0 1px rgba(139,92,246,0.22)"; }}
+                />
               </div>
             </div>
 
+            {/* Divider */}
+            <div style={{ height: 1, background: "rgba(139,92,246,0.1)" }} />
+
+            {/* ── AI Pricing ──────────────────────────────────────── */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>AI Pricing</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { id: "text-rate", label: "Credits per message (text)", value: textRate, onChange: handleTextRateChange },
+                  { id: "voice-rate", label: "Credits per minute (voice)", value: voiceRate, onChange: handleVoiceRateChange },
+                ].map((field) => (
+                  <div key={field.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{field.label}</span>
+                    <div style={{ borderRadius: 10, padding: "1.5px", background: "linear-gradient(135deg, rgba(6,182,212,0.28) 0%, rgba(139,92,246,0.15) 100%)", display: "inline-flex" }}>
+                      <input
+                        id={field.id}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        style={{ width: "100%", padding: "9px 14px", borderRadius: 8.5, background: "rgba(12,5,28,0.93)", border: "none", outline: "none", color: "rgba(255,255,255,0.88)", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 600 }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, background: "rgba(139,92,246,0.1)" }} />
+
             {/* ── Knowledge Base ───────────────────────────────────── */}
-            <div className="space-y-3">
-              <Label className="text-sm text-muted-foreground">Knowledge Base</Label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>Knowledge Base</span>
 
               {/* Upload area */}
               <button
                 type="button"
                 onClick={() => !isUploading && fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="w-full flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors py-6 px-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, border: "1.5px dashed rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.04)", padding: "24px 16px", cursor: isUploading ? "not-allowed" : "pointer", opacity: isUploading ? 0.6 : 1, transition: "all 0.2s ease" }}
+                onMouseOver={(e) => { if (!isUploading) { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(6,182,212,0.5)"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(6,182,212,0.06)"; } }}
+                onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(139,92,246,0.3)"; (e.currentTarget as HTMLButtonElement).style.background = "rgba(139,92,246,0.04)"; }}
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                    <span className="text-sm text-muted-foreground">Uploading and processing...</span>
+                    <Loader2 size={22} className="animate-spin" style={{ color: "#06b6d4" }} />
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>Uploading and processing...</span>
                   </>
                 ) : (
                   <>
-                    <Upload className="w-6 h-6 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Click to upload <span className="font-medium text-foreground">.txt</span>,{' '}
-                      <span className="font-medium text-foreground">.md</span>, or{' '}
-                      <span className="font-medium text-foreground">.pdf</span>
+                    <Upload size={22} style={{ color: "rgba(139,92,246,0.7)" }} />
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
+                      Click to upload{" "}
+                      <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>.txt</span>,{" "}
+                      <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>.md</span>, or{" "}
+                      <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>.pdf</span>
                     </span>
                   </>
                 )}
@@ -404,27 +406,27 @@ export default function TwinSetupCard() {
 
               {/* Document list */}
               {documents.length > 0 && (
-                <div className="space-y-2">
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {documents.map((doc) => (
                     <div
                       key={doc.filename}
-                      className="flex items-center justify-between rounded-lg border border-border bg-secondary/10 px-3 py-2"
+                      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderRadius: 10, border: "1px solid rgba(139,92,246,0.18)", background: "rgba(139,92,246,0.06)", padding: "9px 12px" }}
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm text-foreground truncate">{doc.filename}</span>
-                        <Badge variant="outline" className="text-xs flex-shrink-0">
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                        <FileText size={14} style={{ color: "rgba(139,92,246,0.7)", flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{doc.filename}</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 999, background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", color: "rgba(6,182,212,0.8)", flexShrink: 0, fontFamily: "'SF Mono', monospace" }}>
                           {doc.chunks} chunk{doc.chunks !== 1 ? 's' : ''}
-                        </Badge>
+                        </span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive flex-shrink-0"
+                      <button
                         onClick={() => handleDeleteDocument(doc.filename)}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, flexShrink: 0, color: "rgba(255,255,255,0.3)", transition: "color 0.15s ease" }}
+                        onMouseOver={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(239,68,68,0.9)"; }}
+                        onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.3)"; }}
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -433,35 +435,34 @@ export default function TwinSetupCard() {
 
             {/* ── Save / Discard ───────────────────────────────────── */}
             {hasChanges && (
-              <div className="flex items-center justify-end gap-2 pt-4 mt-1 border-t border-border/50">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs font-sans text-muted-foreground hover:text-foreground"
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, paddingTop: 16, marginTop: 4, borderTop: "1px solid rgba(139,92,246,0.1)" }}>
+                <span style={{ flex: 1, display: "flex", alignItems: "center", gap: 7, fontSize: 11.5, color: "rgba(255,255,255,0.5)" }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fbbf24", display: "inline-block", boxShadow: "0 0 7px rgba(251,191,36,0.9)", flexShrink: 0 }} />
+                  Unsaved changes
+                </span>
+                <button
                   onClick={handleDiscard}
                   disabled={isSaving}
+                  style={{ padding: "7px 15px", borderRadius: 9, background: "transparent", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.5)", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all 0.2s ease" }}
+                  onMouseOver={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.22)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.72)"; }}
+                  onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.09)"; (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.5)"; }}
                 >
-                  <X className="w-3.5 h-3.5 mr-1" />
+                  <X size={11} />
                   Discard
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-8 text-xs font-sans"
+                </button>
+                <button
                   onClick={handleSave}
                   disabled={isSaving}
+                  style={{ padding: "7px 18px", borderRadius: 9, background: "linear-gradient(135deg, rgba(6,182,212,0.2) 0%, rgba(139,92,246,0.18) 100%)", border: "1px solid rgba(6,182,212,0.42)", color: "rgba(6,182,212,0.95)", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: "0 0 22px rgba(6,182,212,0.35)", letterSpacing: "0.02em", transition: "all 0.3s ease" }}
+                  onMouseOver={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.1)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 28px rgba(6,182,212,0.45)"; }}
+                  onMouseOut={(e) => { (e.currentTarget as HTMLButtonElement).style.filter = "none"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 22px rgba(6,182,212,0.35)"; }}
                 >
                   {isSaving ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                      Saving...
-                    </>
+                    <><Loader2 size={12} className="animate-spin" />Saving...</>
                   ) : (
-                    <>
-                      <Save className="w-3.5 h-3.5 mr-1" />
-                      Save Changes
-                    </>
+                    <><Save size={12} />Save Changes</>
                   )}
-                </Button>
+                </button>
               </div>
             )}
           </>

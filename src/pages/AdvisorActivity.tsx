@@ -144,7 +144,7 @@ const AdvisorActivity = () => {
 
           {/* Summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+            <div className="bg-card/30 backdrop-blur-md border border-border/50 rounded-2xl p-5 flex items-center gap-4 shadow-xl">
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
                 <Hash className="w-5 h-5 text-primary" />
               </div>
@@ -154,7 +154,7 @@ const AdvisorActivity = () => {
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+            <div className="bg-card/30 backdrop-blur-md border border-border/50 rounded-2xl p-5 flex items-center gap-4 shadow-xl">
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-primary" />
               </div>
@@ -164,7 +164,7 @@ const AdvisorActivity = () => {
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+            <div className="bg-card/30 backdrop-blur-md border border-border/50 rounded-2xl p-5 flex items-center gap-4 shadow-xl">
               <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
                 <Hash className="w-5 h-5 text-primary" />
               </div>
@@ -176,9 +176,9 @@ const AdvisorActivity = () => {
           </div>
 
           {/* Filters bar */}
-          <div className="flex flex-wrap items-center gap-4 mb-6 p-4 rounded-xl bg-card border border-border">
+          <div className="flex flex-wrap items-center gap-4 mb-6 p-4 rounded-2xl bg-card/30 backdrop-blur-md border border-border/50">
             <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
-              <SelectTrigger className="w-[140px] bg-secondary border-border">
+              <SelectTrigger className="w-[140px] bg-white/[0.06] border-border/50">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
@@ -190,7 +190,7 @@ const AdvisorActivity = () => {
             </Select>
 
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-              <SelectTrigger className="w-[150px] bg-secondary border-border">
+              <SelectTrigger className="w-[150px] bg-white/[0.06] border-border/50">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -212,7 +212,7 @@ const AdvisorActivity = () => {
               <p className="text-sm text-muted-foreground mt-4">Loading session history...</p>
             </div>
           ) : filteredSessions.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="bg-card/30 backdrop-blur-md border border-border/50 rounded-2xl text-center py-16 shadow-xl">
               <Clock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="font-heading font-medium text-foreground mb-2">No sessions found</h3>
               <p className="text-sm text-muted-foreground">
@@ -235,7 +235,7 @@ const AdvisorActivity = () => {
                 return (
                   <div
                     key={session.id}
-                    className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border"
+                    className="flex items-center justify-between p-4 rounded-xl bg-card/20 backdrop-blur-sm border border-border/40 hover:bg-card/40 transition-colors"
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getTypeColor(session.type)}`}>
@@ -246,7 +246,7 @@ const AdvisorActivity = () => {
                           <p className="font-medium text-foreground">
                             {session.client?.full_name || 'Unknown Client'}
                           </p>
-                          <span className="text-xs text-muted-foreground capitalize px-2 py-0.5 rounded-full bg-secondary">
+                          <span className="text-xs text-muted-foreground capitalize px-2 py-0.5 rounded-full bg-white/[0.06] border border-border/40">
                             {session.type}
                           </span>
                           {isCancelled && (
