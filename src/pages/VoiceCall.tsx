@@ -16,8 +16,7 @@ import { useWebRTC } from '@/hooks/useWebRTC';
 import { useSessionRealtime } from '@/hooks/useSessionRealtime';
 import { useSessionBilling } from '@/hooks/useSessionBilling';
 import type { ConnectionQuality } from '@/types/session';
-
-const RINGING_TIMEOUT_MS = 60000; // 60 seconds
+import { RINGING_TIMEOUT_MS } from '@/utils/constants';
 
 const VoiceCall = () => {
   const { id } = useParams();

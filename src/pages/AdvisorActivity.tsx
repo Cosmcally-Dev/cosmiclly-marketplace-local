@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@/types/session';
+import { formatDuration, formatDate } from '@/utils/formatters';
 
 interface SessionWithClient extends Session {
   client: { full_name: string | null } | null;
@@ -20,24 +21,6 @@ interface SessionWithClient extends Session {
 
 type TypeFilter = 'all' | 'chat' | 'audio' | 'video';
 type StatusFilter = 'all' | 'completed' | 'cancelled';
-
-const formatDuration = (seconds: number) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  if (mins === 0) return `${secs}s`;
-  return `${mins}m ${secs}s`;
-};
-
-const formatDate = (dateString: string) => {
-  const d = new Date(dateString);
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
 
 const getTypeIcon = (type: string) => {
   switch (type) {
