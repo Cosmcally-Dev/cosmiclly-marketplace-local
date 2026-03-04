@@ -1,96 +1,37 @@
-import { useState, useMemo, useEffect } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, MessageCircle, Users, Sparkles, ArrowRight, Clock, Mail, XCircle, Phone, Loader2 } from "lucide-react";
+import { Settings, MessageCircle, Users, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import { useAdvisors } from "@/hooks/useAdvisors";
 import { AdvisorCard } from "@/components/advisors/AdvisorCard";
 import { getZodiacFromBirthday } from "@/data/zodiacSigns";
 import { useHoroscope, type HoroscopePeriod } from "@/hooks/useHoroscope";
-import { useAdvisorApplication } from "@/hooks/useAdvisorApplication";
-import { AdvisorApplicationModal } from "@/components/modals/AdvisorApplicationModal";
-import AdvisorPrivateProfile from "@/components/profile/AdvisorPrivateProfile";
-import AdvisorSetupWizard from "@/components/advisor/AdvisorSetupWizard";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { user, isAuthenticated, credits, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, credits } = useAuth();
   const { advisors } = useAdvisors();
   const [horoscopeTab, setHoroscopeTab] = useState("today");
-  const [showApplyModal, setShowApplyModal] = useState(false);
-  const { application, hasAdvisorDetails, isProfileComplete, isLoading: appLoading, refetch } = useAdvisorApplication();
 
-  // Dynamic zodiac based on user's date of birth
-  const zodiacSign = user?.dateOfBirth ? getZodiacFromBirthday(user.dateOfBirth) : undefined;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-  const tabToPeriod: Record<string, HoroscopePeriod> = {
-    today: "daily",
-    tomorrow: "daily",
-    week: "weekly",
-    month: "monthly",
-    year: "yearly",
-  };
-
-  const tomorrowDate = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split("T")[0];
-  }, []);
-
-  const mappedPeriod = tabToPeriod[horoscopeTab] ?? "daily";
-  const targetDate = horoscopeTab === "tomorrow" ? tomorrowDate : undefined;
-
-  const { data: horoscope, isLoading: horoscopeLoading } = useHoroscope(
-    zodiacSign?.name ?? null,
-    mappedPeriod,
-    targetDate
-  );
-
-  const horoscopeDateLabel = useMemo(() => {
-    if (horoscope?.date) {
-      const d = new Date(horoscope.date + "T00:00:00");
-      return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    }
-    const now = new Date();
-    if (horoscopeTab === "tomorrow") {
-      const t = new Date(now);
-      t.setDate(t.getDate() + 1);
-      return t.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    }
-    return now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-  }, [horoscope?.date, horoscopeTab]);
-
-  // ── Advisor portal state ──────────────────────────────────────────────────
-  const isAdvisorPortalLoading = authLoading || appLoading;
-
-  const getPortalState = () => {
-    if ((hasAdvisorDetails || user?.isAdvisor) && !isProfileComplete) return "wizard";
-    if (hasAdvisorDetails && isProfileComplete) return "approved";
-    if (!application) return "no-application";
-    if (application.status === "approved") return "wizard";
-    if (application.status === "rejected") return "rejected";
-    return "pending";
-  };
-
-  const portalState = isAdvisorPortalLoading ? "loading" : getPortalState();
-
-  useEffect(() => {
-    if (
-      !isAdvisorPortalLoading &&
-      portalState === "no-application" &&
-      searchParams.get("apply") === "true"
-    ) {
-      setShowApplyModal(true);
-    }
-  }, [isAdvisorPortalLoading, portalState, searchParams]);
-
-  // ── Not authenticated ─────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background">
@@ -103,186 +44,12 @@ const Profile = () => {
     );
   }
 
-  // ── Advisor view ──────────────────────────────────────────────────────────
-  if (user?.isAdvisor || hasAdvisorDetails || application) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col scrollbar-hide">
-        <Header />
-
-        <main className={`flex-1 ${portalState !== "approved" ? "pt-14 md:pt-16" : ""}`}>
-          {portalState === "loading" && (
-            <div className="flex items-center justify-center py-32">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          )}
-
-          {portalState === "no-application" && (
-            <div className="flex flex-col items-center justify-center px-4 py-20">
-              <div className="max-w-lg text-center space-y-6">
-                <div className="flex justify-center">
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="w-10 h-10 text-primary" />
-                  </div>
-                </div>
-
-                <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground">
-                  Become an Advisor
-                </h1>
-
-                <p className="text-lg text-muted-foreground">
-                  Share your spiritual gifts with thousands of seekers. Apply today and start earning.
-                </p>
-
-                <div className="bg-card border border-border rounded-xl p-6 space-y-4 text-left">
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-primary flex-shrink-0" />
-                    <p className="text-sm text-foreground/80">
-                      Offer chat, voice, and video readings to clients worldwide
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-primary flex-shrink-0" />
-                    <p className="text-sm text-foreground/80">
-                      Set your own rates and availability schedule
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-primary flex-shrink-0" />
-                    <p className="text-sm text-foreground/80">
-                      Get reviewed and approved within 24-48 hours
-                    </p>
-                  </div>
-                </div>
-
-                <Button variant="hero" size="lg" onClick={() => setShowApplyModal(true)}>
-                  Apply Now
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {portalState === "pending" && (
-            <div className="flex flex-col items-center justify-center px-4 py-20">
-              <div className="max-w-lg text-center space-y-6">
-                <div className="flex justify-center">
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Clock className="w-10 h-10 text-primary" />
-                  </div>
-                </div>
-
-                <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground">
-                  Application Under Review
-                </h1>
-
-                <p className="text-lg text-muted-foreground">
-                  Your application is being reviewed. We'll contact you shortly.
-                </p>
-
-                <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-                  <div className="flex items-center gap-3 text-left">
-                    <Mail className="w-5 h-5 text-primary flex-shrink-0" />
-                    <p className="text-sm text-foreground/80">
-                      You'll receive an email confirmation with next steps within 24-48 hours.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 text-left">
-                    <Sparkles className="w-5 h-5 text-primary flex-shrink-0" />
-                    <p className="text-sm text-foreground/80">
-                      Once approved, you'll gain access to your advisor dashboard to manage readings
-                      and connect with clients.
-                    </p>
-                  </div>
-                </div>
-
-                {application && (
-                  <div className="bg-secondary/50 border border-border rounded-xl p-4 text-left text-sm">
-                    <p className="text-muted-foreground mb-2 font-medium">Application Details</p>
-                    <div className="space-y-1 text-foreground/80">
-                      <p>
-                        <span className="text-muted-foreground">Name:</span> {application.full_name}
-                      </p>
-                      <p>
-                        <span className="text-muted-foreground">Email:</span> {application.email}
-                      </p>
-                      <p>
-                        <span className="text-muted-foreground">Specialties:</span>{" "}
-                        {application.specialty}
-                      </p>
-                      {application.submitted_at && (
-                        <p>
-                          <span className="text-muted-foreground">Submitted:</span>{" "}
-                          {new Date(application.submitted_at).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <Link to="/">
-                  <Button variant="outline" className="mt-4">
-                    Back to Home
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {portalState === "rejected" && (
-            <div className="flex flex-col items-center justify-center px-4 py-20">
-              <div className="max-w-lg text-center space-y-6">
-                <div className="flex justify-center">
-                  <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center">
-                    <XCircle className="w-10 h-10 text-destructive" />
-                  </div>
-                </div>
-
-                <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground">
-                  Application Not Approved
-                </h1>
-
-                <p className="text-lg text-muted-foreground">
-                  Unfortunately, your application was not approved at this time.
-                </p>
-
-                {application?.notes && (
-                  <div className="bg-card border border-border rounded-xl p-4 text-left">
-                    <p className="text-sm text-muted-foreground mb-1 font-medium">Reviewer Notes</p>
-                    <p className="text-sm text-foreground/80">{application.notes}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-3 justify-center">
-                  <Button variant="hero" onClick={() => setShowApplyModal(true)}>
-                    Re-Apply
-                  </Button>
-                  <Link to="/">
-                    <Button variant="outline">Back to Home</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {portalState === "wizard" && (
-            <div className="container mx-auto px-4 py-8">
-              <AdvisorSetupWizard onComplete={() => refetch()} />
-            </div>
-          )}
-
-          {portalState === "approved" && <AdvisorPrivateProfile />}
-        </main>
-
-        <Footer />
-
-        <AdvisorApplicationModal
-          isOpen={showApplyModal}
-          onClose={() => setShowApplyModal(false)}
-        />
-      </div>
-    );
+  // Advisor view — canonical dashboard is /advisor-portal
+  if (user?.isAdvisor) {
+    return <Navigate to="/advisor-portal" replace />;
   }
 
-  // ── Regular client view ───────────────────────────────────────────────────
+  // Regular user view
   const getInitials = () => {
     if (user?.firstName && user?.lastName) {
       return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
@@ -290,6 +57,46 @@ const Profile = () => {
     if (user?.username) return user.username[0].toUpperCase();
     return "?";
   };
+
+
+  const zodiacSign = user?.dateOfBirth ? getZodiacFromBirthday(user.dateOfBirth) : undefined;
+
+  const tabToPeriod: Record<string, HoroscopePeriod> = {
+    today: 'daily',
+    tomorrow: 'daily',
+    week: 'weekly',
+    month: 'monthly',
+    year: 'yearly',
+  };
+
+  const tomorrowDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  }, []);
+
+  const mappedPeriod = tabToPeriod[horoscopeTab] ?? 'daily';
+  const targetDate = horoscopeTab === 'tomorrow' ? tomorrowDate : undefined;
+
+  const { data: horoscope, isLoading: horoscopeLoading } = useHoroscope(
+    zodiacSign?.name ?? null,
+    mappedPeriod,
+    targetDate,
+  );
+
+  const horoscopeDateLabel = useMemo(() => {
+    if (horoscope?.date) {
+      const d = new Date(horoscope.date + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    const now = new Date();
+    if (horoscopeTab === 'tomorrow') {
+      const t = new Date(now);
+      t.setDate(t.getDate() + 1);
+      return t.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    return now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  }, [horoscope?.date, horoscopeTab]);
 
   const matchedAdvisors = advisors.slice(0, 6);
   const affirmation = "I am constantly growing and evolving into a better person.";
@@ -328,7 +135,9 @@ const Profile = () => {
                 >
                   <item.icon className="w-4 h-4" />
                   <span>{item.label}</span>
-                  {item.dot && <span className="w-2 h-2 rounded-full bg-emerald-500 ml-auto" />}
+                  {item.dot && (
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 ml-auto" />
+                  )}
                 </button>
               ))}
             </nav>

@@ -309,20 +309,24 @@ export const Header = () => {
                       <User className="w-4 h-4" />
                       My Dashboard
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => navigate("/activity")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5"
-                    >
-                      <Activity className="w-4 h-4" />
-                      My Activity
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => navigate("/favorites")}
-                      className="cursor-pointer flex items-center gap-2 p-2.5"
-                    >
-                      <Heart className="w-4 h-4" />
-                      Favorite Advisors
-                    </DropdownMenuItem>
+                    {!user?.isAdvisor && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/activity")}
+                        className="cursor-pointer flex items-center gap-2 p-2.5"
+                      >
+                        <Activity className="w-4 h-4" />
+                        My Activity
+                      </DropdownMenuItem>
+                    )}
+                    {!user?.isAdvisor && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/favorites")}
+                        className="cursor-pointer flex items-center gap-2 p-2.5"
+                      >
+                        <Heart className="w-4 h-4" />
+                        Favorite Advisors
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                       onClick={() => navigate("/add-credit")}
                       className="cursor-pointer flex items-center gap-2 p-2.5"

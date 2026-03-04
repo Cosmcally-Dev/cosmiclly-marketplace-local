@@ -1,31 +1,32 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdvisorStats } from "@/hooks/useAdvisorStats";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
-import { TimePicker } from "@/components/ui/time-picker";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   DollarSign,
+  Users,
   Star,
+  TrendingUp,
+  Clock,
   Camera,
   Loader2,
   MessageSquare,
   Mic,
   Video,
-  Users,
   BarChart2,
   ChevronRight,
   ChevronLeft,
-  Clock,
-  TrendingUp,
   Phone,
   Sparkles,
   HelpCircle,
@@ -34,8 +35,7 @@ import {
   Calendar,
   Menu,
   X,
-  Download,
-  ChevronDown,
+  Activity,
 } from "lucide-react";
 import StripeConnectCard from "@/components/advisor/StripeConnectCard";
 import { AdvisorSettingsView } from "@/components/advisor/AdvisorSettingsView";
@@ -43,22 +43,16 @@ import TwinSetupCard from "@/components/advisor/TwinSetupCard";
 import VoiceRecordingCard from "@/components/advisor/VoiceRecordingCard";
 import { AvailabilityScheduleCard } from "@/components/advisor/AvailabilityScheduleCard";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip as ChartTooltip,
   ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
 } from "recharts";
 import type { Session } from "@/types/session";
 
@@ -144,8 +138,16 @@ const mockReviews = [
   { id: "5", name: "Mia W.",   rating: 5, date: "Feb 1, 2026",  text: "Absolutely phenomenal. She knew things I hadn't even mentioned. Truly gifted." },
 ];
 const allSpecialties = [
-  "Tarot", "Astrology", "Numerology", "Dream Analysis", "Love Advice",
-  "Career Guidance", "Energy Readings", "Mediumship", "Aura Reading", "Past Lives",
+  "Tarot",
+  "Astrology",
+  "Numerology",
+  "Dream Analysis",
+  "Love Advice",
+  "Career Guidance",
+  "Energy Readings",
+  "Mediumship",
+  "Aura Reading",
+  "Past Lives",
 ];
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -175,7 +177,6 @@ const AdvisorPrivateProfile = () => {
   const [activePeriod, setActivePeriod]     = useState<Period>("30d");
   const [sidebarOpen, setSidebarOpen]       = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [reportGranularity, setReportGranularity] = useState<"daily" | "weekly" | "monthly">("daily");
 
   // Avatar
   const [avatarUrl, setAvatarUrl]               = useState<string | undefined>(user?.avatarUrl);
@@ -189,114 +190,74 @@ const AdvisorPrivateProfile = () => {
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Status + service
-  const [isOnline, setIsOnline]             = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
   const [pricePerMinute, setPricePerMinute] = useState("3.50");
+
+  // Fetch advisor details from DB on mount
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchDetails = async () => {
+      const { data, error } = await supabase
+        .from('advisor_details')
+        .select('status, bio_short, bio_long, specialties, price_per_minute, free_minutes, schedule')
+        .eq('id', user.id)
+        .single();
+      if (!error && data) {
+        setIsOnline(data.status === 'online');
+        if (data.bio_short || data.bio_long) setBio(data.bio_short || data.bio_long || '');
+        if (data.specialties && data.specialties.length > 0) setSelectedSpecialties(data.specialties);
+        if (data.price_per_minute) setPricePerMinute(data.price_per_minute.toString());
+        if (data.schedule && typeof data.schedule === 'object' && Object.keys(data.schedule).length > 0) {
+          setSchedule(data.schedule as typeof schedule);
+          savedScheduleRef.current = data.schedule as typeof schedule;
+        }
+        savedServiceRef.current = {
+          pricePerMinute: data.price_per_minute?.toString() || '3.50',
+          bio: data.bio_short || data.bio_long || '',
+          selectedSpecialties: data.specialties && data.specialties.length > 0 ? [...data.specialties] : ['Tarot', 'Astrology', 'Love Advice'],
+        };
+      }
+      setIsLoadingDetails(false);
+    };
+    fetchDetails();
+  }, [user?.id]);
+
+  // Persist status toggle to DB
+  const handleStatusToggle = async (checked: boolean) => {
+    setIsOnline(checked); // Optimistic update
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from('advisor_details')
+      .update({ status: checked ? 'online' : 'offline' })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Status update error:', error);
+      setIsOnline(!checked); // Revert on failure
+    }
+  };
   const [bio, setBio] = useState(
     "Intuitive tarot reader and astrologer with over 8 years of experience guiding seekers on their spiritual journey."
   );
-  const [selectedSpecialties, setSelectedSpecialties] = useState(["Tarot", "Astrology", "Love Advice"]);
-
-  // Schedule
+  const [selectedSpecialties, setSelectedSpecialties] = useState([
+    "Tarot",
+    "Astrology",
+    "Love Advice",
+  ]);
   const [schedule, setSchedule] = useState<
-    Record<string, { enabled: boolean; start: string; end: string }>
+    Record<"Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun", { enabled: boolean; start: string; end: string }>
   >({
-    Mon: { enabled: true,  start: "09:00", end: "17:00" },
-    Tue: { enabled: true,  start: "09:00", end: "17:00" },
-    Wed: { enabled: true,  start: "10:00", end: "18:00" },
-    Thu: { enabled: true,  start: "09:00", end: "17:00" },
-    Fri: { enabled: true,  start: "09:00", end: "15:00" },
+    Mon: { enabled: true, start: "09:00", end: "17:00" },
+    Tue: { enabled: true, start: "09:00", end: "17:00" },
+    Wed: { enabled: true, start: "10:00", end: "18:00" },
+    Thu: { enabled: true, start: "09:00", end: "17:00" },
+    Fri: { enabled: true, start: "09:00", end: "15:00" },
     Sat: { enabled: false, start: "10:00", end: "14:00" },
     Sun: { enabled: false, start: "10:00", end: "14:00" },
   });
   const [scheduleChanged, setScheduleChanged] = useState(false);
   const savedScheduleRef = useRef(schedule);
-  const [serviceChanged, setServiceChanged]   = useState(false);
-  const savedServiceRef = useRef({
-    pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties],
-  });
-
-  useEffect(() => {
-    if (!user?.id) return;
-    const lsKey = `advisor_schedule_${user.id}`;
-    const fetchDetails = async () => {
-      setIsLoadingDetails(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase
-        .from("advisor_details")
-        .select("status, price_per_minute, bio_long, specialties, schedule")
-        .eq("id", user.id)
-        .single() as Promise<{ data: any; error: any }>);
-      if (!error && data) {
-        setIsOnline(data.status === "online");
-        const dbPrice       = data.price_per_minute != null ? String(data.price_per_minute) : "3.50";
-        const dbBio         = data.bio_long ?? bio;
-        const dbSpecialties = data.specialties?.length ? data.specialties : selectedSpecialties;
-        let resolvedSchedule = (data.schedule as typeof schedule) ?? null;
-        if (!resolvedSchedule) {
-          const ls = localStorage.getItem(lsKey);
-          if (ls) resolvedSchedule = JSON.parse(ls) as typeof schedule;
-        }
-        resolvedSchedule ??= schedule;
-        setPricePerMinute(dbPrice);
-        setBio(dbBio);
-        setSelectedSpecialties(dbSpecialties);
-        setSchedule(resolvedSchedule);
-        savedServiceRef.current  = { pricePerMinute: dbPrice, bio: dbBio, selectedSpecialties: [...dbSpecialties] };
-        savedScheduleRef.current = resolvedSchedule;
-      }
-      setIsLoadingDetails(false);
-    };
-    fetchDetails();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (activeTab !== "clients" || !user?.id || clientSessions.length > 0) return;
-    const fetchClients = async () => {
-      setIsLoadingClients(true);
-      const { data, error } = await supabase
-        .from("sessions")
-        .select("*, client:profiles!client_id(full_name, avatar_url)")
-        .eq("advisor_id", user.id)
-        .eq("status", "completed")
-        .order("started_at", { ascending: false })
-        .limit(200);
-      if (!error && data) setClientSessions(data as SessionWithClient[]);
-      setIsLoadingClients(false);
-    };
-    fetchClients();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, user?.id]);
-
-  useEffect(() => {
-    if (activeTab !== "insights" || !user?.id || insightSessions.length > 0) return;
-    const fetchInsights = async () => {
-      setIsLoadingInsights(true);
-      const { data, error } = await supabase
-        .from("sessions")
-        .select("id, type, billable_minutes, cost_total, started_at, client_id")
-        .eq("advisor_id", user.id)
-        .eq("status", "completed");
-      if (!error && data) setInsightSessions(data as Session[]);
-      setIsLoadingInsights(false);
-    };
-    fetchInsights();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, user?.id]);
-
-  const handleStatusToggle = async (checked: boolean) => {
-    setIsOnline(checked);
-    if (!user?.id) return;
-    const { error } = await supabase
-      .from("advisor_details")
-      .update({ status: checked ? "online" : "offline" })
-      .eq("id", user.id);
-    if (error) {
-      console.error("[AdvisorPrivateProfile] Status update error:", error);
-      setIsOnline(!checked);
-    }
-  };
+  const [serviceChanged, setServiceChanged] = useState(false);
+  const savedServiceRef = useRef({ pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties] });
 
   const getInitials = () => {
     if (user?.firstName && user?.lastName)
@@ -309,39 +270,46 @@ const AdvisorPrivateProfile = () => {
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
     setIsUploading(true);
-    const fileExt = file.name.split(".").pop();
+    const fileExt = file.name.split('.').pop();
     const filePath = `${user.id}/avatar.${fileExt}`;
     const { error: uploadError } = await supabase.storage
-      .from("avatars")
+      .from('avatars')
       .upload(filePath, file, { upsert: true });
     if (uploadError) {
-      console.error("Avatar upload error:", uploadError);
+      console.error('Avatar upload error:', uploadError);
       setIsUploading(false);
       return;
     }
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
     const { error: updateError } = await supabase
-      .from("profiles")
+      .from('profiles')
       .update({ avatar_url: publicUrl })
-      .eq("id", user.id);
+      .eq('id', user.id);
     if (!updateError) setAvatarUrl(publicUrl);
     setIsUploading(false);
-    e.target.value = "";
+    e.target.value = '';
   };
 
   const toggleSpecialty = (s: string) => {
-    setSelectedSpecialties((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+    setSelectedSpecialties((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
+    );
     setServiceChanged(true);
   };
 
   const handleSaveService = async () => {
     if (!user?.id) return;
     const { error } = await supabase
-      .from("advisor_details")
-      .update({ price_per_minute: parseFloat(pricePerMinute) || 0, bio_long: bio, specialties: selectedSpecialties })
-      .eq("id", user.id);
+      .from('advisor_details')
+      .update({
+        price_per_minute: parseFloat(pricePerMinute),
+        bio_short: bio,
+        specialties: selectedSpecialties,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
     if (error) {
-      toast({ title: "Failed to save", description: error.message, variant: "destructive" });
+      console.error('[AdvisorPrivateProfile] Save service error:', error);
       return;
     }
     savedServiceRef.current = { pricePerMinute, bio, selectedSpecialties: [...selectedSpecialties] };
@@ -357,24 +325,34 @@ const AdvisorPrivateProfile = () => {
   };
 
   const toggleDay = (day: string) => {
-    setSchedule((prev) => ({ ...prev, [day]: { ...prev[day], enabled: !prev[day].enabled } }));
+    setSchedule((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], enabled: !prev[day].enabled },
+    }));
     setScheduleChanged(true);
   };
 
   const updateTime = (day: string, field: "start" | "end", value: string) => {
-    setSchedule((prev) => ({ ...prev, [day]: { ...prev[day], [field]: value } }));
+    setSchedule((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value },
+    }));
     setScheduleChanged(true);
   };
 
   const handleSaveSchedule = async () => {
     if (!user?.id) return;
-    localStorage.setItem(`advisor_schedule_${user.id}`, JSON.stringify(schedule));
     const { error } = await supabase
-      .from("advisor_details")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update({ schedule } as any)
-      .eq("id", user.id);
-    if (error) console.error("[AdvisorPrivateProfile] Schedule DB save error:", error);
+      .from('advisor_details')
+      .update({
+        schedule: schedule,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+    if (error) {
+      console.error('[AdvisorPrivateProfile] Save schedule error:', error);
+      return;
+    }
     savedScheduleRef.current = schedule;
     setScheduleChanged(false);
     toast({ title: "Schedule saved" });
@@ -388,25 +366,6 @@ const AdvisorPrivateProfile = () => {
   const navigate_ = (tab: ActiveTab) => {
     setActiveTab(tab);
     setSidebarOpen(false);
-  };
-
-  const handleExportCSV = () => {
-    const headers = ["Date", "Type", "Duration (min)", "Earnings ($)"];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows = (insightSessions as any[]).map((s) => [
-      s.started_at ? new Date(s.started_at).toLocaleDateString() : "—",
-      s.type ?? "—",
-      String(s.billable_minutes ?? 0),
-      s.cost_total != null ? (s.cost_total / 100).toFixed(2) : "0.00",
-    ]);
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `sessions-${new Date().toISOString().split("T")[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   // Derived data
@@ -518,7 +477,7 @@ const AdvisorPrivateProfile = () => {
 
   return (
     <TooltipProvider delayDuration={100}>
-    <div className="relative flex h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] overflow-hidden">
+    <div className="relative flex min-h-[calc(100vh-56px)] md:min-h-[calc(100vh-64px)]">
 
       {/* ── Mobile backdrop ─────────────────────────────────────────────────── */}
       <div
@@ -533,8 +492,8 @@ const AdvisorPrivateProfile = () => {
           ═══════════════════════════════════════════════════════════════════════ */}
       <aside
         className={`
-          absolute top-0 left-0 z-30 h-full
-          lg:relative lg:translate-x-0
+          fixed top-0 left-0 z-30 h-full
+          lg:sticky lg:top-0 lg:translate-x-0 lg:self-start lg:h-screen
           w-64 shrink-0 flex flex-col
           border-r border-border/50
           transition-[width,transform] duration-300 ease-in-out
@@ -700,6 +659,31 @@ const AdvisorPrivateProfile = () => {
             </p>
           )}
           {toolsNav.map((item) => <NavBtn key={item.id} {...item} />)}
+
+          <div className="my-3 h-px bg-border/40 mx-2" />
+
+          {/* My Activity — direct link to /advisor-activity */}
+          {sidebarCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => { navigate("/advisor-activity"); setSidebarOpen(false); }}
+                  className="w-full flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 px-0 py-2.5 h-10 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                >
+                  <Activity className="w-4 h-4 flex-shrink-0" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8} className="font-medium">My Activity</TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onClick={() => { navigate("/advisor-activity"); setSidebarOpen(false); }}
+              className="w-full flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 text-left group px-3 py-2.5 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+            >
+              <Activity className="w-4 h-4 flex-shrink-0 group-hover:text-foreground" />
+              <span className="flex-1 truncate">My Activity</span>
+            </button>
+          )}
         </nav>
 
         {/* ── Live Sessions CTA ── */}
@@ -735,7 +719,7 @@ const AdvisorPrivateProfile = () => {
       {/* ═══════════════════════════════════════════════════════════════════════
           MAIN CONTENT
           ═══════════════════════════════════════════════════════════════════════ */}
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden bg-background">
+      <main className="flex-1 min-w-0 flex flex-col bg-background">
 
         {/* Mobile top bar */}
         <div className="shrink-0 flex items-center gap-3 px-4 h-14 bg-background/95 backdrop-blur-md border-b border-border/50 lg:hidden">
@@ -761,181 +745,113 @@ const AdvisorPrivateProfile = () => {
           </div>
         </div>
 
-        {/* Scrollable page content */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide">
+        {/* Page content */}
+        <div className="flex-1">
           <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-5 sm:space-y-6">
 
             {/* ────────────────────────────────────────────────────
                 OVERVIEW
             ──────────────────────────────────────────────────── */}
             {activeTab === "overview" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20, fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
+              <div className="space-y-5 sm:space-y-6">
 
-                {/* ── Page header + toolbar ── */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                  {/* Left: title + subtitle */}
+                {/* Page header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em" }}>Overview</h1>
-                    <p style={{ margin: "4px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
-                      <strong style={{ color: "rgba(255,255,255,0.85)", fontWeight: 700 }}>{totalSess}</strong> sessions in {periodLabel}
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">Overview</h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      <span className="font-semibold text-foreground">{totalSess}</span> sessions in {periodLabel}
                     </p>
                   </div>
-
-                  {/* Right: granularity selector + export */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                    {/* Granularity selector — segmented pill */}
-                    <div style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(6,182,212,0.18)",
-                      borderRadius: 12,
-                      padding: 3,
-                      gap: 2,
-                      backdropFilter: "blur(12px)",
-                      boxShadow: "0 2px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
-                    }}>
-                      {(["daily", "weekly", "monthly"] as const).map((opt) => {
-                        const active = reportGranularity === opt;
-                        return (
-                          <button
-                            key={opt}
-                            onClick={() => {
-                              setReportGranularity(opt);
-                              setActivePeriod(opt === "daily" ? "7d" : opt === "weekly" ? "30d" : "90d");
-                            }}
-                            style={{
-                              padding: "5px 12px",
-                              borderRadius: 9,
-                              border: active ? "1px solid rgba(6,182,212,0.45)" : "1px solid transparent",
-                              background: active
-                                ? "linear-gradient(135deg, rgba(6,182,212,0.22) 0%, rgba(6,182,212,0.10) 100%)"
-                                : "transparent",
-                              color: active ? "#06b6d4" : "rgba(255,255,255,0.38)",
-                              fontSize: 11,
-                              fontWeight: active ? 700 : 500,
-                              cursor: "pointer",
-                              fontFamily: "'Plus Jakarta Sans', ui-sans-serif, sans-serif",
-                              letterSpacing: "0.04em",
-                              textTransform: "capitalize",
-                              transition: "all 0.18s ease",
-                              boxShadow: active ? "0 1px 8px rgba(6,182,212,0.2), inset 0 1px 0 rgba(6,182,212,0.15)" : "none",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Export CSV */}
-                    <button
-                      onClick={handleExportCSV}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "7px 14px",
-                        borderRadius: 10,
-                        background: "rgba(6,182,212,0.15)",
-                        border: "1px solid rgba(6,182,212,0.35)",
-                        color: "#06b6d4",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        fontFamily: "'Plus Jakarta Sans', ui-sans-serif, sans-serif",
-                        boxShadow: "0 2px 12px rgba(6,182,212,0.15)",
-                        transition: "all 0.15s ease",
-                        whiteSpace: "nowrap",
-                      }}
-                      onMouseOver={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = "rgba(6,182,212,0.25)"; b.style.borderColor = "rgba(6,182,212,0.55)"; }}
-                      onMouseOut={(e)  => { const b = e.currentTarget as HTMLButtonElement; b.style.background = "rgba(6,182,212,0.15)"; b.style.borderColor = "rgba(6,182,212,0.35)"; }}
-                    >
-                      <Download size={13} />
-                      Export CSV
-                    </button>
+                  <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1 self-start sm:self-auto">
+                    {(["7d", "30d", "90d"] as const).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setActivePeriod(p)}
+                        className={`px-3 sm:px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                          activePeriod === p
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
                 {/* Preview banner */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(6,182,212,0.04)", border: "1px solid rgba(6,182,212,0.15)", borderRadius: 12, padding: "10px 14px", backdropFilter: "blur(8px)" }}>
-                  <Sparkles size={15} style={{ color: "rgba(6,182,212,0.85)", flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
-                    Stats preview — your real earnings and sessions will appear here after your first reading.
-                  </span>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/[0.07] border border-primary/20 text-sm text-muted-foreground">
+                  <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span>Stats preview — your real earnings and sessions will appear here after your first reading.</span>
                 </div>
 
-                {/* KPI stat cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* Stats row */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
                   {[
-                    { label: "Total Earnings",  value: stats.earnings,         accentRgb: "6,182,212",   change: "+12%", bars: [30, 50, 40, 65, 55, 80, 70] },
-                    { label: "Sessions",        value: String(stats.sessions), accentRgb: "139,92,246",  change: "+8%",  bars: [45, 60, 35, 70, 50, 85, 65] },
-                    { label: "Avg Rating",      value: String(stats.rating),   accentRgb: "245,158,11",  change: "",     bars: [60, 45, 75, 55, 80, 65, 90] },
-                    { label: "Pending Balance", value: stats.pending,          accentRgb: "167,139,250", change: "",     bars: [40, 70, 50, 80, 45, 85, 60] },
-                  ].map(({ label, value, accentRgb, change, bars }) => (
-                    <div key={label} style={{ borderRadius: 18, padding: "1.5px", background: `linear-gradient(160deg, rgba(6,182,212,0.35) 0%, rgba(6,182,212,0.12) 50%, rgba(6,182,212,0.04) 100%)`, boxShadow: "0 0 0 0.5px rgba(6,182,212,0.08), 0 8px 32px rgba(0,0,0,0.45)" }}>
-                      <div style={{ borderRadius: 16.5, background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", padding: "16px 16px 14px", height: "100%", display: "flex", flexDirection: "column" }}>
-                        {/* Top row: label + mini bar chart */}
-                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.38)", fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.4 }}>{label}</span>
-                          {/* Mini bar chart */}
-                          <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 26, flexShrink: 0 }}>
-                            {bars.map((h, i) => (
-                              <div key={i} style={{ width: 3, borderRadius: 2, height: `${h}%`, background: i >= bars.length - 2 ? `rgba(6,182,212,1)` : `rgba(6,182,212,${0.18 + i * 0.09})` }} />
-                            ))}
-                          </div>
+                    { label: "Total Earnings",  value: stats.earnings,         icon: DollarSign, color: "text-cyan-400",    bg: "bg-cyan-400/12",    change: "+12%" },
+                    { label: "Sessions",        value: String(stats.sessions), icon: Users,      color: "text-primary",     bg: "bg-primary/12",     change: "+8%"  },
+                    { label: "Avg Rating",      value: String(stats.rating),   icon: Star,       color: "text-amber-400",   bg: "bg-amber-400/12",   change: ""     },
+                    { label: "Pending Balance", value: stats.pending,          icon: Clock,      color: "text-violet-400",  bg: "bg-violet-400/12",  change: ""     },
+                  ].map((stat) => (
+                    <Card key={stat.label} className="bg-card border-border hover:border-border/80 transition-colors">
+                      <CardContent className="p-3 sm:p-4 flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] text-muted-foreground leading-tight">{stat.label}</p>
+                          <p className="text-xl sm:text-2xl font-bold text-foreground mt-1 leading-none">{stat.value}</p>
+                          {stat.change && (
+                            <span className="text-[11px] text-emerald-400 flex items-center gap-1 mt-1.5">
+                              <TrendingUp className="w-3 h-3 flex-shrink-0" />
+                              {stat.change}
+                            </span>
+                          )}
                         </div>
-                        {/* Value */}
-                        <p style={{ margin: "0 0 0", fontSize: 26, fontWeight: 700, color: "rgba(255,255,255,0.93)", letterSpacing: "-0.03em", lineHeight: 1, flexGrow: 1 }}>{value}</p>
-                        {/* Bottom trend */}
-                        <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: 14, paddingTop: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                          <div style={{ width: 16, height: 16, borderRadius: "50%", border: `1px solid ${change ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.08)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: change ? "#4ade80" : "rgba(255,255,255,0.15)" }} />
-                          </div>
-                          <span style={{ fontSize: 11, color: change ? "#4ade80" : "rgba(255,255,255,0.22)", fontWeight: 600 }}>
-                            {change ? `${change} last ${activePeriod === "7d" ? "week" : activePeriod === "30d" ? "month" : "quarter"}` : "—"}
-                          </span>
+                        <div className={`w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${stat.bg}`}>
+                          <stat.icon className={`w-4.5 h-4.5 ${stat.color}`} style={{ width: "18px", height: "18px" }} />
                         </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
 
                 {/* Session Breakdown */}
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>Session Breakdown</h3>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.38)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", padding: "3px 10px", borderRadius: 999, fontFamily: "'SF Mono',monospace" }}>{totalSess} total</span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground">Session Breakdown</h3>
+                    <span className="text-xs text-muted-foreground bg-muted/60 border border-border/60 px-2.5 py-1 rounded-full">
+                      {totalSess} total
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                     {breakdown.map((t) => {
-                      const colors = {
-                        chat:  { hex: "#06b6d4", rgb: "6,182,212",  icon: MessageSquare },
-                        voice: { hex: "#8b5cf6", rgb: "139,92,246", icon: Mic           },
-                        video: { hex: "#6842EF", rgb: "104,66,239", icon: Video         },
+                      const cfg = {
+                        chat:  { iconBg: "bg-primary/10",             iconColor: "text-primary",   barColor: "bg-primary",   gradFrom: "from-primary/[0.05]",            border: "border-primary/20",            accent: "text-primary",   badgeBg: "bg-primary/10",            icon: MessageSquare },
+                        voice: { iconBg: "bg-[rgba(162,60,222,0.1)]", iconColor: "text-[#A23CDE]", barColor: "bg-[#A23CDE]", gradFrom: "from-[rgba(162,60,222,0.05)]",   border: "border-[rgba(162,60,222,0.2)]", accent: "text-[#A23CDE]", badgeBg: "bg-[rgba(162,60,222,0.1)]", icon: Mic           },
+                        video: { iconBg: "bg-[rgba(104,66,239,0.1)]", iconColor: "text-[#6842EF]", barColor: "bg-[#6842EF]", gradFrom: "from-[rgba(104,66,239,0.05)]",   border: "border-[rgba(104,66,239,0.2)]", accent: "text-[#6842EF]", badgeBg: "bg-[rgba(104,66,239,0.1)]", icon: Video         },
                       }[t.key as "chat" | "voice" | "video"];
-                      const TypeIcon = colors.icon;
+                      const TypeIcon = cfg.icon;
+
                       return (
-                        <div key={t.key} style={{ borderRadius: 20, padding: "1.5px", background: `linear-gradient(160deg, rgba(${colors.rgb},0.45) 0%, rgba(139,92,246,0.1) 50%, rgba(${colors.rgb},0.04) 100%)`, boxShadow: "0 0 0 0.5px rgba(139,92,246,0.07), 0 8px 32px rgba(0,0,0,0.4)" }}>
-                          <div style={{ borderRadius: 18.5, background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", padding: "18px 18px 16px", position: "relative", overflow: "hidden" }}>
-                            {/* ambient glow */}
-                            <div style={{ position: "absolute", top: -28, right: -28, width: 90, height: 90, borderRadius: "50%", background: `rgba(${colors.rgb},0.12)`, filter: "blur(28px)", pointerEvents: "none" }} />
-                            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-                              <div style={{ width: 36, height: 36, borderRadius: 11, background: `rgba(${colors.rgb},0.12)`, border: `1px solid rgba(${colors.rgb},0.25)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 14px rgba(${colors.rgb},0.08)` }}>
-                                <TypeIcon size={16} style={{ color: colors.hex }} />
-                              </div>
-                              <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: `rgba(${colors.rgb},0.12)`, border: `1px solid rgba(${colors.rgb},0.28)`, color: colors.hex, fontFamily: "'SF Mono',monospace", letterSpacing: "0.04em" }}>{t.pct}%</span>
+                        <div
+                          key={t.key}
+                          className={`relative overflow-hidden rounded-2xl border ${cfg.border} bg-gradient-to-br ${cfg.gradFrom} via-card to-card p-4 sm:p-5`}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center ${cfg.iconBg}`}>
+                              <TypeIcon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${cfg.iconColor}`} />
                             </div>
-                            <p style={{ margin: "0 0 2px", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: `rgba(${colors.rgb},0.65)`, fontFamily: "'SF Mono',monospace" }}>{t.label}</p>
-                            <p style={{ margin: "0 0 2px", fontSize: 32, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.03em", lineHeight: 1 }}>{t.sessions}</p>
-                            <p style={{ margin: "0 0 10px", fontSize: 11, color: "rgba(255,255,255,0.38)" }}>sessions</p>
-                            <p style={{ margin: "0 0 2px", fontSize: 14, fontWeight: 700, color: colors.hex }}>{t.earnings}</p>
-                            <p style={{ margin: "0 0 12px", fontSize: 10, color: "rgba(255,255,255,0.3)" }}>revenue earned</p>
-                            <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
-                              <div style={{ height: "100%", width: `${t.pct}%`, background: `linear-gradient(90deg, rgba(${colors.rgb},0.65), ${colors.hex})`, borderRadius: 3, transition: "width 0.7s ease", boxShadow: `0 0 8px rgba(${colors.rgb},0.5)` }} />
-                            </div>
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.badgeBg} ${cfg.accent}`}>
+                              {t.pct}%
+                            </span>
+                          </div>
+                          <p className="text-[10px] font-semibold text-muted-foreground mb-0.5 uppercase tracking-wider">{t.label}</p>
+                          <p className="text-3xl sm:text-[2rem] font-bold text-foreground tracking-tight leading-none mb-0.5">{t.sessions}</p>
+                          <p className="text-xs text-muted-foreground mb-3">sessions</p>
+                          <p className={`text-sm font-semibold ${cfg.accent}`}>{t.earnings}</p>
+                          <p className="text-[10px] text-muted-foreground mb-3">revenue earned</p>
+                          <div className="h-1 rounded-full bg-border/40 overflow-hidden">
+                            <div className={`h-full rounded-full ${cfg.barColor} transition-all duration-700`} style={{ width: `${t.pct}%` }} />
                           </div>
                         </div>
                       );
@@ -944,57 +860,55 @@ const AdvisorPrivateProfile = () => {
                 </div>
 
                 {/* Earnings Chart */}
-                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(139,92,246,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(139,92,246,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(139,92,246,0.08), 0 16px 48px rgba(0,0,0,0.5)" }}>
-                  <div style={{ borderRadius: 18.5, background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", overflow: "hidden" }}>
-                    <div style={{ padding: "18px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>Earnings Breakdown</h3>
-                    </div>
-                    <div style={{ padding: "16px 8px 4px 4px" }}>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <AreaChart data={chartData} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="ovChatGrad"  x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%"  stopColor="#06b6d4" stopOpacity={0.4}  />
-                              <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.02} />
-                            </linearGradient>
-                            <linearGradient id="ovVoiceGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%"  stopColor="#8b5cf6" stopOpacity={0.35} />
-                              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.02} />
-                            </linearGradient>
-                            <linearGradient id="ovVideoGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%"  stopColor="#6842EF" stopOpacity={0.35} />
-                              <stop offset="95%" stopColor="#6842EF" stopOpacity={0.02} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                          <XAxis dataKey="label" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: "rgba(255,255,255,0.35)", fontFamily: "'Plus Jakarta Sans',ui-sans-serif,sans-serif" }} />
-                          <YAxis fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v: number) => `$${v}`} width={45} tick={{ fill: "rgba(255,255,255,0.28)", fontFamily: "'Plus Jakarta Sans',ui-sans-serif,sans-serif" }} />
-                          <ChartTooltip
-                            cursor={{ stroke: "rgba(6,182,212,0.25)", strokeWidth: 1, strokeDasharray: "4 4" }}
-                            contentStyle={{ background: "linear-gradient(155deg,#1a0d38,#0f0620)", border: "1px solid rgba(6,182,212,0.25)", borderRadius: "10px", color: "rgba(255,255,255,0.88)", fontSize: "12px", fontFamily: "'Plus Jakarta Sans',sans-serif", boxShadow: "0 8px 32px rgba(0,0,0,0.55)" }}
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            formatter={(value: any, name: string) => [`$${value}`, name.charAt(0).toUpperCase() + name.slice(1)]}
-                          />
-                          <Area type="monotone" dataKey="chat"  stackId="1" stroke="#06b6d4" fill="url(#ovChatGrad)"  strokeWidth={2} />
-                          <Area type="monotone" dataKey="voice" stackId="1" stroke="#8b5cf6" fill="url(#ovVoiceGrad)" strokeWidth={2} />
-                          <Area type="monotone" dataKey="video" stackId="1" stroke="#6842EF" fill="url(#ovVideoGrad)" strokeWidth={2} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "0 16px 16px" }}>
+                <Card className="bg-card border-border overflow-hidden">
+                  <CardHeader className="pb-2 px-4 sm:px-5 pt-4 sm:pt-5">
+                    <CardTitle className="text-sm sm:text-base font-heading">Earnings Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-1 sm:px-2 pb-3">
+                    <ResponsiveContainer width="100%" height={200}>
+                      <AreaChart data={chartData} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="chatGrad"  x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+                          </linearGradient>
+                          <linearGradient id="voiceGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#A23CDE" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#A23CDE" stopOpacity={0.02} />
+                          </linearGradient>
+                          <linearGradient id="videoGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#6842EF" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#6842EF" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                        <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v: number) => `$${v}`} width={45} />
+                        <ChartTooltip
+                          cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1, strokeDasharray: "4 4" }}
+                          contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))", fontSize: "12px" }}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          formatter={(value: any, name: string) => [`$${value}`, name.charAt(0).toUpperCase() + name.slice(1)]}
+                        />
+                        <Area type="monotone" dataKey="chat"  stackId="1" stroke="hsl(var(--primary))" fill="url(#chatGrad)"  strokeWidth={2} />
+                        <Area type="monotone" dataKey="voice" stackId="1" stroke="#A23CDE"              fill="url(#voiceGrad)" strokeWidth={2} />
+                        <Area type="monotone" dataKey="video" stackId="1" stroke="#6842EF"              fill="url(#videoGrad)" strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    <div className="flex items-center justify-center gap-5 mt-1.5 pb-1">
                       {[
-                        { label: "Chat",  color: "#06b6d4" },
-                        { label: "Voice", color: "#8b5cf6" },
-                        { label: "Video", color: "#6842EF" },
+                        { label: "Chat",  color: "hsl(var(--primary))" },
+                        { label: "Voice", color: "#A23CDE"              },
+                        { label: "Video", color: "#6842EF"              },
                       ].map((l) => (
-                        <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: l.color, display: "inline-block", boxShadow: `0 0 6px ${l.color}` }} />
-                          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{l.label}</span>
+                        <div key={l.label} className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: l.color }} />
+                          <span className="text-xs text-muted-foreground">{l.label}</span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
 
               </div>
             )}
@@ -1044,75 +958,50 @@ const AdvisorPrivateProfile = () => {
                 REVIEWS
             ──────────────────────────────────────────────────── */}
             {activeTab === "reviews" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20, fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
-                <div>
-                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em" }}>Reviews</h1>
-                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>What clients say about you</p>
-                </div>
-
-                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(139,92,246,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(139,92,246,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(139,92,246,0.08), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
-                  <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", overflow: "hidden" }}>
-
-                    {/* Card header */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
-                        <div style={{ width: 42, height: 42, borderRadius: 13, background: "linear-gradient(135deg, rgba(6,182,212,0.14) 0%, rgba(139,92,246,0.14) 100%)", border: "1px solid rgba(6,182,212,0.22)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(6,182,212,0.09)", flexShrink: 0 }}>
-                          <Star size={18} style={{ color: "rgba(6,182,212,0.85)", fill: "rgba(6,182,212,0.25)" }} />
-                        </div>
-                        <div>
-                          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>Client Reviews</h2>
-                          <p style={{ margin: "3px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
-                            {mockReviews.length > 0 ? `${mockReviews.length} review${mockReviews.length !== 1 ? "s" : ""} from your clients` : "No reviews yet"}
-                          </p>
-                        </div>
-                      </div>
-                      {mockReviews.length > 0 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 8, background: "rgba(6,182,212,0.07)", border: "1px solid rgba(6,182,212,0.2)" }}>
-                          <Star size={13} style={{ color: "rgba(6,182,212,0.9)", fill: "rgba(6,182,212,0.5)" }} />
-                          <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(6,182,212,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>4.8</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Review rows */}
-                    <div style={{ padding: "14px 16px 16px" }}>
-                      {mockReviews.length === 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", textAlign: "center" }}>
-                          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                            <Star size={20} style={{ color: "rgba(255,255,255,0.18)" }} />
-                          </div>
-                          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>No reviews yet</p>
-                          <p style={{ margin: "6px 0 0", fontSize: 12, color: "rgba(255,255,255,0.28)" }}>Reviews will appear here after completed sessions.</p>
-                        </div>
-                      ) : (
-                        mockReviews.map((review) => (
-                          <div key={review.id} style={{ position: "relative", borderRadius: 14, padding: "1px", background: "linear-gradient(135deg, rgba(6,182,212,0.32) 0%, rgba(139,92,246,0.16) 50%, transparent 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.1), 0 4px 16px rgba(6,182,212,0.05), 0 2px 8px rgba(0,0,0,0.35)", marginBottom: 7 }}>
-                            <div aria-hidden="true" style={{ position: "absolute", left: 1, top: "18%", bottom: "18%", width: 3, borderRadius: "0 3px 3px 0", background: "linear-gradient(180deg, #06b6d4 0%, rgba(139,92,246,0.6) 100%)", boxShadow: "0 0 14px rgba(6,182,212,0.7)", zIndex: 2 }} />
-                            <div style={{ borderRadius: 13, padding: "14px 16px 14px 20px", background: "linear-gradient(135deg, rgba(6,182,212,0.06) 0%, rgba(139,92,246,0.04) 100%)", backdropFilter: "blur(12px)", position: "relative", zIndex: 2 }}>
-                              <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 8 }}>
-                                <div style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg, rgba(6,182,212,0.15) 0%, rgba(139,92,246,0.15) 100%)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                  <span style={{ fontSize: 14, fontWeight: 700, color: "rgba(6,182,212,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{review.name[0]}</span>
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                                    <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{review.name}</p>
-                                    <div style={{ display: "flex", gap: 2, flexShrink: 0 }}>
-                                      {Array.from({ length: 5 }).map((_, i) => (
-                                        <Star key={i} size={12} style={i < review.rating ? { color: "rgba(6,182,212,0.9)", fill: "rgba(6,182,212,0.7)" } : { color: "rgba(255,255,255,0.15)", fill: "transparent" }} />
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <p style={{ margin: "2px 0 0", fontSize: 10.5, color: "rgba(255,255,255,0.3)", fontFamily: "'SF Mono', 'Fira Code', monospace", letterSpacing: "0.04em" }}>{review.date}</p>
-                                </div>
-                              </div>
-                              <p style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.6, fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>{review.text}</p>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
+              <div className="space-y-5 sm:space-y-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">Reviews</h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">What clients say about you</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[rgba(104,66,239,0.10)] border border-[rgba(104,66,239,0.25)] shrink-0">
+                    <Star className="w-3.5 h-3.5 fill-[#6842EF] text-[#6842EF]" />
+                    <span className="text-xs font-bold text-[#6842EF]">4.8</span>
+                    <span className="text-xs text-muted-foreground">· {mockReviews.length}</span>
                   </div>
                 </div>
+
+                {mockReviews.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center mb-3">
+                      <Star className="w-5 h-5 text-muted-foreground/40" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">No reviews yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Reviews will appear here after completed sessions.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {mockReviews.map((review) => (
+                      <div key={review.id} className="p-4 rounded-xl bg-card border border-border hover:border-border/80 transition-colors">
+                        <div className="flex items-start gap-3 mb-2.5">
+                          <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 ring-1 ring-primary/20">
+                            <span className="text-sm font-bold text-primary">{review.name[0]}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground leading-tight">{review.name}</p>
+                            <p className="text-xs text-muted-foreground/70">{review.date}</p>
+                          </div>
+                          <div className="flex gap-0.5 flex-shrink-0">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? "fill-[#6842EF] text-[#6842EF]" : "text-border"}`} />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{review.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1120,91 +1009,73 @@ const AdvisorPrivateProfile = () => {
                 MY CLIENTS
             ──────────────────────────────────────────────────── */}
             {activeTab === "clients" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20, fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
-                <div>
-                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em" }}>My Clients</h1>
-                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Your complete client history</p>
+              <div className="space-y-5 sm:space-y-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">My Clients</h1>
+                    <p className="text-xs text-muted-foreground mt-0.5">Your complete client history</p>
+                  </div>
+                  {clientGroups.length > 0 && (
+                    <span className="text-xs font-semibold text-primary/80 bg-primary/10 px-3 py-1 rounded-full shrink-0 self-start mt-1">
+                      {clientGroups.length} client{clientGroups.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
                 </div>
 
-                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(6,182,212,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.08), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
-                  <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", overflow: "hidden" }}>
-
-                    {/* Card header */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
-                        <div style={{ width: 42, height: 42, borderRadius: 13, background: "linear-gradient(135deg, rgba(6,182,212,0.14) 0%, rgba(139,92,246,0.14) 100%)", border: "1px solid rgba(6,182,212,0.22)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(6,182,212,0.09)", flexShrink: 0 }}>
-                          <Users size={18} style={{ color: "rgba(6,182,212,0.85)" }} />
+                {isLoadingClients ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                ) : clientGroups.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-3">
+                      <Users className="w-6 h-6 text-primary/40" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">No clients yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Your clients will appear here after completed sessions.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {clientGroups.map((client) => (
+                      <div
+                        key={client.clientId}
+                        className="flex items-center gap-3 p-3.5 sm:p-4 rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-[0_0_18px_hsl(var(--primary)/0.08)] transition-all duration-200"
+                      >
+                        <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden ring-1 ring-primary/25 bg-primary/15 flex items-center justify-center">
+                          {client.avatarUrl
+                            ? <img src={client.avatarUrl} alt={client.name} className="w-full h-full object-cover" />
+                            : <span className="text-sm font-bold text-primary">{client.name[0]?.toUpperCase()}</span>
+                          }
                         </div>
-                        <div>
-                          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>My Clients</h2>
-                          <p style={{ margin: "3px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
-                            {clientGroups.length > 0 ? `${clientGroups.length} client${clientGroups.length !== 1 ? "s" : ""} · complete history` : "No clients yet"}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">{client.name}</p>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            {client.typeCounts.chat > 0 && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/12 text-primary font-semibold">{client.typeCounts.chat} chat</span>
+                            )}
+                            {client.typeCounts.audio > 0 && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(162,60,222,0.12)] text-[#A23CDE] font-semibold">{client.typeCounts.audio} voice</span>
+                            )}
+                            {client.typeCounts.video > 0 && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(104,66,239,0.12)] text-[#6842EF] font-semibold">{client.typeCounts.video} video</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-foreground">${client.totalEarnings.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {client.sessions.length} session{client.sessions.length !== 1 ? "s" : ""}
                           </p>
+                          {client.lastSessionAt && (
+                            <p className="text-[10px] text-muted-foreground/55 mt-0.5">
+                              {new Date(client.lastSessionAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      {clientGroups.length > 0 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 8, background: "rgba(6,182,212,0.07)", border: "1px solid rgba(6,182,212,0.2)" }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(6,182,212,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{clientGroups.length}</span>
-                          <span style={{ fontSize: 11, color: "rgba(6,182,212,0.6)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>client{clientGroups.length !== 1 ? "s" : ""}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Client rows */}
-                    <div style={{ padding: "14px 16px 16px" }}>
-                      {isLoadingClients ? (
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 0" }}>
-                          <Loader2 className="w-6 h-6 animate-spin" style={{ color: "rgba(6,182,212,0.7)" }} />
-                        </div>
-                      ) : clientGroups.length === 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", textAlign: "center" }}>
-                          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                            <Users size={20} style={{ color: "rgba(255,255,255,0.18)" }} />
-                          </div>
-                          <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>No clients yet</p>
-                          <p style={{ margin: "6px 0 0", fontSize: 12, color: "rgba(255,255,255,0.28)" }}>Your clients will appear here after completed sessions.</p>
-                        </div>
-                      ) : (
-                        clientGroups.map((client) => (
-                          <div key={client.clientId} style={{ position: "relative", borderRadius: 14, padding: "1px", background: "linear-gradient(135deg, rgba(6,182,212,0.32) 0%, rgba(139,92,246,0.16) 50%, transparent 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.1), 0 4px 16px rgba(6,182,212,0.05), 0 2px 8px rgba(0,0,0,0.35)", marginBottom: 7 }}>
-                            <div aria-hidden="true" style={{ position: "absolute", left: 1, top: "18%", bottom: "18%", width: 3, borderRadius: "0 3px 3px 0", background: "linear-gradient(180deg, #06b6d4 0%, rgba(139,92,246,0.6) 100%)", boxShadow: "0 0 14px rgba(6,182,212,0.7)", zIndex: 2 }} />
-                            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 16px 13px 20px", borderRadius: 13, background: "linear-gradient(135deg, rgba(6,182,212,0.06) 0%, rgba(139,92,246,0.04) 100%)", backdropFilter: "blur(12px)", position: "relative", zIndex: 2 }}>
-                              <div style={{ width: 40, height: 40, borderRadius: "50%", flexShrink: 0, overflow: "hidden", border: "1px solid rgba(6,182,212,0.25)", background: "linear-gradient(135deg, rgba(6,182,212,0.15) 0%, rgba(139,92,246,0.15) 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                {client.avatarUrl
-                                  ? <img src={client.avatarUrl} alt={client.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                  : <span style={{ fontSize: 14, fontWeight: 700, color: "rgba(6,182,212,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{client.name[0]?.toUpperCase()}</span>
-                                }
-                              </div>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{client.name}</p>
-                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 5, flexWrap: "wrap" }}>
-                                  {client.typeCounts.chat > 0 && (
-                                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 999, background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", color: "rgba(6,182,212,0.85)", fontWeight: 700, fontFamily: "'SF Mono', monospace" }}>{client.typeCounts.chat} chat</span>
-                                  )}
-                                  {client.typeCounts.audio > 0 && (
-                                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 999, background: "rgba(162,60,222,0.1)", border: "1px solid rgba(162,60,222,0.2)", color: "rgba(162,60,222,0.85)", fontWeight: 700, fontFamily: "'SF Mono', monospace" }}>{client.typeCounts.audio} voice</span>
-                                  )}
-                                  {client.typeCounts.video > 0 && (
-                                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 999, background: "rgba(104,66,239,0.1)", border: "1px solid rgba(104,66,239,0.2)", color: "rgba(104,66,239,0.85)", fontWeight: 700, fontFamily: "'SF Mono', monospace" }}>{client.typeCounts.video} video</span>
-                                  )}
-                                </div>
-                              </div>
-                              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>${client.totalEarnings.toFixed(2)}</p>
-                                <p style={{ margin: "3px 0 0", fontSize: 11, color: "rgba(255,255,255,0.4)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{client.sessions.length} session{client.sessions.length !== 1 ? "s" : ""}</p>
-                                {client.lastSessionAt && (
-                                  <p style={{ margin: "2px 0 0", fontSize: 10, color: "rgba(255,255,255,0.25)", fontFamily: "'SF Mono', monospace" }}>
-                                    {new Date(client.lastSessionAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
+                    ))}
                   </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -1212,149 +1083,137 @@ const AdvisorPrivateProfile = () => {
                 INSIGHTS
             ──────────────────────────────────────────────────── */}
             {activeTab === "insights" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20, fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
+              <div className="space-y-5 sm:space-y-6">
                 <div>
-                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em" }}>Performance Insights</h1>
-                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Analytics from your completed sessions</p>
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">Performance Insights</h1>
+                  <p className="text-xs text-muted-foreground mt-0.5">Analytics from your completed sessions</p>
                 </div>
 
                 {isLoadingInsights ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0" }}>
-                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: "rgba(6,182,212,0.7)" }} />
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
                 ) : totalInsightSessions === 0 ? (
-                  <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(139,92,246,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(139,92,246,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(139,92,246,0.08), 0 24px 64px rgba(0,0,0,0.55)" }}>
-                    <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "64px 24px", textAlign: "center" }}>
-                      <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                        <BarChart2 size={22} style={{ color: "rgba(255,255,255,0.18)" }} />
-                      </div>
-                      <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>No data yet</p>
-                      <p style={{ margin: "6px 0 0", fontSize: 12, color: "rgba(255,255,255,0.28)" }}>Complete your first session to see insights here.</p>
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-14 h-14 rounded-full bg-card border border-border flex items-center justify-center mb-3">
+                      <BarChart2 className="w-6 h-6 text-muted-foreground/40" />
                     </div>
+                    <p className="text-sm font-semibold text-foreground">No data yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Complete your first session to see insights here.</p>
                   </div>
                 ) : (
                   <>
-                    {/* 3 KPI metric cards */}
-                    <div className="grid grid-cols-3 gap-3">
+                    {/* 3 metric cards */}
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
                       {[
-                        { label: "Unique Clients", value: String(uniqueClientCount), icon: Users,      color: "rgba(6,182,212,0.9)",   bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.2)"   },
-                        { label: "Avg Session",    value: `${avgDurationMin}m`,      icon: Clock,      color: "rgba(6,182,212,0.9)",   bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.2)"   },
-                        { label: "Total Hours",    value: `${totalHours}h`,          icon: TrendingUp, color: "rgba(6,182,212,0.9)",   bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.2)"   },
-                      ].map(({ label, value, icon: Icon, color, bg, border }) => (
-                        <div key={label} style={{ borderRadius: 18, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.35) 0%, rgba(6,182,212,0.12) 50%, rgba(6,182,212,0.06) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.12), 0 8px 32px rgba(0,0,0,0.45)" }}>
-                          <div style={{ borderRadius: 16.5, background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", padding: "16px", display: "flex", flexDirection: "column", gap: 12 }}>
-                            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-                              <div style={{ width: 32, height: 32, borderRadius: 10, background: bg, border: `1px solid ${border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                <Icon size={15} style={{ color }} />
-                              </div>
+                        { label: "Unique Clients", value: String(uniqueClientCount), icon: Users      },
+                        { label: "Avg Session",    value: `${avgDurationMin}m`,      icon: Clock      },
+                        { label: "Total Hours",    value: `${totalHours}h`,          icon: TrendingUp },
+                      ].map((m) => (
+                        <Card key={m.label} className="bg-card border-border border-t-2 border-t-cyan-400/35">
+                          <CardContent className="p-3 sm:p-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight">{m.label}</p>
+                              <p className="text-lg sm:text-xl font-bold text-foreground mt-0.5">{m.value}</p>
                             </div>
-                            <div>
-                              <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em", fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>{value}</p>
-                              <p style={{ margin: "4px 0 0", fontSize: 11, color: "rgba(255,255,255,0.4)", fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>{label}</p>
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex-shrink-0 flex items-center justify-center bg-cyan-400/12">
+                              <m.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
                             </div>
-                          </div>
-                        </div>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
 
                     {/* Return rate + Avg duration */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {/* Return clients */}
-                      <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.35) 0%, rgba(6,182,212,0.12) 50%, rgba(6,182,212,0.06) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.12), 0 8px 32px rgba(0,0,0,0.45)" }}>
-                        <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", padding: "20px 24px" }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                      <Card className="bg-gradient-to-br from-cyan-400/[0.04] to-card border-border border-t-2 border-t-cyan-400/30">
+                        <CardContent className="p-4 sm:p-5">
+                          <div className="flex items-center justify-between mb-4">
                             <div>
-                              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Return clients</p>
-                              <p style={{ margin: "3px 0 0", fontSize: 10.5, color: "rgba(255,255,255,0.35)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>last 30 days</p>
+                              <p className="text-xs font-semibold text-foreground">Return clients</p>
+                              <p className="text-[10px] text-muted-foreground/60 mt-0.5">(last 30 days)</p>
                             </div>
-                            <button title="Clients who had more than one session with you in the last 30 days" style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(6,182,212,0.08)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                              <HelpCircle size={14} style={{ color: "rgba(6,182,212,0.55)" }} />
+                            <button title="Clients who had more than one session with you in the last 30 days" className="w-6 h-6 rounded-lg bg-cyan-400/10 flex items-center justify-center text-cyan-400/60 hover:text-cyan-400 transition-colors">
+                              <HelpCircle className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                          <div style={{ display: "flex", alignItems: "center" }}>
-                            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                              <p style={{ margin: 0, fontSize: 32, fontWeight: 700, color: "rgba(255,255,255,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.03em" }}>{returningClients30d}</p>
-                              <p style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,0.35)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>clients</p>
+                          <div className="flex items-center">
+                            <div className="flex-1 flex flex-col items-center gap-0.5">
+                              <p className="text-3xl font-bold text-foreground">{returningClients30d}</p>
+                              <p className="text-[10px] text-muted-foreground">clients</p>
                             </div>
-                            <div style={{ width: 1, height: 40, background: "rgba(255,255,255,0.08)", margin: "0 20px", flexShrink: 0 }} />
-                            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                              <p style={{ margin: 0, fontSize: 32, fontWeight: 700, color: "rgba(6,182,212,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.03em" }}>{returningClientsPct}%</p>
-                              <p style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,0.35)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>return rate</p>
+                            <div className="w-px h-10 bg-border/50 mx-3 flex-shrink-0" />
+                            <div className="flex-1 flex flex-col items-center gap-0.5">
+                              <p className="text-3xl font-bold text-cyan-400">{returningClientsPct}%</p>
+                              <p className="text-[10px] text-muted-foreground">return rate</p>
                             </div>
                           </div>
-                        </div>
-                      </div>
+                        </CardContent>
+                      </Card>
 
-                      {/* Avg duration */}
-                      <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.35) 0%, rgba(6,182,212,0.12) 50%, rgba(6,182,212,0.06) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.12), 0 8px 32px rgba(0,0,0,0.45)" }}>
-                        <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", padding: "20px 24px" }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                            <div>
-                              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Avg session</p>
-                              <p style={{ margin: "3px 0 0", fontSize: 10.5, color: "rgba(255,255,255,0.35)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>last 30 days</p>
-                            </div>
-                            <button title="Average duration of your sessions in the last 30 days" style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(6,182,212,0.08)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                              <HelpCircle size={14} style={{ color: "rgba(6,182,212,0.55)" }} />
-                            </button>
+                      <Card className="bg-gradient-to-br from-cyan-400/[0.04] to-card border-border border-t-2 border-t-cyan-400/30">
+                        <CardContent className="p-4 sm:p-5 flex flex-col items-center justify-center h-full gap-1">
+                          <p className="text-[10px] text-muted-foreground mb-1">Avg session duration</p>
+                          <p className="text-3xl font-bold text-foreground">{avgDurationFormatted}</p>
+                          <div className="relative w-full mt-3">
+                            <div className="h-1 rounded-full bg-border/50 w-full" />
+                            <div
+                              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-cyan-400 border-2 border-card shadow-[0_0_6px_rgba(34,211,238,0.5)] transition-all"
+                              style={{ left: `calc(${avgDurTrackPct}% - 6px)` }}
+                            />
                           </div>
-                          <div style={{ display: "flex", alignItems: "center" }}>
-                            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                              <p style={{ margin: 0, fontSize: 32, fontWeight: 700, color: "rgba(255,255,255,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.03em" }}>{avgDurationFormatted}</p>
-                              <p style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,0.35)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>per session</p>
-                            </div>
-                            <div style={{ width: 1, height: 40, background: "rgba(255,255,255,0.08)", margin: "0 20px", flexShrink: 0 }} />
-                            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                              <p style={{ margin: 0, fontSize: 32, fontWeight: 700, color: "rgba(6,182,212,0.9)", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.03em" }}>{totalHours}h</p>
-                              <p style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,0.35)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>total time</p>
-                            </div>
+                          <div className="flex justify-between w-full mt-1">
+                            <span className="text-[9px] text-muted-foreground/50">0m</span>
+                            <span className="text-[9px] text-muted-foreground/50">60m</span>
                           </div>
-                        </div>
-                      </div>
+                        </CardContent>
+                      </Card>
                     </div>
 
-                    {/* Session distribution chart */}
-                    <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.35) 0%, rgba(6,182,212,0.12) 50%, rgba(6,182,212,0.06) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.12), 0 8px 32px rgba(0,0,0,0.45)" }}>
-                      <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", overflow: "hidden" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "18px 24px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <BarChart2 size={15} style={{ color: "rgba(6,182,212,0.85)" }} />
-                          </div>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.85)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Session Distribution</span>
-                        </div>
-                        <div style={{ padding: "8px 16px 16px" }}>
-                          <ResponsiveContainer width="100%" height={150}>
-                            <BarChart data={typeDistributionData} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                              <XAxis dataKey="label" stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} fontFamily="'Plus Jakarta Sans', sans-serif" />
-                              <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-                              <ChartTooltip contentStyle={{ background: "rgba(18,10,46,0.97)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "10px", color: "rgba(255,255,255,0.85)", fontSize: "12px", fontFamily: "'Plus Jakarta Sans', sans-serif" }} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
-                              <Bar dataKey="count" radius={[5, 5, 0, 0]}>
-                                {typeDistributionData.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                                ))}
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Session distribution */}
+                    <Card className="bg-card border-border">
+                      <CardHeader className="pb-2 px-4 sm:px-5 pt-4 sm:pt-5">
+                        <CardTitle className="text-sm sm:text-base font-heading flex items-center gap-2">
+                          <BarChart2 className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                          Session Distribution
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="px-2 pb-4">
+                        <ResponsiveContainer width="100%" height={150}>
+                          <BarChart data={typeDistributionData} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                            <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                            <ChartTooltip
+                              contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))", fontSize: "12px" }}
+                              cursor={{ fill: "hsl(var(--border)/0.3)" }}
+                            />
+                            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                              {typeDistributionData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
 
                     {/* All-time summary */}
-                    <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.35) 0%, rgba(6,182,212,0.12) 50%, rgba(6,182,212,0.06) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.12), 0 8px 32px rgba(0,0,0,0.45)" }}>
-                      <div style={{ borderRadius: "18.5px", background: "linear-gradient(135deg, rgba(6,182,212,0.06) 0%, rgba(18,10,46,0.98) 40%, rgba(9,6,26,1) 100%)", backdropFilter: "blur(24px)", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, position: "relative", overflow: "hidden" }}>
-                        <div aria-hidden="true" style={{ position: "absolute", right: 24, top: "50%", transform: "translateY(-50%)", opacity: 0.04 }}>
-                          <BarChart2 size={64} style={{ color: "rgba(6,182,212,1)" }} />
-                        </div>
-                        <div style={{ position: "relative", zIndex: 1 }}>
-                          <p style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,0.4)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 4 }}>All-time earnings</p>
-                          <p style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "rgba(6,182,212,0.95)", letterSpacing: "-0.03em", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>${totalInsightEarnings.toFixed(2)}</p>
-                        </div>
-                        <div style={{ textAlign: "right", position: "relative", zIndex: 1 }}>
-                          <p style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,0.4)", fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 4 }}>Total sessions</p>
-                          <p style={{ margin: 0, fontSize: 28, fontWeight: 700, color: "rgba(255,255,255,0.9)", letterSpacing: "-0.03em", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{totalInsightSessions}</p>
-                        </div>
+                    <Card className="bg-gradient-to-r from-cyan-400/[0.06] via-card to-card border-border border-t-2 border-t-cyan-400/30 overflow-hidden relative">
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <BarChart2 className="w-16 h-16 text-cyan-400/[0.06]" />
                       </div>
-                    </div>
+                      <CardContent className="p-4 sm:p-5 flex items-center justify-between gap-4 relative">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">All-time earnings</p>
+                          <p className="text-2xl font-bold text-cyan-400">${totalInsightEarnings.toFixed(2)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground mb-1">Total sessions</p>
+                          <p className="text-2xl font-bold text-foreground">{totalInsightSessions}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </>
                 )}
               </div>
@@ -1364,23 +1223,14 @@ const AdvisorPrivateProfile = () => {
                 AI TWIN & PAYOUTS
             ──────────────────────────────────────────────────── */}
             {activeTab === "ai-payouts" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 20, fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
+              <div className="space-y-5 sm:space-y-6">
                 <div>
-                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em" }}>AI Twin</h1>
-                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Configure your AI clone and voice model</p>
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground">AI Twin</h1>
+                  <p className="text-xs text-muted-foreground mt-0.5">Configure your AI clone and voice model</p>
                 </div>
 
-                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(6,182,212,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.1), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
-                  <div style={{ borderRadius: "18.5px", overflow: "hidden" }}>
-                    <TwinSetupCard />
-                  </div>
-                </div>
-
-                <div style={{ borderRadius: 20, padding: "1.5px", background: "linear-gradient(160deg, rgba(6,182,212,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(6,182,212,0.05) 100%)", boxShadow: "0 0 0 0.5px rgba(6,182,212,0.1), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)" }}>
-                  <div style={{ borderRadius: "18.5px", overflow: "hidden" }}>
-                    <VoiceRecordingCard />
-                  </div>
-                </div>
+                <TwinSetupCard />
+                <VoiceRecordingCard />
               </div>
             )}
 
