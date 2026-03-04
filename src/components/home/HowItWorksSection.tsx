@@ -50,7 +50,7 @@ export const HowItWorksSection = () => {
           {steps.map((step, index) => (
             <div
               key={step.title}
-              className="relative text-center animate-fade-in pt-4"
+              className="relative text-center animate-fade-in"
               style={{ animationDelay: `${index * 0.15}s` }}
             >
               {/* Connector Line (Desktop) */}
@@ -58,14 +58,15 @@ export const HowItWorksSection = () => {
                 <div className="hidden md:block absolute top-[3.5rem] left-[60%] w-[80%] h-px bg-gradient-to-r from-border via-primary/30 to-border" />
               )}
 
-              {/* Step Number */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white text-black text-xs font-bold flex items-center justify-center">
-                {index + 1}
-              </div>
-
-              {/* Icon - 15% larger */}
-              <div className={`w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mb-6 shadow-lg`}>
-                <step.icon className="w-12 h-12 text-white" />
+              {/* Icon + Step Number */}
+              <div className="relative inline-block mb-6">
+                <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}>
+                  <step.icon className="w-12 h-12 text-white" />
+                </div>
+                {/* Step Number badge anchored to top of icon */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white text-black text-xs font-bold flex items-center justify-center shadow-sm">
+                  {index + 1}
+                </div>
               </div>
 
               {/* Content */}

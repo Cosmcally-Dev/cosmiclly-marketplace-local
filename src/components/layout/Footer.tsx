@@ -39,9 +39,9 @@ export const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-10">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
+            <Link to="/" className="flex items-center gap-0 mb-4">
               <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-9 w-auto object-contain" />
-              <span className="font-heading text-lg font-semibold text-gradient">Cosmiclly</span>
+              <span className="font-heading text-lg font-semibold text-gradient -ml-2">osmiclly</span>
             </Link>
             <p className="text-muted-foreground text-sm mb-5">
               Connect with gifted psychic advisors for guidance on love, career, and life.

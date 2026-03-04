@@ -464,7 +464,7 @@ const Chat = () => {
         )}
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-styled">
           {/* Ringing state */}
           {(chatStatus === 'connecting' || chatStatus === 'ringing') && (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-12">

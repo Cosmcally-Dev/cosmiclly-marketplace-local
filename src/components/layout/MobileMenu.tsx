@@ -95,9 +95,9 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <Link to="/" onClick={onClose} className="flex items-center gap-2">
+            <Link to="/" onClick={onClose} className="flex items-center gap-0">
               <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-8 w-auto object-contain" />
-              <span className="font-heading text-lg font-semibold text-gradient">Cosmiclly</span>
+              <span className="font-heading text-lg font-semibold text-gradient -ml-2">osmiclly</span>
             </Link>
             <button
               onClick={onClose}
@@ -109,7 +109,7 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           </div>
 
           {/* Menu Items */}
-          <nav className="flex-1 overflow-y-auto py-2">
+          <nav className="flex-1 overflow-y-auto py-2 scrollbar-styled">
             <ul className="space-y-0.5">
               {menuItems.map((item) => (
                 <li key={item.label}>

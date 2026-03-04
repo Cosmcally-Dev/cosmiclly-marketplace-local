@@ -79,6 +79,18 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      fontSize: {
+        /* Nudge up the two smallest steps for modern readability */
+        xs:   ['0.8125rem', { lineHeight: '1.4' }],   /* 13px  (was 12px) */
+        sm:   ['0.9375rem', { lineHeight: '1.5' }],   /* 15px  (was 14px) */
+        base: ['1rem',      { lineHeight: '1.65' }],  /* 16px — keep */
+        lg:   ['1.125rem',  { lineHeight: '1.55' }],  /* 18px — keep */
+        xl:   ['1.25rem',   { lineHeight: '1.45' }],  /* 20px — keep */
+        '2xl':['1.5rem',    { lineHeight: '1.35' }],  /* 24px — keep */
+        '3xl':['1.875rem',  { lineHeight: '1.25' }],  /* 30px — keep */
+        '4xl':['2.25rem',   { lineHeight: '1.15' }],  /* 36px — keep */
+        '5xl':['3rem',      { lineHeight: '1.1'  }],  /* 48px — keep */
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

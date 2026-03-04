@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Mail, Lock, User, Sparkles, Eye, EyeOff, Calendar, Clock } from 'lucide-react';
+import { Mail, Lock, User, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { TimePicker } from '@/components/ui/time-picker';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,20 +9,18 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth, SignUpData } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { WelcomeModal } from './WelcomeModal';
-
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: 'signin' | 'signup';
+  onSignupSuccess?: (firstName: string) => void;
 }
 
-export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps) => {
+export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess }: AuthModalProps) => {
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
   // Form fields
@@ -38,7 +38,6 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
   const { login, signup, resetPassword, signInWithGoogle } = useAuth();
   const { toast } = useToast();
 
-  // Sync mode with prop when modal opens
   useEffect(() => {
     setMode(initialMode);
     setError('');
@@ -71,7 +70,6 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
       if (!password) return 'Password is required';
       if (password.length < 6) return 'Password must be at least 6 characters';
       if (password !== confirmPassword) return 'Passwords do not match';
-      if (!dateOfBirth) return 'Date of birth is required';
       if (!agreed) return 'You must agree to the terms';
     } else {
       if (!email.trim()) return 'Email is required';
@@ -100,14 +98,14 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           username: username.trim(),
-          dateOfBirth,
+          dateOfBirth: dateOfBirth || undefined,
           timeOfBirth: timeOfBirth || undefined,
         };
 
         const result = await signup(signUpData);
         if (result.success) {
           onClose();
-          setShowWelcome(true);
+          onSignupSuccess?.(firstName.trim());
         } else {
           setError(result.error || 'Signup failed');
         }
@@ -166,22 +164,23 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
     }
   };
 
-  const handleWelcomeClose = () => {
-    setShowWelcome(false);
-  };
+  const labelClass = "text-xs font-medium text-foreground/65 h-5 flex items-center";
+  const inputClass = "pl-9 h-10 bg-input border-border text-sm";
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md bg-card border-border p-0 max-h-[90vh] overflow-y-auto scrollbar-styled">
-          {/* Header — compact inline layout */}
-          <div className="bg-hero-gradient px-6 py-4 text-center relative overflow-hidden">
+        <DialogContent className="sm:max-w-lg bg-card border-border p-0 max-h-[90vh] overflow-y-auto scrollbar-styled">
+
+          {/* Header */}
+          <div className="bg-hero-gradient px-8 py-5 text-center relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-2 left-4 w-1 h-1 bg-primary rounded-full animate-twinkle" />
-              <div className="absolute top-4 right-8 w-1.5 h-1.5 bg-primary rounded-full animate-twinkle" style={{ animationDelay: '0.5s' }} />
-              <div className="absolute bottom-3 left-1/4 w-1 h-1 bg-primary/70 rounded-full animate-twinkle" style={{ animationDelay: '1s' }} />
+              <div className="absolute top-2 left-6 w-1 h-1 bg-primary rounded-full animate-twinkle" />
+              <div className="absolute top-5 right-10 w-1.5 h-1.5 bg-primary rounded-full animate-twinkle" style={{ animationDelay: '0.5s' }} />
+              <div className="absolute bottom-3 left-1/3 w-1 h-1 bg-primary/70 rounded-full animate-twinkle" style={{ animationDelay: '1s' }} />
+              <div className="absolute top-3 right-1/4 w-1 h-1 bg-secondary/60 rounded-full animate-twinkle" style={{ animationDelay: '1.5s' }} />
             </div>
-            <div className="relative flex items-center justify-center gap-2 mb-0.5">
+            <div className="relative flex items-center justify-center gap-2.5 mb-1">
               <Sparkles className="w-5 h-5 text-primary shrink-0" />
               <h2 className="font-heading text-xl font-semibold text-foreground">
                 {mode === 'forgot' ? 'Reset Password' : isSignUp ? 'Begin Your Journey' : 'Welcome Back'}
@@ -195,7 +194,7 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
           {/* Form */}
           <form onSubmit={mode === 'forgot' ? handleResetPassword : handleSubmit} className="px-6 pt-4 pb-3 space-y-3">
             {error && (
-              <div className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                 {error}
               </div>
             )}
@@ -259,214 +258,216 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
               )
             ) : isSignUp ? (
               <>
-                {/* Row 1: First Name + Last Name */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="space-y-1">
-                    <Label htmlFor="firstName" className="text-xs text-muted-foreground">First Name *</Label>
+                {/* Group 1: Names — side by side */}
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="firstName" className={labelClass}>First Name *</Label>
                     <div className="relative">
-                      <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                       <Input
                         id="firstName"
                         type="text"
                         placeholder="John"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        className="pl-8 h-9 bg-secondary border-border text-sm"
+                        className={inputClass}
                         required
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="lastName" className="text-xs text-muted-foreground">Last Name *</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lastName" className={labelClass}>Last Name *</Label>
                     <div className="relative">
-                      <User className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                       <Input
                         id="lastName"
                         type="text"
                         placeholder="Doe"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        className="pl-8 h-9 bg-secondary border-border text-sm"
+                        className={inputClass}
                         required
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Row 2: Username + Email */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="space-y-1">
-                    <Label htmlFor="username" className="text-xs text-muted-foreground">Username *</Label>
+                {/* Group 2: Account identifiers — stacked, full width */}
+                <div className="space-y-3.5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className={labelClass}>Email Address *</Label>
                     <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-xs leading-none">@</span>
-                      <Input
-                        id="username"
-                        type="text"
-                        placeholder="johndoe"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                        className="pl-7 h-9 bg-secondary border-border text-sm"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="email" className="text-xs text-muted-foreground">Email *</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                       <Input
                         id="email"
                         type="email"
                         placeholder="john@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-8 h-9 bg-secondary border-border text-sm"
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="username" className={labelClass}>Username *</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm leading-none select-none">@</span>
+                      <Input
+                        id="username"
+                        type="text"
+                        placeholder="johndoe"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                        className="pl-7 h-10 bg-input border-border text-sm"
                         required
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Row 3: Password + Confirm Password */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="space-y-1">
-                    <Label htmlFor="password" className="text-xs text-muted-foreground">Password *</Label>
+                {/* Group 3: Passwords — side by side */}
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className={labelClass}>Password *</Label>
                     <div className="relative">
-                      <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                       <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="Min 6 chars"
+                        placeholder="Min. 6 chars"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-8 pr-8 h-9 bg-secondary border-border text-sm"
+                        className="pl-9 pr-10 h-10 bg-input border-border text-sm"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="confirmPassword" className="text-xs text-muted-foreground">Confirm *</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirmPassword" className={labelClass}>Confirm *</Label>
                     <div className="relative">
-                      <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Re-enter"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-8 pr-8 h-9 bg-secondary border-border text-sm"
+                        className="pl-9 pr-10 h-10 bg-input border-border text-sm"
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
                 </div>
 
-                {/* Row 4: Date of Birth + Time of Birth */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="space-y-1">
-                    <Label htmlFor="dateOfBirth" className="text-xs text-muted-foreground">Date of Birth *</Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                      <Input
-                        id="dateOfBirth"
-                        type="date"
-                        value={dateOfBirth}
-                        onChange={(e) => setDateOfBirth(e.target.value)}
-                        className="pl-8 h-9 bg-secondary border-border text-sm"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="timeOfBirth" className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      Time of Birth
-                      <span className="text-[10px] font-sans font-normal text-muted-foreground/60 border border-border/60 rounded px-1.5 py-0.5 leading-none">optional</span>
+                {/* Group 4: Birth info — side by side (astrology context) */}
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="space-y-1.5">
+                    <Label className={`${labelClass} gap-1.5`}>
+                      Date of Birth
+                      <span className="text-[10px] font-sans font-medium text-primary bg-primary/10 border border-primary/20 rounded px-1.5 py-px leading-none">optional</span>
                     </Label>
-                    <div className="relative">
-                      <Clock className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                      <Input
-                        id="timeOfBirth"
-                        type="time"
-                        value={timeOfBirth}
-                        onChange={(e) => setTimeOfBirth(e.target.value)}
-                        className="pl-8 h-9 bg-secondary border-border text-sm"
-                      />
-                    </div>
+                    <DatePicker
+                      value={dateOfBirth}
+                      onChange={setDateOfBirth}
+                      placeholder="Select date"
+                      fromYear={1920}
+                      toYear={new Date().getFullYear() - 10}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className={`${labelClass} gap-1.5`}>
+                      Time of Birth
+                      <span className="text-[10px] font-sans font-medium text-primary bg-primary/10 border border-primary/20 rounded px-1.5 py-px leading-none">optional</span>
+                    </Label>
+                    <TimePicker
+                      value={timeOfBirth || "09:00"}
+                      onChange={setTimeOfBirth}
+                      className="w-full h-10"
+                    />
                   </div>
                 </div>
 
-                {/* Terms Agreement */}
-                <div className="flex items-start gap-2">
+                {/* Terms */}
+                <div className="flex items-start gap-2.5">
                   <Checkbox
                     id="terms"
                     checked={agreed}
                     onCheckedChange={(checked) => setAgreed(checked as boolean)}
                     className="mt-0.5 shrink-0"
                   />
-                  <label htmlFor="terms" className="text-xs text-muted-foreground leading-tight">
+                  <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug cursor-pointer">
                     I agree to the{' '}
-                    <a href="#" className="text-primary hover:underline">Terms of Service</a>
+                    <a href="#" className="text-primary hover:underline font-medium">Terms of Service</a>
                     {' '}and{' '}
-                    <a href="#" className="text-primary hover:underline">Privacy Policy</a>
+                    <a href="#" className="text-primary hover:underline font-medium">Privacy Policy</a>
                   </label>
                 </div>
               </>
             ) : (
               <>
-                {/* Sign In Form */}
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-11 bg-secondary border-border"
-                    required
-                  />
-                </div>
-
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 h-11 bg-secondary border-border"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    className="text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
-                  >
-                    Forgot password?
-                  </button>
+                {/* Sign In */}
+                <div className="space-y-3.5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signin-email" className={labelClass}>Email Address</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        id="signin-email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className={inputClass}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="signin-password" className={labelClass}>Password</Label>
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        id="signin-password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-9 pr-10 h-10 bg-input border-border text-sm"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
@@ -530,11 +531,6 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps
         </DialogContent>
       </Dialog>
 
-      <WelcomeModal 
-        isOpen={showWelcome} 
-        onClose={handleWelcomeClose}
-        userName={firstName}
-      />
     </>
   );
 };

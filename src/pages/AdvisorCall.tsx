@@ -92,9 +92,9 @@ const SessionListView = () => {
       <Header />
       <main className="flex-1 pt-16 md:pt-20 p-4 max-w-2xl mx-auto w-full">
         <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/advisor-portal')}>
             <ArrowLeft className="w-4 h-4 mr-1" />
-            Home
+            Advisor Dashboard
           </Button>
           <h1 className="text-2xl font-bold text-foreground">Incoming Sessions</h1>
         </div>
@@ -406,7 +406,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-styled">
             {/* Previous conversations */}
             {pastMessages.length > 0 && (
               <>

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -280,18 +279,40 @@ export default function VoiceRecordingCard() {
 
   // ── Render ─────────────────────────────────────────────────────────
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Mic className="w-5 h-5 text-primary" />
-            Voice Clone
-          </CardTitle>
-          {renderStatusBadge()}
+    <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", overflow: "hidden", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 13, background: "linear-gradient(135deg, rgba(139,92,246,0.18) 0%, rgba(6,182,212,0.12) 100%)", border: "1px solid rgba(139,92,246,0.3)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(139,92,246,0.12)", flexShrink: 0 }}>
+            <Mic size={18} style={{ color: "rgba(139,92,246,0.9)" }} />
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>Voice Clone</h2>
+            <p style={{ margin: "3px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>Record your voice for AI sessions</p>
+          </div>
         </div>
-      </CardHeader>
+        <div>
+          {recordingState === 'recording' && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 8, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.25)" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(239,68,68,0.9)", boxShadow: "0 0 7px rgba(239,68,68,0.8)", animation: "pulse 2s infinite" }} />
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: "rgba(239,68,68,0.9)", letterSpacing: "0.06em", fontFamily: "'SF Mono', 'Fira Code', monospace" }}>RECORDING</span>
+            </div>
+          )}
+          {recordingState === 'cloned' && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 8, background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.25)" }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(34,197,94,0.9)", boxShadow: "0 0 7px rgba(34,197,94,0.8)" }} />
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: "rgba(34,197,94,0.9)", letterSpacing: "0.06em", fontFamily: "'SF Mono', 'Fira Code', monospace" }}>CLONED</span>
+            </div>
+          )}
+          {recordingState !== 'recording' && recordingState !== 'cloned' && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.06em", fontFamily: "'SF Mono', 'Fira Code', monospace" }}>NOT SET</span>
+            </div>
+          )}
+        </div>
+      </div>
 
-      <CardContent className="space-y-6">
+      <div className="space-y-6" style={{ padding: "20px 24px 24px" }}>
         {/* ── Cloned State ──────────────────────────────────────── */}
         {recordingState === 'cloned' && (
           <div className="space-y-4">
@@ -445,7 +466,7 @@ export default function VoiceRecordingCard() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

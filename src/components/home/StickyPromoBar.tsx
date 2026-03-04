@@ -21,7 +21,7 @@ export const StickyPromoBar = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 sm:h-8 px-4 sm:px-3 text-xs font-bold bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg transition-all min-w-[140px] font-sans"
+            className="h-9 sm:h-8 px-4 sm:px-3 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 hover:text-white shadow-lg shadow-secondary/30 transition-all min-w-[140px] font-sans"
           >
             Claim Your Free Reading
             <ArrowRight className="w-3 h-3 ml-1" />

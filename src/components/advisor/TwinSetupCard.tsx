@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -277,29 +276,27 @@ export default function TwinSetupCard() {
 
   // ── Render ─────────────────────────────────────────────────────────
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Bot className="w-5 h-5 text-primary" />
-            Twin AI
-          </CardTitle>
-          {!isLoading && (
-            <Badge
-              variant="outline"
-              className={
-                twinEnabled
-                  ? 'border-green-500/30 text-green-600 dark:text-green-400 bg-green-500/10'
-                  : 'text-muted-foreground'
-              }
-            >
-              {twinEnabled ? 'Active' : 'Inactive'}
-            </Badge>
-          )}
+    <div style={{ borderRadius: "18.5px", background: "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)", backdropFilter: "blur(24px)", overflow: "hidden", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 13, background: "linear-gradient(135deg, rgba(139,92,246,0.18) 0%, rgba(6,182,212,0.12) 100%)", border: "1px solid rgba(139,92,246,0.3)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(139,92,246,0.12)", flexShrink: 0 }}>
+            <Bot size={18} style={{ color: "rgba(139,92,246,0.9)" }} />
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "rgba(255,255,255,0.92)", letterSpacing: "-0.02em", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>Twin AI</h2>
+            <p style={{ margin: "3px 0 0", fontSize: 12, color: "rgba(255,255,255,0.5)", fontFamily: "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif" }}>AI knowledge base &amp; pricing</p>
+          </div>
         </div>
-      </CardHeader>
+        {!isLoading && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 8, background: twinEnabled ? "rgba(34,197,94,0.07)" : "rgba(255,255,255,0.04)", border: `1px solid ${twinEnabled ? "rgba(34,197,94,0.25)" : "rgba(255,255,255,0.08)"}` }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: twinEnabled ? "rgba(34,197,94,0.9)" : "rgba(255,255,255,0.3)", boxShadow: twinEnabled ? "0 0 7px rgba(34,197,94,0.8)" : "none" }} />
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: twinEnabled ? "rgba(34,197,94,0.9)" : "rgba(255,255,255,0.4)", letterSpacing: "0.06em", fontFamily: "'SF Mono', 'Fira Code', monospace" }}>{twinEnabled ? "ACTIVE" : "INACTIVE"}</span>
+          </div>
+        )}
+      </div>
 
-      <CardContent className="space-y-6">
+      <div className="space-y-6" style={{ padding: "20px 24px 24px" }}>
         {isLoading ? (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -469,7 +466,7 @@ export default function TwinSetupCard() {
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -16,13 +16,23 @@ interface User {
   stripeCustomerId?: string;
 }
 
+export interface SessionLog {
+  id: string;
+  type: "chat" | "call";
+  advisorId: string;
+  advisorName: string;
+  duration: number;
+  creditsUsed: number;
+  timestamp: Date;
+}
+
 export interface SignUpData {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
   username: string;
-  dateOfBirth: string;
+  dateOfBirth?: string;
   timeOfBirth?: string;
 }
 
@@ -51,6 +61,12 @@ interface AuthContextType {
   credits: number;
   addCredits: (amount: number) => Promise<void>;
   refreshCredits: () => Promise<void>;
+  sessionLogs: SessionLog[];
+  addSessionLog: (log: Omit<SessionLog, "id">) => void;
+  authModalOpen: boolean;
+  authModalMode: 'signin' | 'signup';
+  openAuthModal: (mode?: 'signin' | 'signup') => void;
+  closeAuthModal: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -60,7 +76,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [credits, setCredits] = useState<number>(0);
+  const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([]);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+
+  const openAuthModal = (mode: 'signin' | 'signup' = 'signin') => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setAuthModalOpen(false);
+  };
 
   // Build a User object from Supabase auth user + optional profile data
   const buildUserFromSession = (
@@ -179,6 +207,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
       });
 
+    // Load session logs from localStorage
+    const storedLogs = localStorage.getItem("sessionLogs");
+    if (storedLogs) setSessionLogs(JSON.parse(storedLogs));
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -218,7 +250,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             firstName: data.firstName,
             lastName: data.lastName,
             username: data.username,
-            dateOfBirth: data.dateOfBirth,
+            dateOfBirth: data.dateOfBirth || null,
             timeOfBirth: data.timeOfBirth || null,
             isAdvisor: false,
           },
@@ -250,6 +282,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setSession(null);
     setCredits(0);
+    setSessionLogs([]);
+    localStorage.removeItem("sessionLogs");
   };
 
   const addCredits = async (amount: number) => {
@@ -385,6 +419,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsPasswordRecovery(false);
   };
 
+  const addSessionLog = (log: Omit<SessionLog, "id">) => {
+    const newLog: SessionLog = {
+      ...log,
+      id: crypto.randomUUID(),
+    };
+    const newLogs = [newLog, ...sessionLogs];
+    setSessionLogs(newLogs);
+    localStorage.setItem("sessionLogs", JSON.stringify(newLogs));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -404,6 +448,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         credits,
         addCredits,
         refreshCredits,
+        sessionLogs,
+        addSessionLog,
+        authModalOpen,
+        authModalMode,
+        openAuthModal,
+        closeAuthModal,
       }}
     >
       {children}

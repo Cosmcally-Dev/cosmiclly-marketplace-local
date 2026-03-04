@@ -40,10 +40,10 @@ const AdvisorPortal = () => {
   }, [isLoading, portalState, searchParams]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col scrollbar-hide">
       <Header />
 
-      <main className="flex-1 pt-20">
+      <main className={`flex-1 ${portalState !== 'approved' ? 'pt-14 md:pt-16' : ''}`}>
         {portalState === 'loading' && (
           <div className="flex items-center justify-center py-32">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -193,18 +193,7 @@ const AdvisorPortal = () => {
         )}
 
         {portalState === 'approved' && (
-          <div className="container mx-auto px-4 py-8">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-heading font-bold text-foreground">Advisor Dashboard</h1>
-              <Link to="/advisor-call">
-                <Button variant="hero" size="sm">
-                  <Phone className="w-4 h-4 mr-2" />
-                  Incoming Sessions
-                </Button>
-              </Link>
-            </div>
-            <AdvisorPrivateProfile />
-          </div>
+          <AdvisorPrivateProfile />
         )}
       </main>
 
