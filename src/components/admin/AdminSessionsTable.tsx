@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Phone, MessageCircle, Video, Calendar, Flag, Loader2 } from 'lucide-react';
+import { Phone, MessageCircle, Video, Calendar, Flag } from 'lucide-react';
 
 export const AdminSessionsTable = () => {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -194,8 +194,8 @@ export const AdminSessionsTable = () => {
               <Button variant="outline" onClick={() => { setFlagSessionId(null); setFlagReason(''); }}>
                 Cancel
               </Button>
-              <Button onClick={handleFlag} disabled={isFlagging || !flagReason.trim()}>
-                {isFlagging ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Flag className="w-4 h-4 mr-2" />}
+              <Button onClick={handleFlag} disabled={!flagReason.trim()} loading={isFlagging}>
+                {!isFlagging && <Flag className="w-4 h-4 mr-2" />}
                 Create Dispute
               </Button>
             </div>

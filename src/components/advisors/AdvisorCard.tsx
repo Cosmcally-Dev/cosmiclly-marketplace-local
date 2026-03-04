@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Star, MoonStar, MessageCircle, Phone, Video, Sparkles, Heart, Award } from 'lucide-react';
+import { MoonStar, MessageCircle, Phone, Video, Heart, Award } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StarRating } from '@/components/ui/star-rating';
+import { PriceDisplay } from '@/components/ui/price-display';
 import { AuthModal } from '@/components/modals/AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -147,33 +149,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
 
           {/* Rating + reviews — single row */}
           <div className="flex items-center justify-center gap-1.5 mb-3">
-            {advisor.rating > 0 ? (
-              <>
-                <div className="flex items-center gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-3.5 h-3.5 ${
-                        i < Math.floor(advisor.rating)
-                          ? 'text-primary fill-primary'
-                          : 'text-muted-foreground'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-sm font-semibold text-foreground font-sans">{advisor.rating}</span>
-                <span className="text-muted-foreground/60 text-xs">·</span>
-              </>
-            ) : (
-              <span className="text-xs text-muted-foreground font-sans">No reviews yet</span>
-            )}
-            {advisor.rating > 0 && (
-              <span className="text-xs text-muted-foreground font-sans">
-                {advisor.readingsCount > 0
-                  ? `${advisor.readingsCount.toLocaleString()} readings`
-                  : 'New'}
-              </span>
-            )}
+            <StarRating value={advisor.rating} count={advisor.readingsCount} />
           </div>
 
           {/* Specialty pills — nowrap + flex-1 forces both pills onto one row always */}
@@ -201,23 +177,11 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           </div>
 
           {/* Pricing */}
-          <div className="flex items-baseline justify-center gap-2 mb-5 font-sans">
-            {advisor.discountedPrice ? (
-              <>
-                <span className="text-sm text-muted-foreground line-through">
-                  ${advisor.pricePerMinute}
-                </span>
-                <span className="text-xl font-bold text-primary">
-                  ${advisor.discountedPrice}
-                  <span className="text-sm font-normal text-muted-foreground">/min</span>
-                </span>
-              </>
-            ) : (
-              <span className="text-xl font-bold text-primary">
-                ${advisor.pricePerMinute}
-                <span className="text-sm font-normal text-muted-foreground">/min</span>
-              </span>
-            )}
+          <div className="flex justify-center mb-5">
+            <PriceDisplay
+              price={advisor.pricePerMinute}
+              discountedPrice={advisor.discountedPrice}
+            />
           </div>
 
           {/* Action buttons */}

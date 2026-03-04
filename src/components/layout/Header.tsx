@@ -32,6 +32,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBadge } from "@/components/ui/notification-badge";
 import { MobileMenu } from "./MobileMenu";
 import { AuthModal } from "@/components/modals/AuthModal";
 import { AdvisorApplicationModal } from "@/components/modals/AdvisorApplicationModal";
@@ -162,7 +163,7 @@ export const Header = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-6" aria-label="Main navigation">
               <DropdownMenu>
                 <DropdownMenuTrigger className="font-sans text-sm font-medium text-foreground/80 hover:text-primary transition-colors flex items-center gap-1 outline-none">
                   Explore Advisors
@@ -271,13 +272,12 @@ export const Header = () => {
                 {isAdvisor && incomingSessions.length > 0 && (
                   <button
                     onClick={() => navigate('/advisor-call')}
-                    className="relative p-2 text-foreground/70 hover:text-primary transition-colors"
+                    className="p-2 text-foreground/70 hover:text-primary transition-colors"
                     title={`${incomingSessions.length} incoming session(s)`}
                   >
-                    <Bell className="w-5 h-5 animate-bounce" />
-                    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                      {incomingSessions.length}
-                    </span>
+                    <NotificationBadge count={incomingSessions.length}>
+                      <Bell className="w-5 h-5 animate-bounce" />
+                    </NotificationBadge>
                   </button>
                 )}
                 <DropdownMenu>
@@ -358,7 +358,7 @@ export const Header = () => {
                           <Phone className="w-4 h-4" />
                           Advisor Dashboard
                           {incomingSessions.length > 0 && (
-                            <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            <span className="ml-auto bg-destructive text-destructive-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                               {incomingSessions.length}
                             </span>
                           )}

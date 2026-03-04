@@ -13,10 +13,10 @@ import {
   Upload,
   Trash2,
   FileText,
-  Loader2,
   Save,
   X,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 interface KnowledgeDoc {
   filename: string;
@@ -299,7 +299,7 @@ export default function TwinSetupCard() {
       <div className="space-y-6" style={{ padding: "20px 24px 24px" }}>
         {isLoading ? (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Spinner size="sm" />
             Loading Twin AI settings...
           </div>
         ) : (
@@ -379,7 +379,7 @@ export default function TwinSetupCard() {
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                    <Spinner size="md" className="text-primary" />
                     <span className="text-sm text-muted-foreground">Uploading and processing...</span>
                   </>
                 ) : (
@@ -448,19 +448,10 @@ export default function TwinSetupCard() {
                   size="sm"
                   className="h-8 text-xs font-sans"
                   onClick={handleSave}
-                  disabled={isSaving}
+                  loading={isSaving}
                 >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-3.5 h-3.5 mr-1" />
-                      Save Changes
-                    </>
-                  )}
+                  {!isSaving && <Save className="w-3.5 h-3.5 mr-1" />}
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             )}

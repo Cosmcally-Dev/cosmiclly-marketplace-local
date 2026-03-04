@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Gift, Zap, Loader2 } from 'lucide-react';
+import { ArrowLeft, Gift, Zap } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -115,7 +116,7 @@ const AddCredit = () => {
                 <div className="text-center">
                   {loadingPackage === pkg.amount ? (
                     <div className="flex flex-col items-center gap-2 py-2">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                      <Spinner size="lg" className="text-primary" />
                       <span className="text-sm text-muted-foreground">Redirecting to checkout...</span>
                     </div>
                   ) : (

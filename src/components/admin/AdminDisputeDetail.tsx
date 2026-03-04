@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, DollarSign, CheckCircle, XCircle, Search } from 'lucide-react';
+import { DollarSign, CheckCircle, XCircle, Search } from 'lucide-react';
 import type { Dispute } from '@/hooks/useAdminDisputes';
 
 interface AdminDisputeDetailProps {
@@ -212,34 +212,31 @@ export function AdminDisputeDetail({
                   <Button
                     variant="outline"
                     onClick={handleInvestigate}
-                    disabled={isProcessing}
+                    loading={isProcessing}
                     className="w-full"
                   >
-                    {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+                    {!isProcessing && <Search className="w-4 h-4 mr-2" />}
                     Mark as Investigating
                   </Button>
                 )}
 
                 <Button
                   onClick={handleResolveWithRefund}
-                  disabled={isProcessing || !refundAmount}
+                  disabled={!refundAmount}
+                  loading={isProcessing}
                   className="w-full"
                 >
-                  {isProcessing ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                  )}
+                  {!isProcessing && <CheckCircle className="w-4 h-4 mr-2" />}
                   Issue Refund & Resolve
                 </Button>
 
                 <Button
                   variant="destructive"
                   onClick={handleReject}
-                  disabled={isProcessing}
+                  loading={isProcessing}
                   className="w-full"
                 >
-                  {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
+                  {!isProcessing && <XCircle className="w-4 h-4 mr-2" />}
                   Reject Dispute
                 </Button>
               </div>

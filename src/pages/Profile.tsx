@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, MessageCircle, Users, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { Settings, MessageCircle, Users, Sparkles, ArrowRight } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { useAdvisors } from "@/hooks/useAdvisors";
 import { AdvisorCard } from "@/components/advisors/AdvisorCard";
 import { zodiacSigns } from "@/data/zodiacSigns";
@@ -24,7 +25,7 @@ const Profile = () => {
       <div className="min-h-screen bg-background flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Spinner size="lg" className="text-primary" />
         </div>
         <Footer />
       </div>

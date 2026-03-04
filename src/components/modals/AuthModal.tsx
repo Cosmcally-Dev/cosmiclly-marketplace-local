@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Mail, Lock, User, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Sparkles } from 'lucide-react';
 import { TimePicker } from '@/components/ui/time-picker';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth, SignUpData } from '@/hooks/useAuth';
@@ -18,8 +19,6 @@ interface AuthModalProps {
 
 export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess }: AuthModalProps) => {
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(initialMode);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
@@ -240,9 +239,9 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess 
                     variant="hero"
                     size="lg"
                     className="w-full"
-                    disabled={isLoading}
+                    loading={isLoading}
                   >
-                    {isLoading ? 'Sending...' : 'Send Reset Link'}
+                    Send Reset Link
                   </Button>
 
                   <div className="text-center">
@@ -331,45 +330,29 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess 
                   <div className="space-y-1.5">
                     <Label htmlFor="password" className={labelClass}>Password *</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                      <Input
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
+                      <PasswordInput
                         id="password"
-                        type={showPassword ? 'text' : 'password'}
                         placeholder="Min. 6 chars"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-9 pr-10 h-10 bg-input border-border text-sm"
+                        className="pl-9 h-10 bg-input border-border text-sm"
                         required
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
                     </div>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="confirmPassword" className={labelClass}>Confirm *</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                      <Input
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
+                      <PasswordInput
                         id="confirmPassword"
-                        type={showConfirmPassword ? 'text' : 'password'}
                         placeholder="Re-enter"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-9 pr-10 h-10 bg-input border-border text-sm"
+                        className="pl-9 h-10 bg-input border-border text-sm"
                         required
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -449,23 +432,15 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess 
                       </button>
                     </div>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                      <Input
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground z-10" />
+                      <PasswordInput
                         id="signin-password"
-                        type={showPassword ? 'text' : 'password'}
                         placeholder="Your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-9 pr-10 h-10 bg-input border-border text-sm"
+                        className="pl-9 h-10 bg-input border-border text-sm"
                         required
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -479,9 +454,9 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess 
                   variant="hero"
                   size="lg"
                   className="w-full"
-                  disabled={isLoading}
+                  loading={isLoading}
                 >
-                  {isLoading ? 'Please wait...' : (isSignUp ? 'Create Free Account' : 'Sign In')}
+                  {isSignUp ? 'Create Free Account' : 'Sign In'}
                 </Button>
 
                 {/* Social Login Divider */}

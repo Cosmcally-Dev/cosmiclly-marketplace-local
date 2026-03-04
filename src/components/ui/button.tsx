@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,8 @@ const buttonVariants = cva(
         hero: "bg-gradient-to-r from-[hsl(252,85%,60%)] to-[hsl(280,70%,55%)] text-white font-semibold hover:opacity-90 shadow-[0_0_40px_hsl(252,85%,60%,0.3)]",
         gold: "bg-[hsl(45,90%,55%)] text-[hsl(270,30%,6%)] font-semibold hover:bg-[hsl(45,90%,50%)] shadow-lg",
         mystical: "border border-[hsl(270,50%,70%)]/50 bg-[hsl(270,60%,50%)]/10 text-[hsl(270,50%,70%)] hover:bg-[hsl(270,60%,50%)]/20 hover:border-[hsl(270,60%,50%)]",
+        success: "bg-emerald-600 text-white hover:bg-emerald-500",
+        warning: "bg-amber-500 text-[hsl(260,45%,7%)] hover:bg-amber-400",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -38,12 +41,25 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+  ({ className, variant, size, asChild = false, loading = false, children, disabled, ...props }, ref) => {
+    if (asChild) {
+      return <Slot className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props}>{children}</Slot>;
+    }
+    return (
+      <button
+        className={cn(buttonVariants({ variant, size, className }), loading && "opacity-80")}
+        ref={ref}
+        disabled={disabled || loading}
+        {...props}
+      >
+        {loading && <Loader2 className="animate-spin" />}
+        {children}
+      </button>
+    );
   }
 );
 Button.displayName = "Button";

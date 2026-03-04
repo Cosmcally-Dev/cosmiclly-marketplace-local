@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import {
   Sparkles,
   Camera,
-  Loader2,
   ChevronRight,
   ChevronLeft,
   Check,
@@ -277,20 +276,11 @@ export default function AdvisorSetupWizard({
 
         <Button
           variant="outline"
-          disabled={isUploading}
+          loading={isUploading}
           onClick={() => fileInputRef.current?.click()}
         >
-          {isUploading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Uploading...
-            </>
-          ) : (
-            <>
-              <Camera className="mr-2 h-4 w-4" />
-              {avatarUrl ? "Change Photo" : "Upload Photo"}
-            </>
-          )}
+          {!isUploading && <Camera className="mr-2 h-4 w-4" />}
+          {isUploading ? "Uploading..." : avatarUrl ? "Change Photo" : "Upload Photo"}
         </Button>
       </div>
     </div>
@@ -440,19 +430,11 @@ export default function AdvisorSetupWizard({
               <Button
                 variant="hero"
                 onClick={handleFinish}
-                disabled={!canProceed() || isSubmitting}
+                disabled={!canProceed()}
+                loading={isSubmitting}
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Finish Setup
-                  </>
-                )}
+                {!isSubmitting && <Check className="mr-2 h-4 w-4" />}
+                {isSubmitting ? "Saving..." : "Finish Setup"}
               </Button>
             )}
           </div>

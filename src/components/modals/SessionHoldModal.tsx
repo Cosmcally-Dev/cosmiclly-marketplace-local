@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Shield, Clock, Loader2, AlertCircle } from 'lucide-react';
+import { CreditCard, Shield, Clock, AlertCircle } from 'lucide-react';
 
 interface SessionHoldModalProps {
   isOpen: boolean;
@@ -117,20 +117,11 @@ export function SessionHoldModal({
           <div className="flex flex-col gap-2">
             <Button
               onClick={() => onConfirmHold(selectedMinutes)}
-              disabled={isProcessing}
+              loading={isProcessing}
               className="w-full h-11"
             >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Authorizing...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Authorize ${maxCharge.toFixed(2)} Hold
-                </>
-              )}
+              {!isProcessing && <CreditCard className="w-4 h-4 mr-2" />}
+              {isProcessing ? "Authorizing..." : `Authorize $${maxCharge.toFixed(2)} Hold`}
             </Button>
             <Button
               variant="ghost"

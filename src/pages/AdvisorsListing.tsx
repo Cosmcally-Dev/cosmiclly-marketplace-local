@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { 
-  ChevronRight, SlidersHorizontal, Grid3X3, List, Loader2, ChevronDown, X
+import {
+  SlidersHorizontal, Grid3X3, List, ChevronDown, X
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { AdvisorCard } from '@/components/advisors/AdvisorCard';
@@ -281,21 +283,17 @@ const AdvisorsListing = () => {
         {/* Breadcrumb */}
         <div className="bg-secondary/30 border-b border-border">
           <div className="container mx-auto px-4 py-3">
-            <div className="flex items-center gap-2 text-sm">
-              <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                Home
-              </Link>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              <Link to="/advisors" className="text-muted-foreground hover:text-primary transition-colors">
-                Advisors
-              </Link>
+            <Breadcrumb>
+              <BreadcrumbItem href="/">Home</BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem href="/advisors">Advisors</BreadcrumbItem>
               {category && (
                 <>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-foreground">{category.label}</span>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem active>{category.label}</BreadcrumbItem>
                 </>
               )}
-            </div>
+            </Breadcrumb>
           </div>
         </div>
 
@@ -615,7 +613,7 @@ const AdvisorsListing = () => {
                 <div ref={loadMoreRef} className="h-20 flex items-center justify-center mt-8">
                   {isLoading && (
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Spinner size="sm" />
                       <span>Loading more advisors...</span>
                     </div>
                   )}

@@ -386,7 +386,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
           {/* Chat header */}
           <div className="flex items-center justify-between p-4 border-b border-border bg-card/50">
             <div className="flex items-center gap-3">
-              <button onClick={handleLeaveCall} className="p-2 text-muted-foreground hover:text-foreground">
+              <button onClick={handleLeaveCall} className="p-2 text-muted-foreground hover:text-foreground" aria-label="Leave session">
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
@@ -571,6 +571,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
               className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
                 isMuted ? 'bg-red-500/20 text-red-500' : 'bg-secondary text-foreground hover:bg-secondary/80'
               }`}
+              aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
             >
               {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
             </button>
@@ -581,6 +582,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
                   isCameraOff ? 'bg-red-500/20 text-red-500' : 'bg-secondary text-foreground hover:bg-secondary/80'
                 }`}
+                aria-label={isCameraOff ? 'Turn on camera' : 'Turn off camera'}
               >
                 {isCameraOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
               </button>
@@ -589,6 +591,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
             <button
               onClick={handleLeaveCall}
               className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+              aria-label="End call"
             >
               <PhoneOff className="w-7 h-7" />
             </button>
@@ -602,6 +605,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
               className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
                 !isSpeakerOn ? 'bg-red-500/20 text-red-500' : 'bg-secondary text-foreground hover:bg-secondary/80'
               }`}
+              aria-label={isSpeakerOn ? 'Mute speaker' : 'Unmute speaker'}
             >
               {isSpeakerOn ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
             </button>

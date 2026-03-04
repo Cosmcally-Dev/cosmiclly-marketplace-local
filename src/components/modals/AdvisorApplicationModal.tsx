@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import {
   Dialog,
@@ -243,16 +242,9 @@ export const AdvisorApplicationModal = ({ isOpen, onClose }: AdvisorApplicationM
             type="submit"
             variant="default"
             className="w-full mt-6"
-            disabled={isLoading}
+            loading={isLoading}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
-              </>
-            ) : (
-              'Apply Now'
-            )}
+            Apply Now
           </Button>
         </form>
       </DialogContent>

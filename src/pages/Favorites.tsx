@@ -4,6 +4,8 @@ import { ArrowLeft, Heart, Search } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { EmptyState } from '@/components/ui/empty-state';
 import { AdvisorCard } from '@/components/advisors/AdvisorCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdvisors } from '@/hooks/useAdvisors';
@@ -53,25 +55,23 @@ const Favorites = () => {
 
           {isLoading ? (
             <div className="text-center py-12">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
+              <Spinner size="lg" className="mx-auto text-primary" />
               <p className="text-sm text-muted-foreground mt-4">Loading favorites...</p>
             </div>
           ) : favoriteAdvisors.length === 0 ? (
-            <div className="text-center py-16">
-              <Heart className="w-12 h-12 mx-auto text-muted-foreground/40 mb-4" />
-              <h3 className="font-heading font-medium text-foreground mb-2">
-                No favorites yet
-              </h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                Browse our advisors and tap the heart icon to save them here for quick access.
-              </p>
-              <Button asChild>
-                <Link to="/advisors">
-                  <Search className="w-4 h-4 mr-2" />
-                  Browse Advisors
-                </Link>
-              </Button>
-            </div>
+            <EmptyState
+              icon={<Heart className="w-12 h-12" />}
+              title="No favorites yet"
+              description="Browse our advisors and tap the heart icon to save them here for quick access."
+              action={
+                <Button asChild>
+                  <Link to="/advisors">
+                    <Search className="w-4 h-4 mr-2" />
+                    Browse Advisors
+                  </Link>
+                </Button>
+              }
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {favoriteAdvisors.map((advisor) => (
