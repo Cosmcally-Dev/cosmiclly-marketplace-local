@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Clock, Plus, Check, Zap } from "lucide-react";
+import { Clock, Check } from "lucide-react";
 import { TimePicker } from "@/components/ui/time-picker";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -10,7 +10,7 @@ interface DaySlot {
   enabled: boolean;
   start: string;
   end: string;
-  breaks?: Array<{ start: string; end: string }>;
+
 }
 
 type Schedule = Record<DayKey, DaySlot>;
@@ -41,33 +41,18 @@ const DAY_LABELS: Record<DayKey, { full: string; abbr: string }> = {
 // ─── Design tokens ───────────────────────────────────────────────────────────
 
 const T = {
-  /* Backgrounds */
   cardBg:         "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)",
   rowActiveBg:    "linear-gradient(135deg, rgba(6,182,212,0.06) 0%, rgba(139,92,246,0.04) 100%)",
   rowInactiveBg:  "linear-gradient(135deg, rgba(10,4,24,0.75) 0%, rgba(8,3,20,0.70) 100%)",
-
-  /* Borders */
-  cardBorder:     "linear-gradient(160deg, rgba(139,92,246,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(139,92,246,0.05) 100%)",
-  rowActiveBorder:"rgba(6,182,212,0.3)",
-  rowInactBorder: "rgba(255,255,255,0.04)",
-  pillBorder:     "rgba(6,182,212,0.22)",
-  pillBorderHov:  "rgba(6,182,212,0.55)",
-
-  /* Glows */
+  cardBorder:     "linear-gradient(160deg, rgba(6,182,212,0.45) 0%, rgba(6,182,212,0.2) 50%, rgba(6,182,212,0.08) 100%)",
   rowActiveGlow:  "0 0 0 0.5px rgba(6,182,212,0.18), 0 6px 28px rgba(6,182,212,0.09), 0 2px 8px rgba(0,0,0,0.4)",
   pillGlow:       "0 0 0 3px rgba(6,182,212,0.12), 0 0 16px rgba(6,182,212,0.08)",
   saveGlow:       "0 0 22px rgba(6,182,212,0.35)",
   leftBarGlow:    "0 0 14px rgba(6,182,212,0.7)",
-
-  /* Text */
   textPrimary:    "rgba(255,255,255,0.92)",
   textSub:        "rgba(255,255,255,0.5)",
-  textMuted:      "rgba(255,255,255,0.3)",
   textDead:       "rgba(255,255,255,0.18)",
-  textCyan:       "rgba(6,182,212,0.9)",
   textViolet:     "rgba(139,92,246,0.85)",
-
-  /* Font */
   fontDisp:       "'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif",
   fontMono:       "'SF Mono', 'Fira Code', 'JetBrains Mono', monospace",
 };
@@ -103,15 +88,16 @@ function PillTimePicker({
 
   return (
     <div
+      className="_asc_timepill"
       aria-label={label}
       style={{
         borderRadius: 999,
         padding: "1.5px",
         background: open && !disabled
-          ? `linear-gradient(135deg, rgba(6,182,212,0.7) 0%, rgba(139,92,246,0.4) 100%)`
+          ? "linear-gradient(135deg, rgba(6,182,212,0.7) 0%, rgba(139,92,246,0.4) 100%)"
           : disabled
           ? "rgba(255,255,255,0.04)"
-          : `linear-gradient(135deg, rgba(6,182,212,0.28) 0%, rgba(139,92,246,0.15) 100%)`,
+          : "linear-gradient(135deg, rgba(6,182,212,0.28) 0%, rgba(139,92,246,0.15) 100%)",
         boxShadow: open && !disabled ? T.pillGlow : "none",
         transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
         flexShrink: 0,
@@ -122,9 +108,7 @@ function PillTimePicker({
         style={{
           borderRadius: 999,
           overflow: "hidden",
-          background: open
-            ? "rgba(10,4,24,0.97)"
-            : "rgba(12,5,28,0.93)",
+          background: open ? "rgba(10,4,24,0.97)" : "rgba(12,5,28,0.93)",
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
@@ -155,13 +139,12 @@ interface DayRowProps {
 
 function DayRow({ day, slot, onToggle, onUpdateTime }: DayRowProps) {
   const [hovered, setHovered] = useState(false);
-  const [breakHint, setBreakHint] = useState(false);
   const span = slot.enabled ? hourSpan(slot.start, slot.end) : null;
 
   return (
     <div
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setBreakHint(false); }}
+      onMouseLeave={() => setHovered(false)}
       style={{
         position: "relative",
         borderRadius: 14,
@@ -172,7 +155,9 @@ function DayRow({ day, slot, onToggle, onUpdateTime }: DayRowProps) {
             : "linear-gradient(135deg, rgba(6,182,212,0.32) 0%, rgba(139,92,246,0.16) 50%, transparent 100%)"
           : "linear-gradient(135deg, rgba(255,255,255,0.055) 0%, transparent 100%)",
         boxShadow: slot.enabled
-          ? hovered ? T.rowActiveGlow : "0 0 0 0.5px rgba(6,182,212,0.1), 0 4px 16px rgba(6,182,212,0.05), 0 2px 8px rgba(0,0,0,0.35)"
+          ? hovered
+            ? T.rowActiveGlow
+            : "0 0 0 0.5px rgba(6,182,212,0.1), 0 4px 16px rgba(6,182,212,0.05), 0 2px 8px rgba(0,0,0,0.35)"
           : "0 0 0 0.5px rgba(255,255,255,0.03), 0 2px 8px rgba(0,0,0,0.25)",
         transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
         opacity: slot.enabled ? 1 : 0.48,
@@ -202,8 +187,8 @@ function DayRow({ day, slot, onToggle, onUpdateTime }: DayRowProps) {
           style={{
             position: "absolute",
             left: 1,
-            top: "18%",
-            bottom: "18%",
+            top: "20%",
+            bottom: "20%",
             width: 3,
             borderRadius: "0 3px 3px 0",
             background: "linear-gradient(180deg, #06b6d4 0%, rgba(139,92,246,0.6) 100%)",
@@ -213,11 +198,17 @@ function DayRow({ day, slot, onToggle, onUpdateTime }: DayRowProps) {
         />
       )}
 
-      {/* Row content */}
+      {/* ── Row content ──
+          Desktop: single flex row — [day group 148px fixed] [time section flex-1]
+          Mobile:  wraps to two lines via CSS flex-wrap: wrap
+      ── */}
       <div
+        className="_asc_row_content"
         style={{
           display: "flex",
           alignItems: "center",
+          // nowrap on desktop; CSS overrides to wrap on mobile
+          flexWrap: "nowrap",
           gap: 12,
           padding: "13px 16px 13px 20px",
           borderRadius: 13,
@@ -227,94 +218,114 @@ function DayRow({ day, slot, onToggle, onUpdateTime }: DayRowProps) {
           zIndex: 2,
         }}
       >
-        {/* Custom toggle */}
-        <button
-          onClick={onToggle}
-          role="switch"
-          aria-checked={slot.enabled}
-          aria-label={`Toggle ${DAY_LABELS[day].full}`}
-          style={{
-            position: "relative",
-            width: 40,
-            height: 22,
-            borderRadius: 11,
-            border: "1.5px solid",
-            borderColor: slot.enabled ? "rgba(6,182,212,0.75)" : "rgba(255,255,255,0.14)",
-            background: slot.enabled
-              ? "linear-gradient(135deg, rgba(6,182,212,0.22) 0%, rgba(139,92,246,0.18) 100%)"
-              : "rgba(255,255,255,0.04)",
-            cursor: "pointer",
-            flexShrink: 0,
-            boxShadow: slot.enabled
-              ? "0 0 12px rgba(6,182,212,0.28), inset 0 0 8px rgba(6,182,212,0.1)"
-              : "none",
-            transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
-            padding: 0,
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: slot.enabled ? "calc(100% - 18px)" : 2,
-              transform: "translateY(-50%)",
-              width: 16,
-              height: 16,
-              borderRadius: "50%",
-              background: slot.enabled
-                ? "linear-gradient(135deg, #06b6d4 0%, #818cf8 100%)"
-                : "rgba(255,255,255,0.22)",
-              boxShadow: slot.enabled ? "0 0 10px rgba(6,182,212,0.9)" : "none",
-              transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
-            }}
-          />
-        </button>
 
-        {/* Day label */}
+        {/* ── Group 1: Toggle + Day label (fixed width for column alignment) ── */}
         <div
+          className="_asc_day_group"
           style={{
             display: "flex",
-            flexDirection: "column",
-            minWidth: 88,
+            alignItems: "center",
+            gap: 12,
+            // fixed width keeps all rows' time-pickers in the same column
+            minWidth: 152,
             flexShrink: 0,
           }}
         >
-          <span
+          {/* Toggle */}
+          <button
+            onClick={onToggle}
+            role="switch"
+            aria-checked={slot.enabled}
+            aria-label={`Toggle ${DAY_LABELS[day].full}`}
             style={{
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              color: slot.enabled ? "rgba(6,182,212,0.65)" : T.textDead,
-              fontFamily: T.fontMono,
-              transition: "color 0.3s",
+              position: "relative",
+              width: 40,
+              height: 22,
+              borderRadius: 11,
+              border: "1.5px solid",
+              borderColor: slot.enabled ? "rgba(6,182,212,0.75)" : "rgba(255,255,255,0.14)",
+              background: slot.enabled
+                ? "linear-gradient(135deg, rgba(6,182,212,0.22) 0%, rgba(139,92,246,0.18) 100%)"
+                : "rgba(255,255,255,0.04)",
+              cursor: "pointer",
+              flexShrink: 0,
+              boxShadow: slot.enabled
+                ? "0 0 12px rgba(6,182,212,0.28), inset 0 0 8px rgba(6,182,212,0.1)"
+                : "none",
+              transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+              padding: 0,
             }}
           >
-            {DAY_LABELS[day].abbr}
-          </span>
-          <span
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: slot.enabled ? T.textPrimary : T.textDead,
-              fontFamily: T.fontDisp,
-              letterSpacing: "-0.01em",
-              transition: "color 0.3s",
-            }}
-          >
-            {DAY_LABELS[day].full}
-          </span>
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: slot.enabled ? "calc(100% - 18px)" : 2,
+                transform: "translateY(-50%)",
+                width: 16,
+                height: 16,
+                borderRadius: "50%",
+                background: slot.enabled
+                  ? "linear-gradient(135deg, #06b6d4 0%, #818cf8 100%)"
+                  : "rgba(255,255,255,0.22)",
+                boxShadow: slot.enabled ? "0 0 10px rgba(6,182,212,0.9)" : "none",
+                transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+              }}
+            />
+          </button>
+
+          {/* Day label */}
+          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                color: slot.enabled ? "rgba(6,182,212,0.65)" : T.textDead,
+                fontFamily: T.fontMono,
+                transition: "color 0.3s",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {DAY_LABELS[day].abbr}
+            </span>
+            <span
+              className="_asc_day_full"
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: slot.enabled ? T.textPrimary : T.textDead,
+                fontFamily: T.fontDisp,
+                letterSpacing: "-0.01em",
+                transition: "color 0.3s",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {DAY_LABELS[day].full}
+            </span>
+          </div>
         </div>
 
-        {/* Time pickers OR unavailable label */}
+        {/* ── Group 2: Time pickers OR "Unavailable" label (fills remaining space) ── */}
         {slot.enabled ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, flexWrap: "wrap" }}>
+          <div
+            className="_asc_time_section"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flex: 1,
+              minWidth: 0,
+              flexWrap: "wrap",
+            }}
+          >
             <PillTimePicker
               label={`${DAY_LABELS[day].full} start`}
               value={slot.start}
               onChange={(v) => onUpdateTime("start", v)}
             />
 
-            {/* Divider */}
+            {/* "TO" divider */}
             <div
               style={{
                 display: "flex",
@@ -324,30 +335,11 @@ function DayRow({ day, slot, onToggle, onUpdateTime }: DayRowProps) {
                 flexShrink: 0,
               }}
             >
-              <div
-                style={{
-                  width: 10,
-                  height: 1,
-                  background: "linear-gradient(90deg, transparent, rgba(139,92,246,0.4))",
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  fontFamily: T.fontMono,
-                }}
-              >
+              <div style={{ width: 10, height: 1, background: "linear-gradient(90deg, transparent, rgba(139,92,246,0.4))" }} />
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", fontFamily: T.fontMono }}>
                 TO
               </span>
-              <div
-                style={{
-                  width: 10,
-                  height: 1,
-                  background: "linear-gradient(90deg, rgba(139,92,246,0.4), transparent)",
-                }}
-              />
+              <div style={{ width: 10, height: 1, background: "linear-gradient(90deg, rgba(139,92,246,0.4), transparent)" }} />
             </div>
 
             <PillTimePicker
@@ -370,6 +362,7 @@ function DayRow({ day, slot, onToggle, onUpdateTime }: DayRowProps) {
                   fontFamily: T.fontMono,
                   letterSpacing: "0.04em",
                   flexShrink: 0,
+                  whiteSpace: "nowrap",
                 }}
               >
                 {span}
@@ -377,7 +370,7 @@ function DayRow({ day, slot, onToggle, onUpdateTime }: DayRowProps) {
             )}
           </div>
         ) : (
-          <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+          <div className="_asc_time_section" style={{ flex: 1, display: "flex", alignItems: "center", minWidth: 0 }}>
             <span
               style={{
                 fontSize: 12,
@@ -392,98 +385,7 @@ function DayRow({ day, slot, onToggle, onUpdateTime }: DayRowProps) {
           </div>
         )}
 
-        {/* Hover-reveal: + Break */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            marginLeft: "auto",
-            flexShrink: 0,
-            opacity: hovered && slot.enabled ? 1 : 0,
-            transition: "opacity 0.2s ease",
-            pointerEvents: hovered && slot.enabled ? "auto" : "none",
-          }}
-        >
-          <button
-            onClick={() => setBreakHint((p) => !p)}
-            title="Add break / split shift"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "4px 9px",
-              borderRadius: 8,
-              background: breakHint ? "rgba(139,92,246,0.14)" : "rgba(255,255,255,0.04)",
-              border: "1px solid",
-              borderColor: breakHint ? "rgba(139,92,246,0.38)" : "rgba(255,255,255,0.09)",
-              cursor: "pointer",
-              color: breakHint ? T.textViolet : T.textSub,
-              fontSize: 11,
-              fontWeight: 600,
-              fontFamily: T.fontDisp,
-              letterSpacing: "0.01em",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(139,92,246,0.38)";
-              e.currentTarget.style.color = T.textViolet;
-            }}
-            onMouseLeave={(e) => {
-              if (!breakHint) {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)";
-                e.currentTarget.style.color = T.textSub;
-              }
-            }}
-          >
-            <Plus size={11} />
-            <span>Break</span>
-          </button>
-        </div>
       </div>
-
-      {/* Break tooltip */}
-      {breakHint && slot.enabled && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 7px)",
-            right: 16,
-            zIndex: 50,
-            borderRadius: 10,
-            padding: "10px 14px",
-            background: "rgba(18,6,40,0.97)",
-            border: "1px solid rgba(139,92,246,0.28)",
-            boxShadow: "0 10px 36px rgba(0,0,0,0.65), 0 0 0 0.5px rgba(139,92,246,0.12)",
-            backdropFilter: "blur(16px)",
-            fontSize: 12,
-            color: T.textSub,
-            whiteSpace: "nowrap",
-            fontFamily: T.fontDisp,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              marginBottom: 4,
-            }}
-          >
-            <Zap size={12} style={{ color: T.textViolet }} />
-            <span
-              style={{
-                fontWeight: 700,
-                color: T.textPrimary,
-                fontFamily: T.fontDisp,
-              }}
-            >
-              Split shifts coming soon
-            </span>
-          </div>
-          <span>Add lunch breaks & mid-day availability gaps</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -503,7 +405,6 @@ export function AvailabilityScheduleCard({
   const enabledDays = DAYS.filter((d) => schedule[d]?.enabled ?? false);
   const enabledCount = enabledDays.length;
 
-  /* Total weekly hours */
   const totalHours = enabledDays.reduce((sum, d) => {
     const slot = schedule[d];
     const [sh, sm] = slot.start.split(":").map(Number);
@@ -511,7 +412,6 @@ export function AvailabilityScheduleCard({
     return sum + Math.max(0, eh * 60 + em - (sh * 60 + sm)) / 60;
   }, 0);
 
-  /* Apply first enabled day's times to all other enabled days */
   const handleApplyAll = useCallback(() => {
     const ref = enabledDays[0];
     if (!ref) return;
@@ -530,23 +430,16 @@ export function AvailabilityScheduleCard({
 
   return (
     <>
-      {/* Google Font + keyframes injection */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
         @keyframes _asc_pulse {
-          0%, 100% { opacity: 1; transform: scale(1);   }
+          0%, 100% { opacity: 1; transform: scale(1); }
           50%       { opacity: 0.5; transform: scale(0.85); }
         }
-
         @keyframes _asc_fadein {
           from { opacity: 0; transform: translateY(-5px); }
-          to   { opacity: 1; transform: translateY(0);    }
-        }
-
-        @keyframes _asc_shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
+          to   { opacity: 1; transform: translateY(0); }
         }
 
         ._asc_save:hover {
@@ -562,9 +455,125 @@ export function AvailabilityScheduleCard({
           background: rgba(6,182,212,0.14) !important;
           color: rgba(6,182,212,1) !important;
         }
+
+        /* ─────────────────────────────────────────────────────────────────────
+           MOBILE  ≤ 600px
+        ───────────────────────────────────────────────────────────────────── */
+        @media (max-width: 600px) {
+
+          /* Header: let title take full width, actions row below it */
+          ._asc_header {
+            flex-wrap: wrap !important;
+            padding: 14px 16px 12px !important;
+            gap: 8px !important;
+          }
+          ._asc_header_left {
+            flex: 1 1 100% !important;
+          }
+          ._asc_header_actions {
+            width: 100% !important;
+            /* push everything to the right so status pill is right-aligned */
+            justify-content: flex-end !important;
+            gap: 8px !important;
+          }
+          ._asc_applyall {
+            font-size: 10.5px !important;
+            padding: 5px 11px !important;
+          }
+
+          /* Week bar */
+          ._asc_week_bar {
+            padding: 9px 14px !important;
+          }
+
+          /* Row content: stack into two lines */
+          ._asc_row_content {
+            flex-wrap: wrap !important;
+            align-items: flex-start !important;
+            padding: 10px 12px 12px 16px !important;
+            gap: 0 !important;              /* remove gap; handle spacing per child */
+          }
+
+          /* Line 1: toggle + day label — full width so time pickers go to next line */
+          ._asc_day_group {
+            width: 100% !important;
+            min-width: 0 !important;
+            margin-bottom: 8px !important;
+          }
+
+          /* Line 2: time pickers — indented to align under the day name text
+             toggle (40px) + gap-between-toggle-and-text (12px) = 52px indent
+             Use calc() to prevent margin + width from overflowing the container */
+          ._asc_time_section {
+            flex: 0 0 auto !important;
+            width: calc(100% - 52px) !important;
+            margin-left: 52px !important;
+            gap: 6px !important;
+            flex-wrap: wrap !important;
+            box-sizing: border-box !important;
+          }
+
+          /* Allow time picker pill wrappers to flex-grow and shrink */
+          ._asc_timepill {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            flex-shrink: 1 !important;
+          }
+          /* Override TimePicker's min-w-[7.5rem] trigger button on mobile */
+          ._asc_timepill button {
+            min-width: 4.5rem !important;
+            width: 100% !important;
+            justify-content: center !important;
+          }
+
+          /* Rows container */
+          ._asc_rows_container {
+            padding: 10px 10px 8px !important;
+          }
+
+          /* Footer: hide entirely when there are no changes (hint text is useless on mobile) */
+          ._asc_footer_clean {
+            display: none !important;
+          }
+
+          /* Footer with unsaved changes: stack vertically */
+          ._asc_footer_dirty {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            padding: 12px 14px 16px !important;
+            gap: 10px !important;
+          }
+          ._asc_footer_hint {
+            display: none !important;
+          }
+          ._asc_footer_actions {
+            width: 100% !important;
+          }
+          ._asc_discard {
+            flex: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+          ._asc_save {
+            flex: 2 !important;
+            justify-content: center !important;
+          }
+        }
+
+        /* Very small phones: remove indent so full width is used */
+        @media (max-width: 360px) {
+          ._asc_time_section {
+            margin-left: 0 !important;
+            width: 100% !important;
+          }
+          ._asc_timepill button {
+            min-width: 4rem !important;
+          }
+        }
       `}</style>
 
-      {/* ── Outer wrapper with gradient border trick ── */}
+      {/* ── Outer border wrapper ── */}
       <div
         style={{
           position: "relative",
@@ -572,7 +581,7 @@ export function AvailabilityScheduleCard({
           padding: "1.5px",
           background: T.cardBorder,
           boxShadow:
-            "0 0 0 0.5px rgba(139,92,246,0.08), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)",
+            "0 0 0 0.5px rgba(6,182,212,0.08), 0 24px 64px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)",
         }}
       >
         {/* ── Card body ── */}
@@ -584,8 +593,10 @@ export function AvailabilityScheduleCard({
             overflow: "hidden",
           }}
         >
+
           {/* ── Header ── */}
           <div
+            className="_asc_header"
             style={{
               display: "flex",
               alignItems: "center",
@@ -594,8 +605,11 @@ export function AvailabilityScheduleCard({
               borderBottom: "1px solid rgba(255,255,255,0.05)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
-              {/* Icon tile */}
+            {/* Left: icon + title */}
+            <div
+              className="_asc_header_left"
+              style={{ display: "flex", alignItems: "center", gap: 13 }}
+            >
               <div
                 style={{
                   width: 42,
@@ -613,7 +627,6 @@ export function AvailabilityScheduleCard({
               >
                 <Clock size={18} style={{ color: "rgba(6,182,212,0.85)" }} />
               </div>
-
               <div>
                 <h2
                   style={{
@@ -627,14 +640,7 @@ export function AvailabilityScheduleCard({
                 >
                   Availability Schedule
                 </h2>
-                <p
-                  style={{
-                    margin: "3px 0 0",
-                    fontSize: 12,
-                    color: T.textSub,
-                    fontFamily: T.fontDisp,
-                  }}
-                >
+                <p style={{ margin: "3px 0 0", fontSize: 12, color: T.textSub, fontFamily: T.fontDisp }}>
                   {enabledCount > 0
                     ? `${enabledCount} day${enabledCount !== 1 ? "s" : ""} · ${
                         totalHours % 1 === 0 ? totalHours : totalHours.toFixed(1)
@@ -644,8 +650,11 @@ export function AvailabilityScheduleCard({
               </div>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {/* Apply to all days */}
+            {/* Right: apply-all + status pill */}
+            <div
+              className="_asc_header_actions"
+              style={{ display: "flex", alignItems: "center", gap: 10 }}
+            >
               {enabledCount > 1 && (
                 <button
                   className="_asc_applyall"
@@ -662,6 +671,7 @@ export function AvailabilityScheduleCard({
                     padding: "6px 14px",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   Apply to all days
@@ -679,6 +689,7 @@ export function AvailabilityScheduleCard({
                     borderRadius: 8,
                     background: "rgba(251,191,36,0.07)",
                     border: "1px solid rgba(251,191,36,0.22)",
+                    flexShrink: 0,
                   }}
                 >
                   <div
@@ -713,6 +724,7 @@ export function AvailabilityScheduleCard({
                     borderRadius: 8,
                     background: "rgba(6,182,212,0.05)",
                     border: "1px solid rgba(6,182,212,0.1)",
+                    flexShrink: 0,
                   }}
                 >
                   <div
@@ -742,6 +754,7 @@ export function AvailabilityScheduleCard({
 
           {/* ── Week at-a-glance bar ── */}
           <div
+            className="_asc_week_bar"
             style={{
               display: "flex",
               gap: 4,
@@ -764,6 +777,7 @@ export function AvailabilityScheduleCard({
                   alignItems: "center",
                   gap: 5,
                   cursor: "pointer",
+                  padding: "2px 0",
                 }}
               >
                 <span
@@ -771,9 +785,7 @@ export function AvailabilityScheduleCard({
                     fontSize: 9,
                     fontWeight: 700,
                     letterSpacing: "0.1em",
-                    color: schedule[day]?.enabled
-                      ? "rgba(6,182,212,0.6)"
-                      : T.textDead,
+                    color: schedule[day]?.enabled ? "rgba(6,182,212,0.6)" : T.textDead,
                     fontFamily: T.fontMono,
                     transition: "color 0.3s",
                   }}
@@ -788,9 +800,7 @@ export function AvailabilityScheduleCard({
                     background: schedule[day]?.enabled
                       ? "linear-gradient(90deg, rgba(6,182,212,0.9) 0%, rgba(139,92,246,0.65) 100%)"
                       : "rgba(255,255,255,0.07)",
-                    boxShadow: schedule[day]?.enabled
-                      ? "0 0 8px rgba(6,182,212,0.45)"
-                      : "none",
+                    boxShadow: schedule[day]?.enabled ? "0 0 8px rgba(6,182,212,0.45)" : "none",
                     transition: "all 0.3s ease",
                   }}
                 />
@@ -799,43 +809,41 @@ export function AvailabilityScheduleCard({
           </div>
 
           {/* ── Day rows ── */}
-          <div style={{ padding: "14px 16px 10px" }}>
+          <div className="_asc_rows_container" style={{ padding: "14px 16px 10px" }}>
             {DAYS.map((day) => (
               <DayRow
                 key={day}
                 day={day}
-                slot={
-                  schedule[day] ?? { enabled: false, start: "09:00", end: "17:00" }
-                }
+                slot={schedule[day] ?? { enabled: false, start: "09:00", end: "17:00" }}
                 onToggle={() => onToggleDay(day)}
                 onUpdateTime={(field, value) => onUpdateTime(day, field, value)}
               />
             ))}
           </div>
 
-          {/* ── Footer ── */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "12px 24px 18px",
-              borderTop: "1px solid rgba(255,255,255,0.05)",
-            }}
-          >
-            <p
+          {/* ── Footer ──
+              Two variants so mobile can selectively hide the "clean" (no changes) one.
+          ── */}
+          {scheduleChanged ? (
+            <div
+              className="_asc_footer _asc_footer_dirty"
               style={{
-                fontSize: 11,
-                color: T.textDead,
-                fontFamily: T.fontDisp,
-                margin: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 24px 18px",
+                borderTop: "1px solid rgba(255,255,255,0.05)",
               }}
             >
-              Hover a row to add breaks · click a day dot to toggle
-            </p>
+              <p
+                className="_asc_footer_hint"
+                style={{ fontSize: 11, color: T.textDead, fontFamily: T.fontDisp, margin: 0 }}
+              >
+                Click a day dot to toggle availability
+              </p>
 
-            {scheduleChanged && (
               <div
+                className="_asc_footer_actions"
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -875,38 +883,35 @@ export function AvailabilityScheduleCard({
                       ? "linear-gradient(135deg, rgba(34,197,94,0.22) 0%, rgba(6,182,212,0.18) 100%)"
                       : "linear-gradient(135deg, rgba(6,182,212,0.2) 0%, rgba(139,92,246,0.18) 100%)",
                     border: "1px solid",
-                    borderColor: savePressed
-                      ? "rgba(34,197,94,0.55)"
-                      : "rgba(6,182,212,0.42)",
-                    color: savePressed
-                      ? "rgba(134,239,172,0.95)"
-                      : "rgba(6,182,212,0.95)",
+                    borderColor: savePressed ? "rgba(34,197,94,0.55)" : "rgba(6,182,212,0.42)",
+                    color: savePressed ? "rgba(134,239,172,0.95)" : "rgba(6,182,212,0.95)",
                     fontSize: 12,
                     fontWeight: 700,
                     cursor: "pointer",
                     fontFamily: T.fontDisp,
                     letterSpacing: "0.02em",
-                    boxShadow: savePressed
-                      ? "0 0 18px rgba(34,197,94,0.22)"
-                      : T.saveGlow,
+                    boxShadow: savePressed ? "0 0 18px rgba(34,197,94,0.22)" : T.saveGlow,
                     transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
                   }}
                 >
-                  {savePressed ? (
-                    <>
-                      <Check size={13} />
-                      Saved!
-                    </>
-                  ) : (
-                    <>
-                      <Clock size={13} />
-                      Save Schedule
-                    </>
-                  )}
+                  {savePressed ? <><Check size={13} />Saved!</> : <><Clock size={13} />Save Schedule</>}
                 </button>
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div
+              className="_asc_footer _asc_footer_clean"
+              style={{
+                padding: "12px 24px 18px",
+                borderTop: "1px solid rgba(255,255,255,0.05)",
+              }}
+            >
+              <p style={{ fontSize: 11, color: T.textDead, fontFamily: T.fontDisp, margin: 0 }}>
+                Click a day dot to toggle availability
+              </p>
+            </div>
+          )}
+
         </div>
       </div>
     </>

@@ -37,20 +37,21 @@ import {
 
 // ─── Color Tokens ─────────────────────────────────────────────────────────────
 const C = {
-  pageBg:   "#090514",
-  surfBg:   "#0f0c22",
-  cardBg:   "radial-gradient(circle at top left, #2a1b3d, #1a1128)",
-  elevBg:   "#1a1535",
+  pageBg:     "#09061A",
+  surfBg:     "#0C0418",
+  cardBg:     "linear-gradient(155deg, #120A2E 0%, #0C0418 55%, #09061A 100%)",
+  cardBorder: "linear-gradient(160deg, rgba(139,92,246,0.4) 0%, rgba(6,182,212,0.15) 50%, rgba(139,92,246,0.05) 100%)",
+  elevBg:     "#120A2E",
 
-  border:    "rgba(255,255,255,0.1)",
-  borderSub: "rgba(255,255,255,0.05)",
+  border:    "rgba(255,255,255,0.08)",
+  borderSub: "rgba(255,255,255,0.04)",
 
-  cyan:         "#00C2CB",
-  cyanBg:       "rgba(0,194,203,0.1)",
-  cyanBgHov:    "rgba(0,194,203,0.16)",
-  cyanBorder:   "rgba(0,194,203,0.28)",
-  cyanText:     "rgba(0,194,203,0.92)",
-  cyanGlow:     "0 0 20px rgba(0,194,203,0.15)",
+  cyan:         "#06b6d4",
+  cyanBg:       "rgba(6,182,212,0.1)",
+  cyanBgHov:    "rgba(6,182,212,0.16)",
+  cyanBorder:   "rgba(6,182,212,0.28)",
+  cyanText:     "rgba(6,182,212,0.92)",
+  cyanGlow:     "0 0 20px rgba(6,182,212,0.15)",
 
   violet:       "#8b5cf6",
   violetBg:     "rgba(139,92,246,0.1)",
@@ -175,7 +176,7 @@ function StatusBadge({ status }: { status: BadgeStatus }) {
 // ─── AIInsightBar ─────────────────────────────────────────────────────────────
 function AIInsightBar() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(0,194,203,0.04)", border: `1px solid rgba(0,194,203,0.15)`, borderRadius: 10, padding: "10px 14px", marginBottom: 16, cursor: "pointer", backdropFilter: "blur(8px)" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(6,182,212,0.04)", border: `1px solid rgba(6,182,212,0.15)`, borderRadius: 10, padding: "10px 14px", marginBottom: 16, cursor: "pointer", backdropFilter: "blur(8px)" }}>
       <Sparkles size={15} style={{ color: C.cyan, flexShrink: 0 }} />
       <span style={{ fontSize: 12, color: C.textSub, fontFamily: C.font, flex: 1, lineHeight: 1.5 }}>
         AI insight: Your peak booking times are{" "}
@@ -199,7 +200,7 @@ function Sidebar({ activeId, onNavigate }: { activeId: string; onNavigate: (rout
       {/* Logo */}
       <div style={{ padding: "18px 16px 14px", borderBottom: `1px solid ${C.borderSub}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: `linear-gradient(135deg, ${C.violet} 0%, ${C.cyan} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(0,194,203,0.22)" }}>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: `linear-gradient(135deg, ${C.violet} 0%, ${C.cyan} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(6,182,212,0.22)" }}>
             <Sparkles size={16} style={{ color: "white" }} />
           </div>
           <div>
@@ -270,7 +271,7 @@ function Sidebar({ activeId, onNavigate }: { activeId: string; onNavigate: (rout
 
       {/* User card */}
       <div style={{ padding: "12px 10px", borderTop: `1px solid ${C.borderSub}` }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9, padding: 10, borderRadius: 10, background: "radial-gradient(circle at top left, #2a1b3d, #1a1128)", border: `1px solid ${C.border}`, cursor: "pointer", backdropFilter: "blur(12px)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, padding: 10, borderRadius: 10, background: C.cardBg, border: `1px solid ${C.border}`, cursor: "pointer", backdropFilter: "blur(12px)" }}>
           <div style={{ width: 32, height: 32, borderRadius: "50%", background: `linear-gradient(135deg, ${C.violet} 0%, ${C.cyan} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white", flexShrink: 0, fontFamily: C.font }}>
             {initials}
           </div>
@@ -326,7 +327,7 @@ function DashHeader({ navigate }: { navigate: ReturnType<typeof useNavigate> }) 
           onClick={() => navigate("/settings")}
           style={{ width: 36, height: 36, borderRadius: "50%", padding: "1.5px", background: `linear-gradient(135deg, ${C.violet} 0%, ${C.cyan} 100%)`, cursor: "pointer", flexShrink: 0 }}
         >
-          <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `linear-gradient(135deg, rgba(139,92,246,0.45) 0%, rgba(0,194,203,0.45) 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white", fontFamily: C.font }}>
+          <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: `linear-gradient(135deg, rgba(139,92,246,0.45) 0%, rgba(6,182,212,0.45) 100%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "white", fontFamily: C.font }}>
             {initials}
           </div>
         </div>
@@ -339,7 +340,7 @@ function DashHeader({ navigate }: { navigate: ReturnType<typeof useNavigate> }) 
 function CustomAreaTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; payload: { sessions?: number } }>; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "radial-gradient(circle at top left, #2a1b3d, #1a1128)", border: `1px solid ${C.cyanBorder}`, borderRadius: 10, padding: "10px 16px", boxShadow: "0 8px 32px rgba(0,0,0,0.55)", backdropFilter: "blur(16px)" }}>
+    <div style={{ background: C.cardBg, border: `1px solid ${C.cyanBorder}`, borderRadius: 10, padding: "10px 16px", boxShadow: "0 8px 32px rgba(0,0,0,0.55)", backdropFilter: "blur(16px)" }}>
       <div style={{ fontSize: 10, color: C.textDead, fontFamily: C.fontMono, marginBottom: 5, letterSpacing: "0.07em", textTransform: "uppercase" }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 700, color: C.textPrimary, fontFamily: C.font, letterSpacing: "-0.02em" }}>${payload[0].value.toLocaleString()}</div>
       {payload[0].payload.sessions !== undefined && (
@@ -487,9 +488,9 @@ export function AdvisorDashboardView() {
         * { box-sizing: border-box; }
         .adv-dash-scroll::-webkit-scrollbar { width: 5px; }
         .adv-dash-scroll::-webkit-scrollbar-track { background: transparent; }
-        .adv-dash-scroll::-webkit-scrollbar-thumb { background: rgba(0,194,203,0.32); border-radius: 100px; }
-        .adv-dash-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,194,203,0.58); }
-        .adv-dash-scroll { scrollbar-width: thin; scrollbar-color: rgba(0,194,203,0.32) transparent; }
+        .adv-dash-scroll::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.32); border-radius: 100px; }
+        .adv-dash-scroll::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.58); }
+        .adv-dash-scroll { scrollbar-width: thin; scrollbar-color: rgba(6,182,212,0.32) transparent; }
         input::placeholder { color: rgba(255,255,255,0.26) !important; }
 
         @keyframes adv-pulse-dot {
@@ -508,7 +509,7 @@ export function AdvisorDashboardView() {
         }
         .adv-kpi-card:hover {
           transform: scale(1.02);
-          box-shadow: 0 0 20px rgba(0,194,203,0.15) !important;
+          box-shadow: 0 0 20px rgba(6,182,212,0.15) !important;
         }
 
         .adv-chart-card {
@@ -516,7 +517,7 @@ export function AdvisorDashboardView() {
         }
         .adv-chart-card:hover {
           transform: scale(1.005);
-          box-shadow: 0 0 20px rgba(0,194,203,0.12) !important;
+          box-shadow: 0 0 20px rgba(6,182,212,0.12) !important;
         }
       `}</style>
 
@@ -537,38 +538,47 @@ export function AdvisorDashboardView() {
                   key={label}
                   className="adv-kpi-card"
                   style={{
-                    background: C.cardBg,
-                    border: `1px solid ${C.border}`,
-                    borderRadius: 14,
-                    padding: 16,
-                    backdropFilter: "blur(12px)",
-                    cursor: "default",
+                    borderRadius: 16,
+                    padding: "1.5px",
+                    background: C.cardBorder,
+                    boxShadow: "0 0 0 0.5px rgba(139,92,246,0.08), 0 8px 32px rgba(0,0,0,0.5)",
                   }}
                 >
-                  {/* Top: label + plain icon */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.textLabel, fontFamily: C.fontMono }}>
-                      {label}
-                    </span>
-                    <Icon size={18} style={{ color: iconColor, flexShrink: 0 }} />
-                  </div>
-
-                  {/* Middle: value + sparkline */}
-                  <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 14 }}>
-                    {statsLoading ? (
-                      <Loader2 size={20} className="adv-spin" style={{ color: C.cyan }} />
-                    ) : (
-                      <span style={{ fontSize: 24, fontWeight: 700, color: C.textPrimary, fontFamily: C.font, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                        {value}
+                  <div
+                    style={{
+                      borderRadius: "14.5px",
+                      background: C.cardBg,
+                      backdropFilter: "blur(24px)",
+                      padding: 16,
+                      cursor: "default",
+                      height: "100%",
+                    }}
+                  >
+                    {/* Top: label + plain icon */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.textLabel, fontFamily: C.fontMono }}>
+                        {label}
                       </span>
-                    )}
-                    <SparklineBars bars={bars} color={iconColor} />
-                  </div>
+                      <Icon size={18} style={{ color: iconColor, flexShrink: 0 }} />
+                    </div>
 
-                  {/* Bottom: separator + change */}
-                  <div style={{ borderTop: `1px solid ${C.borderSub}`, paddingTop: 10, display: "flex", alignItems: "center", gap: 5 }}>
-                    <TrendingUp size={11} style={{ color: C.green, flexShrink: 0 }} />
-                    <span style={{ fontSize: 11, color: C.green, fontFamily: C.font, fontWeight: 600 }}>{change}</span>
+                    {/* Middle: value + sparkline */}
+                    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 14 }}>
+                      {statsLoading ? (
+                        <Loader2 size={20} className="adv-spin" style={{ color: C.cyan }} />
+                      ) : (
+                        <span style={{ fontSize: 24, fontWeight: 700, color: C.textPrimary, fontFamily: C.font, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                          {value}
+                        </span>
+                      )}
+                      <SparklineBars bars={bars} color={C.cyan} />
+                    </div>
+
+                    {/* Bottom: separator + change */}
+                    <div style={{ borderTop: `1px solid ${C.borderSub}`, paddingTop: 10, display: "flex", alignItems: "center", gap: 5 }}>
+                      <TrendingUp size={11} style={{ color: C.green, flexShrink: 0 }} />
+                      <span style={{ fontSize: 11, color: C.green, fontFamily: C.font, fontWeight: 600 }}>{change}</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -581,11 +591,19 @@ export function AdvisorDashboardView() {
               <div
                 className="adv-chart-card"
                 style={{
+                  borderRadius: 16,
+                  padding: "1.5px",
+                  background: C.cardBorder,
+                  boxShadow: "0 0 0 0.5px rgba(139,92,246,0.08), 0 16px 48px rgba(0,0,0,0.5)",
+                }}
+              >
+              <div
+                style={{
+                  borderRadius: "14.5px",
                   background: C.cardBg,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 14,
+                  backdropFilter: "blur(24px)",
                   padding: 20,
-                  backdropFilter: "blur(12px)",
+                  height: "100%",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
@@ -597,7 +615,7 @@ export function AdvisorDashboardView() {
                   <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                     {/* Legend chip */}
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ width: 22, height: 3, borderRadius: 2, background: `linear-gradient(90deg, rgba(0,194,203,0.5), ${C.cyan})`, boxShadow: "0 0 6px rgba(0,194,203,0.5)" }} />
+                      <div style={{ width: 22, height: 3, borderRadius: 2, background: `linear-gradient(90deg, rgba(6,182,212,0.5), ${C.cyan})`, boxShadow: "0 0 6px rgba(6,182,212,0.5)" }} />
                       <span style={{ fontSize: 10, color: C.textMuted, fontFamily: C.font }}>Revenue</span>
                     </div>
                     {/* Period switcher */}
@@ -639,7 +657,7 @@ export function AdvisorDashboardView() {
                       />
                       <RechartTooltip
                         content={<CustomAreaTooltip />}
-                        cursor={{ stroke: "rgba(0,194,203,0.3)", strokeWidth: 1 }}
+                        cursor={{ stroke: "rgba(6,182,212,0.3)", strokeWidth: 1 }}
                       />
                       <Area
                         type="monotone"
@@ -648,24 +666,33 @@ export function AdvisorDashboardView() {
                         strokeWidth={3}
                         fill="url(#earningsAreaGradient)"
                         dot={false}
-                        activeDot={{ r: 5, fill: C.cyan, stroke: "rgba(0,194,203,0.3)", strokeWidth: 4 }}
+                        activeDot={{ r: 5, fill: C.cyan, stroke: "rgba(6,182,212,0.3)", strokeWidth: 4 }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
+              </div>
               </div>
 
               {/* ─ Session Breakdown ─ */}
               <div
                 className="adv-chart-card"
                 style={{
+                  borderRadius: 16,
+                  padding: "1.5px",
+                  background: C.cardBorder,
+                  boxShadow: "0 0 0 0.5px rgba(139,92,246,0.08), 0 16px 48px rgba(0,0,0,0.5)",
+                }}
+              >
+              <div
+                style={{
+                  borderRadius: "14.5px",
                   background: C.cardBg,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 14,
+                  backdropFilter: "blur(24px)",
                   padding: 20,
                   display: "flex",
                   flexDirection: "column",
-                  backdropFilter: "blur(12px)",
+                  height: "100%",
                 }}
               >
                 <div style={{ marginBottom: 16 }}>
@@ -705,16 +732,24 @@ export function AdvisorDashboardView() {
                   })}
                 </div>
               </div>
+              </div>
             </div>
 
             {/* ── Transactions table ── */}
             <div
               style={{
+                borderRadius: 16,
+                padding: "1.5px",
+                background: C.cardBorder,
+                boxShadow: "0 0 0 0.5px rgba(139,92,246,0.08), 0 16px 48px rgba(0,0,0,0.5)",
+              }}
+            >
+            <div
+              style={{
+                borderRadius: "14.5px",
                 background: C.cardBg,
-                border: `1px solid ${C.border}`,
-                borderRadius: 14,
+                backdropFilter: "blur(24px)",
                 overflow: "hidden",
-                backdropFilter: "blur(12px)",
               }}
             >
               {/* Table header */}
@@ -732,7 +767,7 @@ export function AdvisorDashboardView() {
                   </div>
                   <button
                     onClick={() => navigate("/advisor-activity")}
-                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 14px", height: 32, borderRadius: 8, background: `linear-gradient(135deg, rgba(0,194,203,0.18) 0%, rgba(139,92,246,0.16) 100%)`, border: `1px solid ${C.cyanBorder}`, color: C.cyanText, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: C.font, letterSpacing: "0.01em", transition: "all 0.18s ease" }}
+                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 14px", height: 32, borderRadius: 8, background: `linear-gradient(135deg, rgba(6,182,212,0.18) 0%, rgba(139,92,246,0.16) 100%)`, border: `1px solid ${C.cyanBorder}`, color: C.cyanText, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: C.font, letterSpacing: "0.01em", transition: "all 0.18s ease" }}
                     onMouseEnter={(e) => { e.currentTarget.style.boxShadow = C.cyanGlow; }}
                     onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "none"; }}
                   >
@@ -771,7 +806,7 @@ export function AdvisorDashboardView() {
                         <tr
                           key={tx.id}
                           style={{ borderBottom: i < filteredTx.length - 1 ? `1px solid ${C.borderSub}` : "none", transition: "background 0.14s ease", cursor: "pointer" }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,194,203,0.03)")}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(6,182,212,0.03)")}
                           onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                         >
                           <td style={{ padding: "12px 16px" }}>
@@ -808,6 +843,7 @@ export function AdvisorDashboardView() {
                   </table>
                 </div>
               )}
+            </div>
             </div>
             {/* bottom padding */}
             <div style={{ height: 24 }} />
