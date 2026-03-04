@@ -212,21 +212,23 @@ Applied in order:
 7. `20260225000000_fix_admin_rls_recursion.sql` — Fix admin RLS infinite recursion
 8. `20260225100000_stripe_integration.sql` — Transactions table, Stripe columns, updated RPCs
 9. `20260225200000_fix_start_rtc_session_overload.sql` — Fix `start_rtc_session` function overload
-10. `20260226000000_reviews_table.sql` — Reviews system
-11. `20260227000000_billing_credits_first.sql` — Credits-first billing logic (server-side)
-12. `20260302000000_advisor_schedule_connect.sql` — Advisor schedule, Stripe Connect, approve/reject RPCs
-13. `20260302100000_disputes_table.sql` — Disputes table with RLS
-14. `20260303000000_twin_ai_infrastructure.sql` — pgvector, knowledge_base_documents, Twin AI columns, AI session RPCs
-15. `20260303100000_seed_dummy_advisors.sql` — 20 dummy advisor accounts
-16. `20260304000000_advisor_contracts_and_stats.sql` — Advisor contracts, dashboard stats RPCs
-17. `20260306000000_transaction_logging_and_favorites.sql` — Transaction logging in `deduct_ai_credits` and `end_rtc_session`, `user_favorites` table with RLS
-18. `20260307000000_sessions_created_at_and_rls_fix.sql` — Add `created_at` column to sessions table, fix advisor_details RLS to allow public view of all advisors (enables offline status visibility + Realtime)
-19. `20260308000000_fix_rls_and_diagnostics.sql` — Fix RLS policies on `disputes` and `knowledge_base_documents`, fix NULL string columns in `auth.users` for seeded accounts (GoTrue crash fix)
-20. `20260309000000_auto_busy_status.sql` — Auto-set advisor status to 'busy' in `accept_session`, revert to 'online' in `end_rtc_session` (if no other active sessions)
-21. `20260310000000_fix_seeded_advisor_status.sql` — Fix seeded dummy advisors status from 'online' to 'offline'
-22. `20260311000000_horoscopes_table.sql` — Dynamic horoscopes table with RLS (public read, service-role write)
-23. `20260312000000_public_advisor_profiles_rls.sql` — **NEEDS TO BE APPLIED** — Add anon SELECT policy on `profiles` scoped to advisor profiles (fixes avatars/names not loading when logged out)
-24. `20260313000000_advisor_public_stats_rpc.sql` — **NEEDS TO BE APPLIED** — Batch `get_all_advisor_public_stats()` RPC (readings, rating, review counts per advisor), anon SELECT on reviews
+10. `20260225250000_add_schedule_to_advisor_details.sql` — Add `schedule` jsonb column to advisor_details
+11. `20260226000000_reviews_table.sql` — Reviews system
+12. `20260227000000_billing_credits_first.sql` — Credits-first billing logic (server-side)
+13. `20260302000000_advisor_schedule_connect.sql` — Advisor schedule, Stripe Connect, approve/reject RPCs
+14. `20260302100000_disputes_table.sql` — Disputes table with RLS
+15. `20260303000000_twin_ai_infrastructure.sql` — pgvector, knowledge_base_documents, Twin AI columns, AI session RPCs
+16. `20260303100000_seed_dummy_advisors.sql` — 20 dummy advisor accounts
+17. `20260304000000_advisor_contracts_and_stats.sql` — Advisor contracts, dashboard stats RPCs
+18. `20260305000000_fix_remaining_rls_and_ai_credits.sql` — Fix recursive RLS policies, add `deduct_ai_credits` RPC
+19. `20260306000000_transaction_logging_and_favorites.sql` — Transaction logging in `deduct_ai_credits` and `end_rtc_session`, `user_favorites` table with RLS
+20. `20260307000000_sessions_created_at_and_rls_fix.sql` — Add `created_at` column to sessions table, fix advisor_details RLS to allow public view of all advisors (enables offline status visibility + Realtime)
+21. `20260308000000_fix_rls_and_diagnostics.sql` — Fix RLS policies on `disputes` and `knowledge_base_documents`, fix NULL string columns in `auth.users` for seeded accounts (GoTrue crash fix)
+22. `20260309000000_auto_busy_status.sql` — Auto-set advisor status to 'busy' in `accept_session`, revert to 'online' in `end_rtc_session` (if no other active sessions)
+23. `20260310000000_fix_seeded_advisor_status.sql` — Fix seeded dummy advisors status from 'online' to 'offline'
+24. `20260311000000_horoscopes_table.sql` — Dynamic horoscopes table with RLS (public read, service-role write)
+25. `20260312000000_public_advisor_profiles_rls.sql` — Add anon SELECT policy on `profiles` scoped to advisor profiles (fixes avatars/names not loading when logged out)
+26. `20260313000000_advisor_public_stats_rpc.sql` — Batch `get_all_advisor_public_stats()` RPC (readings, rating, review counts per advisor), anon SELECT on reviews
 
 ### To apply pending migrations:
 ```bash
