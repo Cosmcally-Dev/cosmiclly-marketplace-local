@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Mail, Lock, User, Sparkles } from 'lucide-react';
 import { TimePicker } from '@/components/ui/time-picker';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -168,6 +168,9 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess 
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-lg bg-card border-border p-0 max-h-[90vh] overflow-y-auto scrollbar-styled">
+          <DialogTitle className="sr-only">
+            {mode === 'forgot' ? 'Reset Password' : isSignUp ? 'Begin Your Journey' : 'Welcome Back'}
+          </DialogTitle>
 
           {/* Header */}
           <div className="bg-hero-gradient px-8 py-5 text-center relative overflow-hidden">

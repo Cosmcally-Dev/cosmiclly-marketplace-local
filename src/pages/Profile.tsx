@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/layout/Header";
@@ -12,7 +12,8 @@ import { Settings, MessageCircle, Users, Sparkles, ArrowRight } from "lucide-rea
 import { Spinner } from "@/components/ui/spinner";
 import { useAdvisors } from "@/hooks/useAdvisors";
 import { AdvisorCard } from "@/components/advisors/AdvisorCard";
-import { zodiacSigns } from "@/data/zodiacSigns";
+import { zodiacSigns, getZodiacFromBirthday } from "@/data/zodiacSigns";
+import { useHoroscope, type HoroscopePeriod } from "@/hooks/useHoroscope";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -20,44 +21,7 @@ const Profile = () => {
   const { advisors } = useAdvisors();
   const [horoscopeTab, setHoroscopeTab] = useState("today");
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <Spinner size="lg" className="text-primary" />
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container max-w-6xl mx-auto pt-24 pb-12 px-4 text-center">
-          <p className="text-muted-foreground text-lg">Please log in to view your profile.</p>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Advisor view — canonical dashboard is /advisor-portal
-  if (user?.isAdvisor) {
-    return <Navigate to="/advisor-portal" replace />;
-  }
-
-  // Regular user view
-  const getInitials = () => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
-    }
-    if (user?.username) return user.username[0].toUpperCase();
-    return "?";
-  };
-
+  // All hooks and derived state MUST be before any early returns (Rules of Hooks)
   const zodiacSign = user?.dateOfBirth ? getZodiacFromBirthday(user.dateOfBirth) : undefined;
 
   const tabToPeriod: Record<string, HoroscopePeriod> = {
@@ -98,6 +62,44 @@ const Profile = () => {
   }, [horoscope?.date, horoscopeTab]);
 
   const matchedAdvisors = advisors.slice(0, 6);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <Spinner size="lg" className="text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-6xl mx-auto pt-24 pb-12 px-4 text-center">
+          <p className="text-muted-foreground text-lg">Please log in to view your profile.</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Advisor view — canonical dashboard is /advisor-portal
+  if (user?.isAdvisor) {
+    return <Navigate to="/advisor-portal" replace />;
+  }
+
+  // Regular user view
+  const getInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    }
+    if (user?.username) return user.username[0].toUpperCase();
+    return "?";
+  };
   const affirmation = "I am constantly growing and evolving into a better person.";
 
   return (
