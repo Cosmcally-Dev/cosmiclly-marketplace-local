@@ -87,11 +87,15 @@ export function useAdvisors(): UseAdvisorsResult {
       // Build stats lookup map
       const statsMap = new Map<string, AdvisorPublicStats>();
       if (!statsResult.error && statsResult.data) {
-        const parsed: AdvisorPublicStats[] = typeof statsResult.data === 'string'
-          ? JSON.parse(statsResult.data)
-          : statsResult.data;
-        if (Array.isArray(parsed)) {
-          parsed.forEach(s => statsMap.set(s.advisor_id, s));
+        try {
+          const parsed: AdvisorPublicStats[] = typeof statsResult.data === 'string'
+            ? JSON.parse(statsResult.data)
+            : statsResult.data;
+          if (Array.isArray(parsed)) {
+            parsed.forEach(s => statsMap.set(s.advisor_id, s));
+          }
+        } catch (parseErr) {
+          console.warn('[useAdvisors] Stats parse error:', parseErr);
         }
       }
 

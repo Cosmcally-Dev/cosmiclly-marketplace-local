@@ -54,8 +54,6 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess 
     setDateOfBirth('');
     setTimeOfBirth('');
     setAgreed(false);
-    setShowPassword(false);
-    setShowConfirmPassword(false);
   };
 
   const isSignUp = mode === 'signup';
