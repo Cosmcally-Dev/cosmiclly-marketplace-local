@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       if (error) {
         console.warn('[useAuth] Profile fetch error:', error.message);
         return null;
@@ -156,10 +156,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userId = session.user.id;
         setTimeout(() => {
           fetchProfile(userId)
-            .then((profile) => {
+            .then(async (profile) => {
               if (profile) {
                 setUser(buildUserFromSession(session.user, profile));
                 setCredits(profile.credits || 0);
+              } else {
+                // Profile missing (trigger may have failed) — create it as fallback
+                const metadata = session.user.user_metadata;
+                const fullName = `${metadata?.firstName || ''} ${metadata?.lastName || ''}`.trim() || session.user.email || '';
+                try {
+                  await supabase.from('profiles').insert({
+                    id: userId,
+                    email: session.user.email,
+                    full_name: fullName,
+                    username: null,
+                    role: 'client',
+                    credits: 0,
+                  });
+                  const retryProfile = await fetchProfile(userId);
+                  if (retryProfile) {
+                    setUser(buildUserFromSession(session.user, retryProfile));
+                    setCredits(retryProfile.credits || 0);
+                  }
+                } catch (insertErr) {
+                  console.warn('[useAuth] Fallback profile creation failed:', insertErr);
+                }
               }
             })
             .catch((err) => {
@@ -242,6 +263,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (data: SignUpData): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Check username availability before creating the auth user
+      if (data.username) {
+        const { data: available } = await supabase.rpc('is_username_available', {
+          p_username: data.username,
+        });
+        if (available === false) {
+          return { success: false, error: 'Username is already taken. Please choose a different one.' };
+        }
+      }
+
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -305,7 +336,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .from('profiles')
       .select('credits')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (profile) {
       setCredits(profile.credits);
@@ -319,7 +350,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .from('profiles')
       .select('credits, stripe_customer_id')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (profile) {
       setCredits(profile.credits || 0);

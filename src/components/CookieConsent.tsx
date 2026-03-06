@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 export const CookieConsent = () => {
@@ -32,9 +32,9 @@ export const CookieConsent = () => {
           <div className="flex-1">
             <p className="text-foreground text-sm md:text-base">
               We use cookies to ensure you get the best experience on our website.{' '}
-              <a href="#" className="text-primary hover:underline">
+              <Link to="/cookies" className="text-primary hover:underline">
                 Learn more
-              </a>
+              </Link>
             </p>
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">

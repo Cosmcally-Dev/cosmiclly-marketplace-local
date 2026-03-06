@@ -269,6 +269,19 @@ const AdvisorPrivateProfile = () => {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
+
+    const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+    if (file.size > MAX_SIZE) {
+      toast({ title: "File too large", description: "Avatar must be under 2 MB.", variant: "destructive" });
+      e.target.value = '';
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "Invalid file type", description: "Please select an image file.", variant: "destructive" });
+      e.target.value = '';
+      return;
+    }
+
     setIsUploading(true);
     const fileExt = file.name.split('.').pop();
     const filePath = `${user.id}/avatar.${fileExt}`;
@@ -276,16 +289,23 @@ const AdvisorPrivateProfile = () => {
       .from('avatars')
       .upload(filePath, file, { upsert: true });
     if (uploadError) {
-      console.error('Avatar upload error:', uploadError);
+      toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
       setIsUploading(false);
+      e.target.value = '';
       return;
     }
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ avatar_url: publicUrl })
+      .update({ avatar_url: cacheBustedUrl })
       .eq('id', user.id);
-    if (!updateError) setAvatarUrl(publicUrl);
+    if (updateError) {
+      toast({ title: "Profile update failed", description: updateError.message, variant: "destructive" });
+    } else {
+      setAvatarUrl(cacheBustedUrl);
+      toast({ title: "Photo updated successfully" });
+    }
     setIsUploading(false);
     e.target.value = '';
   };

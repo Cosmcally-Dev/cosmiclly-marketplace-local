@@ -5,11 +5,6 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 
 const featureNames: Record<string, string> = {
-  '/about': 'About Us',
-  '/privacy': 'Privacy Policy',
-  '/terms': 'Terms of Service',
-  '/cookies': 'Cookie Policy',
-  '/favorites': 'Favorite Advisors',
   '/payment-methods': 'Payment Methods',
 };
 

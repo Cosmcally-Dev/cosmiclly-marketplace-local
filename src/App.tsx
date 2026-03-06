@@ -10,6 +10,7 @@ import { RouteAnnouncer } from "./components/RouteAnnouncer";
 import { PageLoader } from "./components/ui/page-loader";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { CookieConsent } from "./components/CookieConsent";
 
 // Lazy-loaded page components
 const AdvisorProfile = React.lazy(() => import("./pages/AdvisorProfile"));
@@ -39,6 +40,10 @@ const BecomeAdvisor = React.lazy(() => import("./pages/BecomeAdvisor"));
 const HowWeVerify = React.lazy(() => import("./pages/HowWeVerify"));
 const Transactions = React.lazy(() => import("./pages/Transactions"));
 const Favorites = React.lazy(() => import("./pages/Favorites"));
+const AboutUs = React.lazy(() => import("./pages/AboutUs"));
+const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = React.lazy(() => import("./pages/TermsOfService"));
+const CookiePolicy = React.lazy(() => import("./pages/CookiePolicy"));
 
 const queryClient = new QueryClient();
 
@@ -81,11 +86,11 @@ const App = () => (
               <Route path="/advisor-activity" element={<AdvisorActivity />} />
               <Route path="/test-guide" element={<TestGuide />} />
               <Route path="/admin" element={<AdminPanel />} />
-              {/* Coming Soon routes for planned but unbuilt features */}
-              <Route path="/about" element={<ComingSoon />} />
-              <Route path="/privacy" element={<ComingSoon />} />
-              <Route path="/terms" element={<ComingSoon />} />
-              <Route path="/cookies" element={<ComingSoon />} />
+              {/* Legal / content pages */}
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/cookies" element={<CookiePolicy />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/payment-methods" element={<ComingSoon />} />
               <Route path="/advisor/:id/ai" element={<TwinChat />} />
@@ -98,6 +103,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
               </Routes>
               </div>
+              <CookieConsent />
             </Suspense>
           </ErrorBoundary>
         </BrowserRouter>

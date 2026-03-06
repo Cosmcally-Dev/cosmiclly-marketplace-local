@@ -1,7 +1,5 @@
 # Cookie Policy
 
-> **DRAFT — Requires legal review before publication.**
-
 **Last Updated:** February 27, 2026
 
 ---
@@ -79,6 +77,3 @@ For questions about our cookie practices:
 
 - **Email:** privacy@cosmiclly.com
 
----
-
-*This cookie policy is a draft and should be reviewed by legal counsel before publication.*

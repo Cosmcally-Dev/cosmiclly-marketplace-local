@@ -14,8 +14,8 @@ type EmailType =
 // Map email types to Brevo template IDs
 // These should be set up in Brevo dashboard and IDs updated here
 const TEMPLATE_IDS: Record<EmailType, number> = {
-  welcome_client: 1,
-  welcome_advisor: 2,
+  welcome_client: 13,
+  welcome_advisor: 13,
   session_receipt: 3,
   low_credit_warning: 4,
   application_approved: 5,

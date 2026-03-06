@@ -98,6 +98,18 @@ export default function AdvisorSetupWizard({
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+    if (file.size > MAX_SIZE) {
+      toast({ title: "File too large", description: "Avatar must be under 2 MB.", variant: "destructive" });
+      e.target.value = '';
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "Invalid file type", description: "Please select an image file.", variant: "destructive" });
+      e.target.value = '';
+      return;
+    }
+
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
     const filePath = `${user.id}/avatar.${ext}`;
 
@@ -119,11 +131,11 @@ export default function AdvisorSetupWizard({
       const {
         data: { publicUrl },
       } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
 
-      // Update the profiles table with the new avatar URL
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: cacheBustedUrl })
         .eq("id", user.id);
 
       if (updateError) {
@@ -135,7 +147,7 @@ export default function AdvisorSetupWizard({
         return;
       }
 
-      setAvatarUrl(publicUrl);
+      setAvatarUrl(cacheBustedUrl);
       toast({ title: "Photo uploaded successfully" });
     } catch (err) {
       toast({

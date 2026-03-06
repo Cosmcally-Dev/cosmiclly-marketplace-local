@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
       .update({ content: '[deleted]' })
       .eq('sender_id', user.id);
 
-    // 2. Delete advisor details
+    // 2. Delete advisor details (also removes contract_locked_by references)
     await supabaseAdmin
       .from('advisor_details')
       .delete()
@@ -62,7 +62,35 @@ Deno.serve(async (req) => {
         .eq('email', profile.email);
     }
 
-    // 4. Anonymize profile
+    // 4. Delete knowledge base documents (advisor training data + embeddings)
+    await supabaseAdmin
+      .from('knowledge_base_documents')
+      .delete()
+      .eq('advisor_id', user.id);
+
+    // 5. Delete user favorites (both as user and as favorited advisor)
+    await supabaseAdmin
+      .from('user_favorites')
+      .delete()
+      .eq('user_id', user.id);
+    await supabaseAdmin
+      .from('user_favorites')
+      .delete()
+      .eq('advisor_id', user.id);
+
+    // 6. Delete reviews written by the user
+    await supabaseAdmin
+      .from('reviews')
+      .delete()
+      .eq('client_id', user.id);
+
+    // 7. Anonymize disputes (preserve record for audit but scrub PII)
+    await supabaseAdmin
+      .from('disputes')
+      .update({ reason: '[deleted]', resolution_notes: '[deleted]' })
+      .or(`client_id.eq.${user.id},advisor_id.eq.${user.id}`);
+
+    // 8. Anonymize profile
     await supabaseAdmin
       .from('profiles')
       .update({
@@ -74,7 +102,13 @@ Deno.serve(async (req) => {
       })
       .eq('id', user.id);
 
-    // 5. Delete the auth user (this is the critical step that was missing)
+    // 9. Fix orphaned FK references to auth.users
+    await supabaseAdmin
+      .from('advisor_applications')
+      .update({ reviewed_by: null })
+      .eq('reviewed_by', user.id);
+
+    // 10. Delete the auth user
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
     if (deleteError) {
       console.error('Failed to delete auth user:', deleteError);
