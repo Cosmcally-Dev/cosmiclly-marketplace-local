@@ -45,34 +45,28 @@ export const FeaturedAdvisorsSection = () => {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => scroll('left')}
-<<<<<<< HEAD
-              disabled={!canScrollLeft}
-              className="rounded-full w-8 h-8"
-=======
-              className="rounded-full w-10 h-10 sm:w-8 sm:h-8"
->>>>>>> ab2c37d4763b34b5f93f4107bc089dcdc740b4ed
-              aria-label="Scroll advisors left"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => scroll('right')}
-<<<<<<< HEAD
-              disabled={!canScrollRight}
-              className="rounded-full w-8 h-8"
-=======
-              className="rounded-full w-10 h-10 sm:w-8 sm:h-8"
->>>>>>> ab2c37d4763b34b5f93f4107bc089dcdc740b4ed
-              aria-label="Scroll advisors right"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+            <div className="hidden lg:flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => scroll('left')}
+                disabled={!canScrollLeft}
+                className="rounded-full w-8 h-8"
+                aria-label="Scroll advisors left"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => scroll('right')}
+                disabled={!canScrollRight}
+                className="rounded-full w-8 h-8"
+                aria-label="Scroll advisors right"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
             <Link to="/advisors" className="ml-2">
               <Button variant="mystical" size="sm">
                 View All
@@ -87,7 +81,7 @@ export const FeaturedAdvisorsSection = () => {
           <div
             ref={scrollRef}
             onScroll={updateScrollState}
-            className="grid grid-flow-col auto-cols-[280px] md:auto-cols-[320px] gap-6 overflow-x-auto py-2 scrollbar-hide snap-x snap-mandatory"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:none] lg:grid-flow-col lg:auto-cols-[320px] gap-4 lg:gap-6 lg:overflow-x-auto py-2 lg:scrollbar-hide lg:snap-x lg:snap-mandatory"
           >
             {featuredAdvisors.map((advisor, index) => (
               <div
