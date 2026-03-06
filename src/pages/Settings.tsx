@@ -167,15 +167,15 @@ const Settings = () => {
             <p className="text-muted-foreground">Manage your account preferences and settings</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-8">
             {/* Sidebar Navigation */}
             <div className="lg:col-span-1">
-              <nav className="space-y-1 bg-card rounded-xl border border-border p-2">
+              <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible bg-card rounded-xl border border-border p-2 scrollbar-hide">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                    className={`w-full lg:w-full shrink-0 flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors whitespace-nowrap ${
                       activeTab === tab.id ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
                     }`}
                   >

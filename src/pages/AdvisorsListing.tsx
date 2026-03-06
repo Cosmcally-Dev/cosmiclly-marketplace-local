@@ -461,7 +461,7 @@ const AdvisorsListing = () => {
                       Filters
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-80 bg-card border-border">
+                  <SheetContent side="left" className="w-80 max-w-[85vw] bg-card border-border">
                     <SheetHeader>
                       <SheetTitle>Filters</SheetTitle>
                     </SheetHeader>
@@ -537,7 +537,7 @@ const AdvisorsListing = () => {
               {/* Right: Sort & View */}
               <div className="flex items-center gap-3">
                 <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                  <SelectTrigger className="w-[160px] bg-secondary border-border">
+                  <SelectTrigger className="w-[130px] sm:w-[160px] bg-secondary border-border">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>

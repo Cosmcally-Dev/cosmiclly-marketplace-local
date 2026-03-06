@@ -49,8 +49,12 @@ export const FeaturedAdvisorsSection = () => {
               variant="outline"
               size="icon"
               onClick={() => scroll('left')}
+<<<<<<< HEAD
               disabled={!canScrollLeft}
               className="rounded-full w-8 h-8"
+=======
+              className="rounded-full w-10 h-10 sm:w-8 sm:h-8"
+>>>>>>> ab2c37d4763b34b5f93f4107bc089dcdc740b4ed
               aria-label="Scroll advisors left"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -59,8 +63,12 @@ export const FeaturedAdvisorsSection = () => {
               variant="outline"
               size="icon"
               onClick={() => scroll('right')}
+<<<<<<< HEAD
               disabled={!canScrollRight}
               className="rounded-full w-8 h-8"
+=======
+              className="rounded-full w-10 h-10 sm:w-8 sm:h-8"
+>>>>>>> ab2c37d4763b34b5f93f4107bc089dcdc740b4ed
               aria-label="Scroll advisors right"
             >
               <ChevronRight className="w-4 h-4" />

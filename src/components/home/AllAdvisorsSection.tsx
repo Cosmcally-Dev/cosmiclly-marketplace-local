@@ -98,14 +98,14 @@ export const AllAdvisorsSection = () => {
         <Collapsible open={showFilters} onOpenChange={setShowFilters}>
           <CollapsibleContent className="mb-6">
             <div className="bg-card rounded-xl border border-border p-4 md:p-6">
-              <div className="flex flex-wrap items-end gap-6">
+              <div className="flex flex-wrap items-end gap-4 md:gap-6">
                 {/* Sort By — dropdown */}
                 <div>
                   <Label className="text-sm font-sans font-medium text-foreground mb-3 block">
                     Sort By
                   </Label>
                   <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                    <SelectTrigger className="w-[160px] bg-card border-border font-sans">
+                    <SelectTrigger className="w-full sm:w-[160px] bg-card border-border font-sans">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -123,7 +123,7 @@ export const AllAdvisorsSection = () => {
                     Show only
                   </Label>
                   <Select value={commType} onValueChange={(v) => setCommType(v as CommType)}>
-                    <SelectTrigger className="w-[160px] bg-card border-border font-sans">
+                    <SelectTrigger className="w-full sm:w-[160px] bg-card border-border font-sans">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -141,7 +141,7 @@ export const AllAdvisorsSection = () => {
                     Number of reviews
                   </Label>
                   <Select value={minReviews.toString()} onValueChange={(v) => setMinReviews(parseInt(v))}>
-                    <SelectTrigger className="w-[160px] bg-card border-border font-sans">
+                    <SelectTrigger className="w-full sm:w-[160px] bg-card border-border font-sans">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

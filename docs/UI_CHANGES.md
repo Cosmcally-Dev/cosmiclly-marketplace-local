@@ -168,3 +168,49 @@ Tracks all changes made while applying `docs/UI_KIT_SUGGESTIONS.md` to the codeb
 - `docs/UI_CHANGES.md` — This file (complete changelog for all 8 phases)
 - `docs/CURRENT_UI_KIT.md` — Updated to reflect all new components, variants, and patterns
 - `CLAUDE.md` — Updated File Map with new components, documented `Button loading` pattern and `Breadcrumb` component
+
+---
+
+## Phase 9: Mobile Responsiveness
+
+### 9a: Critical Bug Fix — Mobile Auth Buttons
+
+**Problem:** "Join Free" and "Sign In" buttons in the mobile menu drawer had no `onClick` handlers — they rendered but did nothing when tapped. Additionally, the header "Sign In" button was hidden below 1024px (`hidden lg:inline-flex`), and the mobile menu showed auth buttons even for logged-in users.
+
+**Files modified:**
+- `src/components/layout/MobileMenu.tsx`:
+  - Extended `MobileMenuProps` with `onAuth?: (mode: 'signin' | 'signup') => void` and `isAuthenticated?: boolean`
+  - Wired "Join Free" to `onAuth('signup')` + `onClose()`, "Sign In" to `onAuth('signin')` + `onClose()`
+  - Auth buttons only render when `!isAuthenticated`
+  - Split menu items into `publicMenuItems` (always visible) and `authMenuItems` (only when authenticated: Activity, Favorites, Add Funds, Transactions)
+- `src/components/layout/Header.tsx`:
+  - Passed `onAuth={handleAuth}` and `isAuthenticated={isAuthenticated}` to `<MobileMenu>`
+  - Made "Sign In" button visible on all screens: `hidden lg:inline-flex` -> `inline-flex`
+  - Increased "Sign Up" button touch target: `h-8` -> `h-9 sm:h-8`
+
+### 9b: Touch Targets (44x44px minimum)
+
+**Files modified:**
+- `src/components/advisors/AdvisorCard.tsx`:
+  - Favorite heart button: `p-1.5` -> `p-2.5 min-w-11 min-h-11 flex items-center justify-center`
+  - Video & AI Twin buttons: `h-9` -> `h-10` for consistent touch targets
+- `src/components/home/FeaturedAdvisorsSection.tsx`:
+  - Scroll left/right buttons: `w-8 h-8` -> `w-10 h-10 sm:w-8 sm:h-8` (larger on mobile, compact on desktop)
+
+### 9c: Responsive Layouts
+
+**Files modified:**
+- `src/pages/AdvisorsListing.tsx`:
+  - Filter sheet: added `max-w-[85vw]` alongside `w-80` to prevent overflow on narrow devices
+  - Sort select: `w-[160px]` -> `w-[130px] sm:w-[160px]`
+- `src/pages/Activity.tsx`:
+  - Type filter select: `w-[140px]` -> `w-[120px] sm:w-[140px]`
+  - Status filter select: `w-[150px]` -> `w-[120px] sm:w-[150px]`
+- `src/components/home/AllAdvisorsSection.tsx`:
+  - Filter panel gap: `gap-6` -> `gap-4 md:gap-6`
+  - All filter select triggers: `w-[160px]` -> `w-full sm:w-[160px]`
+- `src/pages/Settings.tsx`:
+  - Main grid gap: `gap-8` -> `gap-4 lg:gap-8`
+  - Settings nav: converted to horizontal scrollable strip on mobile (`flex lg:flex-col overflow-x-auto lg:overflow-visible`), buttons use `shrink-0 whitespace-nowrap` for horizontal scroll
+- `src/components/layout/Footer.tsx`:
+  - Grid gap: `gap-8` -> `gap-6 md:gap-8`

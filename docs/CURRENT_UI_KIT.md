@@ -544,3 +544,30 @@ From `tailwindcss-animate`: `animate-in`, `animate-out`, `fade-in-0`, `zoom-in-9
 | `date-fns` | 3.6.0 | Date formatting |
 | `next-themes` | 0.3.0 | Theme management |
 | `@radix-ui/*` | Various | Accessible UI primitives |
+
+---
+
+## 8. Mobile Guidelines
+
+### Touch Targets
+All interactive elements must be at least 44x44px on mobile. Use `min-w-11 min-h-11` (44px) as the minimum for icon-only buttons and small tap targets.
+
+### Responsive Width Patterns
+Avoid hardcoded fixed widths on always-visible elements. Prefer responsive patterns:
+- Select triggers: `w-full sm:w-[160px]` or `w-[120px] sm:w-[150px]`
+- Filter sheets/drawers: always add `max-w-[85vw]` alongside fixed widths (e.g., `w-80 max-w-[85vw]`)
+- Sidebars: convert to horizontal scrollable strip on mobile (`flex lg:flex-col overflow-x-auto lg:overflow-visible`)
+
+### Responsive Gap Pattern
+Scale gaps down on smaller screens:
+- Standard: `gap-4 md:gap-6`
+- Grid layouts: `gap-4 lg:gap-8`
+- Avoid `gap-6` or `gap-8` without a smaller mobile value
+
+### Sticky Elements
+Use `lg:sticky` for sidebars that appear below main content on mobile (single-column layout). Unconditional `sticky` wastes vertical space on mobile.
+
+### MobileMenu Auth Awareness
+The `MobileMenu` component accepts `onAuth` and `isAuthenticated` props. Always pass these from the Header to ensure:
+- Auth buttons (Join Free / Sign In) only show for logged-out users
+- Auth-required menu items (Activity, Favorites, etc.) only show for logged-in users
