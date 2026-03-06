@@ -159,7 +159,10 @@ export const Header = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-0">
               <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-9 w-auto object-contain" />
-              <span className="font-heading text-lg md:text-xl font-semibold text-gradient -ml-3">osmiclly</span>
+              <span
+                className="font-heading font-semibold text-gradient"
+                style={{ marginLeft: "-1.1rem", fontSize: "clamp(1.125rem, 2vw, 1.2rem)", lineHeight: "1.4" }}
+              >osmiclly</span>
             </Link>
 
             {/* Desktop Navigation */}

@@ -97,7 +97,10 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           <div className="flex items-center justify-between p-4 border-b border-border">
             <Link to="/" onClick={onClose} className="flex items-center gap-0">
               <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-8 w-auto object-contain" />
-              <span className="font-heading text-lg font-semibold text-gradient -ml-2">osmiclly</span>
+              <span
+                className="font-heading font-semibold text-gradient"
+                style={{ marginLeft: "-1.1rem", fontSize: "clamp(1.125rem, 2vw, 1.2rem)", lineHeight: "1.2" }}
+              >osmiclly</span>
             </Link>
             <button
               onClick={onClose}
