@@ -63,6 +63,8 @@
 | `decline_session` | Either party cancels a pending session → `status='cancelled'` |
 | `end_rtc_session` | Ends active session, calculates billing, deducts credits atomically, logs transaction |
 | `deduct_ai_credits` | Deducts credits for AI chat messages, logs transaction |
+| `delete_my_account` | Full GDPR anonymization: messages, knowledge docs, favorites, reviews, disputes, profile |
+| `is_username_available` | Check username uniqueness (callable by anon for signup validation) |
 
 ## Session Lifecycle
 
@@ -229,6 +231,8 @@ Applied in order:
 24. `20260311000000_horoscopes_table.sql` — Dynamic horoscopes table with RLS (public read, service-role write)
 25. `20260312000000_public_advisor_profiles_rls.sql` — Add anon SELECT policy on `profiles` scoped to advisor profiles (fixes avatars/names not loading when logged out)
 26. `20260313000000_advisor_public_stats_rpc.sql` — Batch `get_all_advisor_public_stats()` RPC (readings, rating, review counts per advisor), anon SELECT on reviews
+27. `20260314000000_fix_handle_new_user_username_conflict.sql` — `is_username_available` RPC, fix handle_new_user trigger for username unique_violation
+28. `20260315000000_full_gdpr_anonymization.sql` — Full GDPR `delete_my_account` RPC (messages, knowledge docs, favorites, reviews, disputes, profile), fix `reviewed_by` FK constraint
 
 ### To apply pending migrations:
 ```bash
@@ -300,6 +304,8 @@ npx tsc --noEmit     # Type-check without emitting
 - **Accessibility:** Skip-to-content link and `RouteAnnouncer` are in `App.tsx`. All icon-only buttons must have `aria-label`. Use dynamic labels for toggle buttons (e.g., `aria-label={isMuted ? 'Unmute' : 'Mute'}`).
 - **MobileMenu auth props:** `MobileMenu` accepts `onAuth` and `isAuthenticated` props. Always pass these from Header so auth buttons work on mobile and auth-required menu items are conditionally shown. See `Header.tsx` for the pattern.
 - **Mobile touch targets:** All interactive elements must be at least 44x44px on mobile. Use `min-w-11 min-h-11` for icon-only buttons. See `docs/CURRENT_UI_KIT.md` Section 8 for full mobile guidelines.
+- **GDPR account deletion:** The `delete-account` edge function + `delete_my_account` RPC perform full anonymization: messages→[deleted], delete knowledge_base_documents/favorites/reviews, anonymize disputes, anonymize profile (name→"Deleted User", email→deleted-{id}@deleted.local), fix orphaned FKs, delete auth.users. The profile row is **kept but anonymized** (not deleted) to preserve session/transaction FK integrity.
+- **Username uniqueness:** `profiles.username` has a UNIQUE constraint. The `is_username_available` RPC (callable by anon) checks availability before signup. The `handle_new_user` trigger retries with `username=NULL` on unique_violation to prevent orphaned auth users without profiles.
 
 ## Frontend
 

@@ -10,13 +10,13 @@
 
 | Phase | Description | Completion | Notes |
 |-------|-------------|:----------:|-------|
-| **Phase 1** | MVP Launch (Human-to-Human Marketplace) | **~98%** | Auth (email + Google), RTC core done, credits-only billing with shared hook, Stripe credit purchases + Connect payouts, admin with disputes/refunds + advisor contracts + transactions, advisor setup wizard + schedule + profile persistence, dynamic advisor dashboard stats, advisor activity page, Brevo email integration, 20 DB-backed advisors, transaction history (user + admin), favorite advisors, Help Center differentiation |
-| **Phase 2** | Twin AI Expansion (Digital Clone) | **~95%** | Code complete: pgvector + knowledge ingestion, AI text chat (RAG), voice clone (Cartesia + Vapi). Needs deployment + API keys. |
+| **Phase 1** | MVP Launch (Human-to-Human Marketplace) | **~99%** | Auth (email + Google), RTC core done, credits-only billing with shared hook, Stripe credit purchases + Connect payouts (live keys), admin with disputes/refunds + advisor contracts + transactions, advisor setup wizard + schedule + profile persistence, dynamic advisor dashboard stats, advisor activity page, Brevo email integration, 20 DB-backed advisors, transaction history (user + admin), favorite advisors, Help Center, full GDPR anonymization, all edge functions deployed, all Supabase secrets set |
+| **Phase 2** | Twin AI Expansion (Digital Clone) | **~98%** | Code complete + deployed: pgvector + knowledge ingestion, AI text chat (RAG), voice clone (Cartesia + Vapi). API keys set. **Remaining:** Vapi webhook URL configuration. |
 
 ### Quick Stats
 
 - **Edge Functions:** 14 of 14 built (Phase 1: 10 incl. `send-email`, Phase 2: 4 — `ingest-knowledge`, `handle-ai-chat`, `clone-voice`, `vapi-webhook`)
-- **Database Migrations:** 23 (22 applied + 1 pending: `20260312000000`)
+- **Database Migrations:** 28 (26 applied + 2 pending: `20260314000000`, `20260315000000`)
 - **NPM Dependencies:** Core stack + Stripe SDK + LiveKit client + `@vapi-ai/web` installed
 - **Advisors:** 20 defined in static code, all 20 with real DB profiles (auth accounts + advisor_details); `useAdvisors` hook merges DB + static
 - **Environment Variables:** Supabase keys configured; LiveKit + Stripe keys need Supabase secrets; OpenAI, Cartesia, Vapi keys needed for Phase 2 deployment
@@ -207,7 +207,7 @@
 | **Connect Chat UI to Supabase Realtime** | Task 3.1, FR-4.1 | DONE | Chat messages via `useChatMessages` (Realtime subscription). Typing indicators via `useTypingIndicator`. Read receipts via `read_at` column + `markAsRead()`. Cross-session chat history via `useChatHistory`. |
 | **Finalize LiveKit token generation** | Task 3.2, FR-4.3 | DONE | `generate-livekit-token` edge function: verifies auth, checks session status, validates identity, generates scoped JWT. |
 | **Implement Call State Management** | Task 3.3, FR-4.4 | DONE | Full state machine: `connecting → ringing → connected → ended`. Shared billing hook (`useSessionBilling`) with credits-first logic across all 3 session types. |
-| **"Right to be Forgotten" API** | Task 3.4, NFR-2 | PARTIAL | `delete_my_account()` RPC exists. `delete-account` edge function built. Settings.tsx has "Delete Account" UI. **Missing:** full data anonymization (messages, session metadata), confirmation email, admin audit log of deletions. |
+| **"Right to be Forgotten" API** | Task 3.4, NFR-2 | DONE | `delete_my_account()` RPC + `delete-account` edge function with full GDPR cleanup: anonymizes messages, deletes advisor_details/applications/knowledge_base_documents/favorites/reviews, anonymizes disputes, anonymizes profile, fixes orphaned FKs, deletes auth.users. Settings.tsx has "Delete Account" UI with confirmation. |
 
 #### What Exists (Milestone 3)
 - `src/pages/Chat.tsx` — Client chat with ringing/accept flow, real-time messages, typing indicators, read receipts, chat history
@@ -227,8 +227,8 @@
 - Database RPCs: `start_rtc_session()`, `accept_session()`, `decline_session()`, `end_rtc_session()`, `delete_my_account()`
 
 #### What's Missing (Milestone 3)
-1. **Full GDPR data anonymization** — messages should be anonymized (not just deleted), session metadata scrubbed
-2. **LiveKit credentials deployment** — `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` must be set as Supabase secrets
+1. ~~**Full GDPR data anonymization**~~ — DONE (full cleanup in edge function + RPC)
+2. ~~**LiveKit credentials deployment**~~ — DONE (Supabase secrets set)
 3. **Network resilience** — reconnection handling for dropped connections during sessions
 
 ---
@@ -292,9 +292,9 @@
 - Storage bucket: `training_docs` (needs manual creation in Supabase Dashboard)
 
 #### What's Missing (Milestone 5)
-- `OPENAI_API_KEY` Supabase secret (manual step)
-- `training_docs` storage bucket creation (manual step via Dashboard)
-- Deploy `ingest-knowledge` edge function (manual step)
+- ~~`OPENAI_API_KEY` Supabase secret~~ — DONE
+- ~~`training_docs` storage bucket creation~~ — DONE
+- ~~Deploy `ingest-knowledge` edge function~~ — DONE
 
 ---
 
@@ -315,8 +315,8 @@
 - `src/hooks/useAdvisors.ts` — Fetches `twin_enabled` from DB, maps to `twinEnabled`
 
 #### What's Missing (Milestone 6)
-- `OPENAI_API_KEY` Supabase secret (shared with Milestone 5)
-- Deploy `handle-ai-chat` edge function (manual step)
+- ~~`OPENAI_API_KEY` Supabase secret~~ — DONE
+- ~~Deploy `handle-ai-chat` edge function~~ — DONE
 
 ---
 
@@ -337,9 +337,9 @@
 - `src/hooks/useAdvisors.ts` — Fetches `vapi_agent_id` from DB, maps to `vapiAgentId`
 
 #### What's Missing (Milestone 7)
-- `CARTESIA_API_KEY` and `VAPI_API_KEY` Supabase secrets (manual step)
-- `VITE_VAPI_PUBLIC_KEY` in `.env` frontend (manual step)
-- Deploy `clone-voice` and `vapi-webhook` edge functions (manual step)
+- ~~`CARTESIA_API_KEY` and `VAPI_API_KEY` Supabase secrets~~ — DONE
+- ~~`VITE_VAPI_PUBLIC_KEY` in `.env` frontend~~ — DONE
+- ~~Deploy `clone-voice` and `vapi-webhook` edge functions~~ — DONE
 - Configure Vapi webhook URL in Vapi dashboard: `https://jxpzxdbforvuphqvvqkz.supabase.co/functions/v1/vapi-webhook`
 
 ---
@@ -400,16 +400,16 @@ All required packages are installed:
 
 | Variable | Purpose | Phase | Status |
 |----------|---------|-------|:------:|
-| `LIVEKIT_API_KEY` | LiveKit token generation | Phase 1 | Needs setting |
-| `LIVEKIT_API_SECRET` | LiveKit token signing | Phase 1 | Needs setting |
-| `LIVEKIT_URL` | LiveKit WebSocket URL | Phase 1 | Needs setting |
-| `STRIPE_SECRET_KEY` | Stripe server-side operations | Phase 1 | Needs setting |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature verification | Phase 1 | Needs setting |
-| `OPENAI_API_KEY` | Embeddings + chat completions | Phase 2 | Needs setting |
-| `CARTESIA_API_KEY` | Cartesia voice cloning API | Phase 2 | Needs setting |
-| `VAPI_API_KEY` | Vapi agent management | Phase 2 | Needs setting |
-| `BREVO_API_KEY` | Brevo transactional email API | Phase 1 | Needs setting |
-| `VITE_VAPI_PUBLIC_KEY` | Vapi Web SDK (frontend .env) | Phase 2 | Needs setting |
+| `LIVEKIT_API_KEY` | LiveKit token generation | Phase 1 | DONE |
+| `LIVEKIT_API_SECRET` | LiveKit token signing | Phase 1 | DONE |
+| `LIVEKIT_URL` | LiveKit WebSocket URL | Phase 1 | DONE |
+| `STRIPE_SECRET_KEY` | Stripe server-side operations (live keys) | Phase 1 | DONE |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature verification | Phase 1 | DONE |
+| `OPENAI_API_KEY` | Embeddings + chat completions | Phase 2 | DONE |
+| `CARTESIA_API_KEY` | Cartesia voice cloning API | Phase 2 | DONE |
+| `VAPI_API_KEY` | Vapi agent management | Phase 2 | DONE |
+| `BREVO_API_KEY` | Brevo transactional email API | Phase 1 | DONE |
+| `VITE_VAPI_PUBLIC_KEY` | Vapi Web SDK (frontend .env) | Phase 2 | DONE |
 
 ### Applied Migrations
 
@@ -437,6 +437,10 @@ All required packages are installed:
 | 20 | `20260309000000_auto_busy_status.sql` | Auto-set advisor status to 'busy' on accept, revert on end |
 | 21 | `20260310000000_fix_seeded_advisor_status.sql` | Fix seeded dummy advisors status from 'online' to 'offline' |
 | 22 | `20260311000000_horoscopes_table.sql` | Dynamic horoscopes table with RLS (public read, service-role write) |
+| 23 | `20260312000000_public_advisor_profiles_rls.sql` | Anon SELECT policy on profiles scoped to advisor profiles |
+| 24 | `20260313000000_advisor_public_stats_rpc.sql` | Batch `get_all_advisor_public_stats()` RPC, anon SELECT on reviews |
+| 25 | `20260314000000_fix_handle_new_user_username_conflict.sql` | `is_username_available` RPC + fix handle_new_user trigger for username conflicts |
+| 26 | `20260315000000_full_gdpr_anonymization.sql` | Full GDPR delete_my_account RPC + fix reviewed_by FK constraint |
 
 ---
 
@@ -515,17 +519,17 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | 5 | **Dynamic horoscopes** — n8n workflow to populate DB (table + hook + frontend done) | Medium | 1 | PARTIAL |
 | 6 | **Render legal pages** — convert markdown drafts to React pages | Low | 1 | Not started |
 | 7 | **E2E QA testing** — session lifecycle, billing edge cases | High | 1 | Not started |
-| 8 | **Deploy all edge functions** — deploy all 13 to Supabase | Low | 1+2 | Manual step |
-| 9 | **Set environment secrets** — LiveKit, Stripe, OpenAI, Cartesia, Vapi | Low | 1+2 | Manual step |
-| 10 | **Create `training_docs` storage bucket** — private bucket in Supabase Dashboard | Low | 2 | Manual step |
+| ~~8~~ | ~~**Deploy all edge functions**~~ | ~~Low~~ | 1+2 | DONE (all 14 deployed) |
+| ~~9~~ | ~~**Set environment secrets**~~ | ~~Low~~ | 1+2 | DONE (all Supabase secrets set) |
+| ~~10~~ | ~~**Create `training_docs` storage bucket**~~ | ~~Low~~ | 2 | DONE |
 | 11 | **Configure Vapi webhook URL** — set in Vapi dashboard | Low | 2 | Manual step |
-| 12 | **Set `VITE_VAPI_PUBLIC_KEY`** — frontend .env for Vapi Web SDK | Low | 2 | Manual step |
-| 13 | **Apply migration** — `supabase db push` for migrations 14-18 | Low | 1+2 | Manual step |
-| 14 | **Set `BREVO_API_KEY`** — Brevo API key in Supabase secrets | Low | 1 | Manual step |
+| ~~12~~ | ~~**Set `VITE_VAPI_PUBLIC_KEY`**~~ | ~~Low~~ | 2 | DONE (Vercel env vars set) |
+| ~~13~~ | ~~**Apply migrations**~~ | ~~Low~~ | 1+2 | DONE (all migrations applied) |
+| ~~14~~ | ~~**Set `BREVO_API_KEY`**~~ | ~~Low~~ | 1 | DONE |
 | 15 | **Create Brevo email templates** — 6 templates (welcome client/advisor, receipt, low credit, approved, rejected) | Medium | 1 | Manual step |
 | 16 | **Configure Supabase SMTP** — Use Brevo SMTP relay for password reset emails | Low | 1 | Manual step |
-| 17 | **Stripe production keys** — Swap `pk_test_...` → `pk_live_...` in `.env`, update `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` in Supabase secrets | Low | 1 | Manual step |
-| 18 | **Deploy `send-email` edge function** — `supabase functions deploy send-email` | Low | 1 | Manual step |
+| ~~17~~ | ~~**Stripe production keys**~~ | ~~Low~~ | 1 | DONE (live keys configured) |
+| ~~18~~ | ~~**Deploy `send-email` edge function**~~ | ~~Low~~ | 1 | DONE |
 
 ---
 
@@ -555,7 +559,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | FR-6.2 | Advisor Approval Dashboard | DONE | Auto-provision on approval (creates advisor_details with contract terms + updates role). Per-advisor contracts via `AdvisorContractModal`. |
 | FR-6.3 | Dispute Center / Refunds | DONE | `AdminDisputeCenter` + `AdminDisputeDetail` + `admin-refund` edge function + `disputes` table |
 | NFR-1 | Data Privacy & RLS | DONE | RLS policies on all tables |
-| NFR-2 | Right to be Forgotten | PARTIAL | `delete_my_account()` RPC + edge function + UI; needs full anonymization |
+| NFR-2 | Right to be Forgotten | DONE | `delete_my_account()` RPC + `delete-account` edge function with full GDPR cleanup (messages, knowledge docs, favorites, reviews, disputes, profile anonymization, auth deletion) + Settings.tsx UI |
 | NFR-3 | Performance targets | PARTIAL | LiveKit integration exists; latency not benchmarked |
 
 ---
@@ -564,13 +568,13 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 
 | # | Task | Category | Status |
 |---|------|----------|:------:|
-| 1 | Apply pending migrations (`supabase db push`) — `20260304000000`, `20260306000000`, `20260307000000` | DB | Manual step |
-| 2 | Deploy all 14 edge functions (`supabase functions deploy`) | Infra | Manual step |
-| 3 | Set Supabase secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `BREVO_API_KEY`, `LIVEKIT_*`, `OPENAI_API_KEY`, etc. | Infra | Manual step |
-| 4 | Swap Stripe keys to production (`pk_live_...`, `sk_live_...`) | Payments | Manual step |
+| ~~1~~ | ~~Apply pending migrations (`supabase db push`)~~ | DB | DONE |
+| ~~2~~ | ~~Deploy all 14 edge functions (`supabase functions deploy`)~~ | Infra | DONE |
+| ~~3~~ | ~~Set Supabase secrets: STRIPE, BREVO, LIVEKIT, OPENAI, CARTESIA, VAPI~~ | Infra | DONE |
+| ~~4~~ | ~~Swap Stripe keys to production (`pk_live_...`, `sk_live_...`)~~ | Payments | DONE |
 | 5 | Create 6 Brevo email templates (welcome client, welcome advisor, session receipt, low credit, approved, rejected) | Email | Manual step |
 | 6 | Configure Supabase Auth SMTP to use Brevo relay (`smtp-relay.brevo.com:587`) for password reset emails | Email | Manual step |
-| 7 | Create `training_docs` storage bucket in Supabase Dashboard (private) | Storage | Manual step |
+| ~~7~~ | ~~Create `training_docs` storage bucket in Supabase Dashboard (private)~~ | Storage | DONE |
 | 8 | Configure Vapi webhook URL in Vapi dashboard | AI Voice | Manual step |
 | 9 | Set admin user in production database (`profiles.role = 'admin'`) | Auth | Manual step |
 | 10 | Set custom domain for Supabase (optional) and update CORS origins | Infra | Manual step |
@@ -578,10 +582,12 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | 12 | E2E testing: session lifecycle, billing, Stripe checkout, advisor onboarding | QA | Not started |
 | 13 | Mobile responsiveness audit | UI | Not started |
 | 14 | Browser compatibility testing (Chrome, Firefox, Safari, Edge) | QA | Not started |
-| 15 | Set environment variables in Vercel Dashboard (VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, VITE_STRIPE_PUBLISHABLE_KEY, VITE_VAPI_PUBLIC_KEY) | Infra | Manual step |
+| ~~15~~ | ~~Set environment variables in Vercel Dashboard~~ | Infra | DONE |
 | 16 | Set `ALLOWED_ORIGIN` Supabase secret for CORS | Infra | Manual step |
 | 17 | Test CSP headers after deployment (check browser console for violations) | Security | Manual step |
 | 18 | Clean `.env` from git history using BFG Repo-Cleaner (optional, low priority) | Security | Manual step |
 | 19 | Delete or secure 20 dummy advisor accounts before production | Security | Manual step |
 | 20 | Set up Sentry error tracking | Monitoring | Not started |
 | 21 | Set up GitHub Actions CI/CD pipeline | Infra | Not started |
+| 22 | Apply pending migrations: `20260314000000` (username fix) + `20260315000000` (GDPR) | DB | Manual step |
+| 23 | Redeploy `delete-account` edge function (updated with full GDPR cleanup) | Infra | Manual step |
