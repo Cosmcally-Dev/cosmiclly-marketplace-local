@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, ArrowRight, Star } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AdvisorCard } from '@/components/advisors/AdvisorCard';
@@ -8,11 +8,20 @@ import { useAdvisors } from '@/hooks/useAdvisors';
 export const FeaturedAdvisorsSection = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { advisors } = useAdvisors();
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   // Get top-rated advisors for featured section
   const featuredAdvisors = advisors
     .filter(a => a.isTopRated || a.rating >= 4.8)
     .slice(0, 12);
+
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -36,24 +45,28 @@ export const FeaturedAdvisorsSection = () => {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => scroll('left')}
-              className="rounded-full w-10 h-10 sm:w-8 sm:h-8"
-              aria-label="Scroll advisors left"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => scroll('right')}
-              className="rounded-full w-10 h-10 sm:w-8 sm:h-8"
-              aria-label="Scroll advisors right"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+            <div className="hidden lg:flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => scroll('left')}
+                disabled={!canScrollLeft}
+                className="rounded-full w-8 h-8"
+                aria-label="Scroll advisors left"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => scroll('right')}
+                disabled={!canScrollRight}
+                className="rounded-full w-8 h-8"
+                aria-label="Scroll advisors right"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
             <Link to="/advisors" className="ml-2">
               <Button variant="mystical" size="sm">
                 View All
@@ -67,7 +80,8 @@ export const FeaturedAdvisorsSection = () => {
         <div className="relative">
           <div
             ref={scrollRef}
-            className="grid grid-flow-col auto-cols-[280px] md:auto-cols-[300px] gap-4 overflow-x-auto py-2 scrollbar-hide snap-x snap-mandatory"
+            onScroll={updateScrollState}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:none] lg:grid-flow-col lg:auto-cols-[320px] gap-4 lg:gap-6 lg:overflow-x-auto py-2 lg:scrollbar-hide lg:snap-x lg:snap-mandatory"
           >
             {featuredAdvisors.map((advisor, index) => (
               <div

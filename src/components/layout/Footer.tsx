@@ -41,7 +41,10 @@ export const Footer = () => {
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-0 mb-4">
               <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-9 w-auto object-contain" />
-              <span className="font-heading text-lg font-semibold text-gradient -ml-2">osmiclly</span>
+              <span
+                className="font-heading font-semibold text-gradient"
+                style={{ marginLeft: "-1.1rem", fontSize: "clamp(1.125rem, 2vw, 1.2rem)", lineHeight: "1.2" }}
+              >osmiclly</span>
             </Link>
             <p className="text-muted-foreground text-sm mb-5">
               Connect with gifted psychic advisors for guidance on love, career, and life.

@@ -66,7 +66,7 @@ export const AllAdvisorsSection = () => {
   const hasMore = visibleCount < filteredAdvisors.length;
 
   return (
-    <section className="py-12 md:py-16 bg-secondary/20">
+    <section className="py-12 md:py-16 bg-gradient-to-b from-background to-secondary/20">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">

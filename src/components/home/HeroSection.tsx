@@ -74,13 +74,16 @@ export const HeroSection = () => {
               );
             })}
           </div>
+        </div>
 
-          {/* Categories Strip */}
-          <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <CategoriesStrip />
-          </div>
+        {/* Categories Strip - full container width, aligned with Featured Advisors */}
+        <div className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <CategoriesStrip />
         </div>
       </div>
+
+      {/* Smooth fade into bg-background */}
+      <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none z-20" style={{ background: 'linear-gradient(to bottom, transparent, hsl(var(--background)))' }} />
     </section>
   );
 };
