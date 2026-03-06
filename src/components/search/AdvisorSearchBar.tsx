@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Search, User, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,8 +35,10 @@ export const AdvisorSearchBar = ({
   const [query, setQuery] = useState(initialQuery);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Get unique specialties from all advisors
   const allSpecialties = useMemo(() => {
@@ -104,6 +107,24 @@ export const AdvisorSearchBar = ({
 
     return results.slice(0, 8);
   }, [query, advisors, allSpecialties]);
+
+  // Track wrapper position for portal dropdown
+  useEffect(() => {
+    const updateRect = () => {
+      if (wrapperRef.current) {
+        setDropdownRect(wrapperRef.current.getBoundingClientRect());
+      }
+    };
+    if (isOpen) {
+      updateRect();
+      window.addEventListener('scroll', updateRect, true);
+      window.addEventListener('resize', updateRect);
+    }
+    return () => {
+      window.removeEventListener('scroll', updateRect, true);
+      window.removeEventListener('resize', updateRect);
+    };
+  }, [isOpen]);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -179,7 +200,7 @@ export const AdvisorSearchBar = ({
   const isHero = variant === 'hero';
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={wrapperRef} className={`relative ${className}`}>
       <div className="relative">
         <Search className={`absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground ${isHero ? 'w-5 h-5' : 'w-4 h-4'}`} />
         <input
@@ -216,11 +237,18 @@ export const AdvisorSearchBar = ({
         </Button>
       </div>
 
-      {/* Autocomplete Dropdown */}
-      {isOpen && searchResults.length > 0 && (
-        <div 
+      {/* Autocomplete Dropdown — rendered via portal to escape stacking contexts */}
+      {isOpen && searchResults.length > 0 && dropdownRect && createPortal(
+        <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+          style={{
+            position: 'fixed',
+            top: dropdownRect.bottom + 8,
+            left: dropdownRect.left,
+            width: dropdownRect.width,
+            zIndex: 9999,
+          }}
+          className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
         >
           <div className="p-2">
             {searchResults.map((result, index) => (
@@ -228,14 +256,14 @@ export const AdvisorSearchBar = ({
                 key={`${result.type}-${result.id}`}
                 onClick={() => handleResultClick(result)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                  selectedIndex === index 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'hover:bg-secondary text-foreground'
+                  selectedIndex === index
+                    ? 'bg-cyan-500/10 text-cyan-400'
+                    : 'hover:bg-cyan-500/10 hover:text-cyan-400 text-foreground'
                 }`}
               >
                 {result.type === 'advisor' && result.avatar ? (
-                  <img 
-                    src={result.avatar} 
+                  <img
+                    src={result.avatar}
                     alt={result.name}
                     className="w-10 h-10 rounded-full object-cover"
                   />
@@ -260,7 +288,7 @@ export const AdvisorSearchBar = ({
               </button>
             ))}
           </div>
-          
+
           {/* Search all results footer */}
           <div className="border-t border-border p-2">
             <button
@@ -271,7 +299,8 @@ export const AdvisorSearchBar = ({
               Search all for "{query}"
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

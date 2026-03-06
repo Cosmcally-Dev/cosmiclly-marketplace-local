@@ -34,11 +34,12 @@ const socialLinks = [
 export const Footer = () => {
   return (
     <footer className="bg-card border-t border-border">
-      <div className="container mx-auto px-4 py-10 md:py-14">
+      <div className="container mx-auto px-4 py-12 md:py-16">
         {/* Main Footer */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-6 md:gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8 mb-12">
+
           {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="md:col-span-3">
             <Link to="/" className="flex items-center gap-0 mb-4">
               <img src="/cosmiclly-logo.png" alt="Cosmiclly" className="h-9 w-auto object-contain" />
               <span
@@ -46,16 +47,16 @@ export const Footer = () => {
                 style={{ marginLeft: "-1.1rem", fontSize: "clamp(1.125rem, 2vw, 1.2rem)", lineHeight: "1.2" }}
               >osmiclly</span>
             </Link>
-            <p className="text-muted-foreground text-sm mb-5">
+            <p className="text-muted-foreground text-sm leading-relaxed mb-6">
               Connect with gifted psychic advisors for guidance on love, career, and life.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-2.5">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
                   href={social.href}
                   aria-label={social.label}
-                  className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:bg-secondary hover:text-muted-foreground transition-colors"
+                  className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200"
                 >
                   <social.icon className="w-4 h-4" />
                 </a>
@@ -63,59 +64,63 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Services — all specialties in 3 columns */}
-          <div className="col-span-2">
-            <h4 className="font-semibold text-foreground mb-3 text-sm">Services</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
+          {/* Services */}
+          <div className="md:col-span-5">
+            <h4 className="font-semibold text-foreground mb-4 text-xs uppercase tracking-widest">Services</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2.5">
               {footerLinks.services.map((link) => (
-                <Link key={link.label} to={link.href} className="text-muted-foreground hover:text-primary text-xs transition-colors whitespace-nowrap">
+                <Link key={link.label} to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
                   {link.label}
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Explore */}
-          <div>
-            <h4 className="font-semibold text-foreground mb-3 text-sm">Explore</h4>
-            <ul className="space-y-2">
-              {footerLinks.explore.map((link) => (
-                <li key={link.label}>
-                  <Link to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {/* Explore, Support, About */}
+          <div className="md:col-span-4 grid grid-cols-3 gap-6">
+            {/* Explore */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-4 text-xs uppercase tracking-widest">Explore</h4>
+              <ul className="space-y-2.5">
+                {footerLinks.explore.map((link) => (
+                  <li key={link.label}>
+                    <Link to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Support */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-4 text-xs uppercase tracking-widest">Support</h4>
+              <ul className="space-y-2.5">
+                {footerLinks.support.map((link) => (
+                  <li key={link.label}>
+                    <Link to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* About */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-4 text-xs uppercase tracking-widest">About</h4>
+              <ul className="space-y-2.5">
+                {footerLinks.about.map((link) => (
+                  <li key={link.label}>
+                    <Link to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          {/* Support */}
-          <div>
-            <h4 className="font-semibold text-foreground mb-3 text-sm">Support</h4>
-            <ul className="space-y-2">
-              {footerLinks.support.map((link) => (
-                <li key={link.label}>
-                  <Link to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* About */}
-          <div>
-            <h4 className="font-semibold text-foreground mb-3 text-sm">About</h4>
-            <ul className="space-y-2">
-              {footerLinks.about.map((link) => (
-                <li key={link.label}>
-                  <Link to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
         {/* Bottom Bar */}

@@ -3,7 +3,7 @@ import { testimonials } from '@/data/testimonials';
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-16 md:py-24 bg-hero-gradient relative overflow-hidden">
+    <section className="py-16 md:py-24 bg-testimonials-gradient relative overflow-hidden">
       {/* Stars Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(15)].map((_, i) => (
