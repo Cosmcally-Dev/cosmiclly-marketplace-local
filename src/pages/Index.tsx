@@ -6,7 +6,6 @@ import { RecentlyViewedSection } from '@/components/home/RecentlyViewedSection';
 import { AllAdvisorsSection } from '@/components/home/AllAdvisorsSection';
 import { HowItWorksSection } from '@/components/home/HowItWorksSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
-import { CookieConsent } from '@/components/CookieConsent';
 
 const Index = () => {
   return (
@@ -21,7 +20,6 @@ const Index = () => {
         <TestimonialsSection />
       </main>
       <Footer />
-      <CookieConsent />
     </div>
   );
 };

@@ -497,11 +497,15 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 - 5 routes now show Coming Soon instead of 404: `/about`, `/privacy`, `/terms`, `/cookies`, `/payment-methods`
 - Fixed broken `/chat` link in Profile.tsx → redirects to `/advisors`
 
-### Legal/Content Pages (Drafts)
-- `docs/ABOUT_US.md` — Company mission, how the platform works, values
-- `docs/PRIVACY_POLICY.md` — Data collection, GDPR/CCPA, user rights
-- `docs/TERMS_OF_SERVICE.md` — Billing terms, session policies, liability
-- `docs/COOKIE_POLICY.md` — Essential cookies, third-party (Stripe, LiveKit)
+### Legal/Content Pages (Rendered)
+- 4 legal pages rendered via reusable `LegalPage` component + `react-markdown` + `remark-gfm`
+- `docs/ABOUT_US.md` → `/about` via `AboutUs.tsx`
+- `docs/PRIVACY_POLICY.md` → `/privacy` via `PrivacyPolicy.tsx`
+- `docs/TERMS_OF_SERVICE.md` → `/terms` via `TermsOfService.tsx`
+- `docs/COOKIE_POLICY.md` → `/cookies` via `CookiePolicy.tsx`
+- Draft notices removed from all 4 docs
+- CookieConsent banner moved from `Index.tsx` to `App.tsx` (global), "Learn more" links to `/cookies`
+- AuthModal Terms/Privacy links point to actual routes (open in new tab)
 
 ### Dynamic Horoscope Planning
 - `docs/DYNAMIC_HOROSCOPE_PLAN.md` — Full architecture doc for replacing static horoscopes with n8n-automated dynamic content
@@ -517,7 +521,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | ~~3~~ | ~~Auth completion — OAuth~~ | ~~Medium~~ | 1 | DONE (Google only; Facebook removed) |
 | ~~4~~ | ~~Facebook App creation~~ | ~~Low~~ | 1 | Removed — Facebook OAuth no longer used |
 | 5 | **Dynamic horoscopes** — n8n workflow to populate DB (table + hook + frontend done) | Medium | 1 | PARTIAL |
-| 6 | **Render legal pages** — convert markdown drafts to React pages | Low | 1 | Not started |
+| ~~6~~ | ~~**Render legal pages** — convert markdown drafts to React pages~~ | ~~Low~~ | 1 | DONE (react-markdown + LegalPage wrapper, CookieConsent global, AuthModal links fixed) |
 | 7 | **E2E QA testing** — session lifecycle, billing edge cases | High | 1 | Not started |
 | ~~8~~ | ~~**Deploy all edge functions**~~ | ~~Low~~ | 1+2 | DONE (all 14 deployed) |
 | ~~9~~ | ~~**Set environment secrets**~~ | ~~Low~~ | 1+2 | DONE (all Supabase secrets set) |
@@ -578,7 +582,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | 8 | Configure Vapi webhook URL in Vapi dashboard | AI Voice | Manual step |
 | 9 | Set admin user in production database (`profiles.role = 'admin'`) | Auth | Manual step |
 | 10 | Set custom domain for Supabase (optional) and update CORS origins | Infra | Manual step |
-| 11 | Render legal pages (About Us, Privacy Policy, Terms of Service, Cookie Policy) from markdown drafts | Content | Not started |
+| ~~11~~ | ~~Render legal pages (About Us, Privacy Policy, Terms of Service, Cookie Policy) from markdown drafts~~ | Content | DONE |
 | 12 | E2E testing: session lifecycle, billing, Stripe checkout, advisor onboarding | QA | Not started |
 | 13 | Mobile responsiveness audit | UI | Not started |
 | 14 | Browser compatibility testing (Chrome, Firefox, Safari, Edge) | QA | Not started |

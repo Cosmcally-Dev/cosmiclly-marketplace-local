@@ -1,9 +1,5 @@
 # About Cosmiclly
 
-> **DRAFT — Requires legal review before publication.**
-
----
-
 ## Our Mission
 
 Cosmiclly is a trusted online marketplace connecting people seeking guidance with gifted spiritual advisors from around the world. Whether you're looking for clarity on love, career direction, or personal growth, we make it simple to find and connect with the right advisor — in real time.

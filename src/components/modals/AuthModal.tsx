@@ -396,9 +396,9 @@ export const AuthModal = ({ isOpen, onClose, mode: initialMode, onSignupSuccess 
                   />
                   <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug cursor-pointer">
                     I agree to the{' '}
-                    <a href="#" className="text-primary hover:underline font-medium">Terms of Service</a>
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Terms of Service</a>
                     {' '}and{' '}
-                    <a href="#" className="text-primary hover:underline font-medium">Privacy Policy</a>
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Privacy Policy</a>
                   </label>
                 </div>
               </>

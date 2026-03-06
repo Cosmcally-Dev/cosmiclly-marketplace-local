@@ -2,6 +2,15 @@
 
 > **For AI assistants (Claude, etc.) continuing development on this project.**
 
+## Initialization
+
+When initializing this file, also review and update the following docs as needed:
+- `docs/TECHNICAL_GAP_ANALYSIS.md` — current project status, completion tracking
+- `docs/ABOUT_US.md` — About Cosmiclly content (rendered at `/about`)
+- `docs/COOKIE_POLICY.md` — Cookie Policy content (rendered at `/cookies`)
+- `docs/PRIVACY_POLICY.md` — Privacy Policy content (rendered at `/privacy`)
+- `docs/TERMS_OF_SERVICE.md` — Terms of Service content (rendered at `/terms`)
+
 ## Tech Stack
 
 - **Framework:** React 18 + Vite
@@ -141,6 +150,10 @@ All session types (chat, audio, video) follow the same pattern:
 | `/become-advisor` | `BecomeAdvisor.tsx` | Advisor recruitment page |
 | `/how-we-verify` | `HowWeVerify.tsx` | Advisor verification process info |
 | `/support` | `Support.tsx` | Help Center (knowledge base, FAQ, links to /contact) |
+| `/about` | `AboutUs.tsx` | About Cosmiclly (rendered from `docs/ABOUT_US.md`) |
+| `/privacy` | `PrivacyPolicy.tsx` | Privacy Policy (rendered from `docs/PRIVACY_POLICY.md`) |
+| `/terms` | `TermsOfService.tsx` | Terms of Service (rendered from `docs/TERMS_OF_SERVICE.md`) |
+| `/cookies` | `CookiePolicy.tsx` | Cookie Policy (rendered from `docs/COOKIE_POLICY.md`) |
 
 ### Hooks
 | Hook | File | Purpose |
@@ -192,6 +205,7 @@ All session types (chat, audio, video) follow the same pattern:
 | `StepIndicator` | `components/ui/step-indicator.tsx` | Horizontal step dots with lines |
 | `Skeletons` | `components/skeletons/index.tsx` | 5 skeleton variants for common layouts |
 | `RouteAnnouncer` | `components/RouteAnnouncer.tsx` | Screen reader route change announcements |
+| `LegalPage` | `components/layout/LegalPage.tsx` | Reusable markdown page wrapper (react-markdown + remark-gfm) |
 
 ### Documentation
 | File | Purpose |
@@ -262,6 +276,8 @@ npx supabase gen types typescript --linked > src/integrations/supabase/types.gen
 - **Help Center** (`/support`) — Knowledge base, FAQ, quick help topics (links to /contact for support)
 - **Contact Us** (`/contact`) — Contact form and support channels
 - **Credit Purchase** (`/add-credit`) — Stripe checkout for credit purchases
+- **Legal Pages** (`/about`, `/privacy`, `/terms`, `/cookies`) — Rendered from markdown docs via react-markdown + LegalPage wrapper
+- **Cookie Consent** — Global banner on all pages, stores preference in localStorage, links to `/cookies`
 
 ### Known Limitations:
 - Advisors must exist in `advisor_details` + `profiles` tables to appear on the site (20 seeded via migration)
@@ -305,6 +321,8 @@ npx tsc --noEmit     # Type-check without emitting
 - **MobileMenu auth props:** `MobileMenu` accepts `onAuth` and `isAuthenticated` props. Always pass these from Header so auth buttons work on mobile and auth-required menu items are conditionally shown. See `Header.tsx` for the pattern.
 - **Mobile touch targets:** All interactive elements must be at least 44x44px on mobile. Use `min-w-11 min-h-11` for icon-only buttons. See `docs/CURRENT_UI_KIT.md` Section 8 for full mobile guidelines.
 - **GDPR account deletion:** The `delete-account` edge function + `delete_my_account` RPC perform full anonymization: messages→[deleted], delete knowledge_base_documents/favorites/reviews, anonymize disputes, anonymize profile (name→"Deleted User", email→deleted-{id}@deleted.local), fix orphaned FKs, delete auth.users. The profile row is **kept but anonymized** (not deleted) to preserve session/transaction FK integrity.
+- **Legal/content pages:** The 4 legal pages (`/about`, `/privacy`, `/terms`, `/cookies`) are rendered from markdown files in `docs/` using the `LegalPage` wrapper component + `react-markdown` + `remark-gfm`. To update legal content, edit the corresponding markdown file in `docs/` — the page will reflect changes on next build. The first `# Title` heading is stripped from each markdown file since `LegalPage` renders its own hero title.
+- **CookieConsent banner:** Mounted globally in `App.tsx` (not page-specific). Shows on all pages after 1.5s delay if no consent stored in localStorage (`cookie-consent`). "Learn more" links to `/cookies`. Buttons: Decline (stores `declined`) and Accept All (stores `accepted`). Essential cookies (auth tokens) work regardless of choice.
 - **Username uniqueness:** `profiles.username` has a UNIQUE constraint. The `is_username_available` RPC (callable by anon) checks availability before signup. The `handle_new_user` trigger retries with `username=NULL` on unique_violation to prevent orphaned auth users without profiles.
 
 ## Frontend

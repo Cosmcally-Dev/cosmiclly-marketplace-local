@@ -1,7 +1,5 @@
 # Terms of Service
 
-> **DRAFT — Requires legal review before publication.**
-
 **Last Updated:** February 27, 2026
 
 ---
@@ -160,6 +158,3 @@ For questions about these Terms:
 - **Email:** support@cosmiclly.com
 - **Subject Line:** "Terms of Service Inquiry"
 
----
-
-*This document is a draft and should be reviewed by legal counsel before publication.*

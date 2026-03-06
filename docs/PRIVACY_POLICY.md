@@ -1,7 +1,5 @@
 # Privacy Policy
 
-> **DRAFT — Requires legal review before publication.**
-
 **Last Updated:** February 27, 2026
 
 ---
@@ -132,6 +130,3 @@ For privacy-related questions or requests:
 - **Email:** privacy@cosmiclly.com
 - **Support:** support@cosmiclly.com
 
----
-
-*This privacy policy is a draft and should be reviewed by legal counsel before publication.*
