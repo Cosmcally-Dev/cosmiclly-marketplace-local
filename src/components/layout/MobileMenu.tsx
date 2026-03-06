@@ -11,26 +11,51 @@ import { Badge } from '@/components/ui/badge';
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
+  onAuth?: (mode: 'signin' | 'signup') => void;
+  isAuthenticated?: boolean;
 }
 
-const menuItems = [
-  { 
-    icon: Layers, 
-    label: 'Specialties', 
+const publicMenuItems = [
+  {
+    icon: Layers,
+    label: 'Specialties',
     href: '/advisors',
-    isExpandable: true 
+    isExpandable: true
   },
-  { 
-    icon: Sun, 
-    label: 'Daily Horoscope', 
-    href: '/horoscope' 
+  {
+    icon: Sun,
+    label: 'Daily Horoscope',
+    href: '/horoscope'
   },
-  { 
-    icon: Star, 
-    label: 'Daily Oracle', 
+  {
+    icon: Star,
+    label: 'Daily Oracle',
     href: '/daily-oracle',
     badge: 'New'
   },
+  {
+    icon: BookOpen,
+    label: 'Articles',
+    href: '/articles'
+  },
+  {
+    icon: HelpCircle,
+    label: 'Customer Support',
+    href: '/support'
+  },
+  {
+    icon: Shield,
+    label: 'How We Verify Advisors',
+    href: '/support#verification'
+  },
+  {
+    icon: UserCheck,
+    label: 'Psychic Apply Here',
+    href: '/#apply'
+  },
+];
+
+const authMenuItems = [
   {
     icon: History,
     label: 'My Activity',
@@ -51,35 +76,19 @@ const menuItems = [
     label: 'Transaction History',
     href: '/transactions'
   },
-  { 
-    icon: BookOpen, 
-    label: 'Articles', 
-    href: '/articles' 
-  },
-  { 
-    icon: HelpCircle, 
-    label: 'Customer Support', 
-    href: '/support' 
-  },
-  { 
-    icon: Shield, 
-    label: 'How We Verify Advisors', 
-    href: '/support#verification' 
-  },
-  { 
-    icon: UserCheck, 
-    label: 'Psychic Apply Here', 
-    href: '/#apply' 
-  },
 ];
 
-export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
+export const MobileMenu = ({ isOpen, onClose, onAuth, isAuthenticated }: MobileMenuProps) => {
   const [isSpecialtiesExpanded, setIsSpecialtiesExpanded] = useState(false);
+
+  const menuItems = isAuthenticated
+    ? [...publicMenuItems.slice(0, 3), ...authMenuItems, ...publicMenuItems.slice(3)]
+    : publicMenuItems;
 
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className={`fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
@@ -87,7 +96,7 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       />
 
       {/* Menu Panel */}
-      <div 
+      <div
         className={`fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-card z-50 transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -165,15 +174,17 @@ export const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             </ul>
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-border space-y-3">
-            <Button variant="hero" className="w-full font-sans">
-              Join Free
-            </Button>
-            <Button variant="outline" className="w-full font-sans">
-              Sign In
-            </Button>
-          </div>
+          {/* Footer — auth buttons for logged-out users */}
+          {!isAuthenticated && (
+            <div className="p-4 border-t border-border space-y-3">
+              <Button variant="hero" className="w-full font-sans" onClick={() => { onAuth?.('signup'); onClose(); }}>
+                Join Free
+              </Button>
+              <Button variant="outline" className="w-full font-sans" onClick={() => { onAuth?.('signin'); onClose(); }}>
+                Sign In
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </>

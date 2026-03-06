@@ -153,7 +153,7 @@ const Activity = () => {
           {/* Filters bar */}
           <div className="flex flex-wrap items-center gap-4 mb-6 p-4 rounded-xl bg-card border border-border">
             <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
-              <SelectTrigger className="w-[140px] bg-secondary border-border">
+              <SelectTrigger className="w-[120px] sm:w-[140px] bg-secondary border-border">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
@@ -166,7 +166,7 @@ const Activity = () => {
             </Select>
 
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-              <SelectTrigger className="w-[150px] bg-secondary border-border">
+              <SelectTrigger className="w-[120px] sm:w-[150px] bg-secondary border-border">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>

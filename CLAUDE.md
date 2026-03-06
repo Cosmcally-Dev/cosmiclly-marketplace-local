@@ -271,7 +271,6 @@ npx supabase gen types typescript --linked > src/integrations/supabase/types.gen
 ### Not Yet Built:
 - PWA optimization (manifest.json, service worker, offline support)
 - Push notifications for incoming calls
-- Mobile responsiveness improvements
 - E2E test suite
 
 ## Development Commands
@@ -299,6 +298,8 @@ npx tsc --noEmit     # Type-check without emitting
 - **Breadcrumb component:** Use `<Breadcrumb>` from `components/ui/breadcrumb.tsx` instead of inline `<nav>` breadcrumbs. Provides semantic `<nav aria-label>` + `<ol>` structure. See `AdvisorsListing.tsx` for usage example.
 - **Spinner component:** Use `<Spinner>` from `components/ui/spinner.tsx` (sizes: sm/md/lg) instead of raw `<Loader2 className="animate-spin">`. Includes `role="status"` and `aria-label="Loading"` for accessibility.
 - **Accessibility:** Skip-to-content link and `RouteAnnouncer` are in `App.tsx`. All icon-only buttons must have `aria-label`. Use dynamic labels for toggle buttons (e.g., `aria-label={isMuted ? 'Unmute' : 'Mute'}`).
+- **MobileMenu auth props:** `MobileMenu` accepts `onAuth` and `isAuthenticated` props. Always pass these from Header so auth buttons work on mobile and auth-required menu items are conditionally shown. See `Header.tsx` for the pattern.
+- **Mobile touch targets:** All interactive elements must be at least 44x44px on mobile. Use `min-w-11 min-h-11` for icon-only buttons. See `docs/CURRENT_UI_KIT.md` Section 8 for full mobile guidelines.
 
 ## Frontend
 

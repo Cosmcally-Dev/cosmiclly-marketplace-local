@@ -93,7 +93,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           {isAuthenticated && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(advisorDbId); }}
-              className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-background/80 transition-colors"
+              className="absolute top-3 right-3 z-10 p-2.5 min-w-11 min-h-11 flex items-center justify-center rounded-full hover:bg-background/80 transition-colors"
               aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart
@@ -211,7 +211,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                   <Button
                     variant="outline"
                     onClick={handleVideoClick}
-                    className="font-sans border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs h-9"
+                    className="font-sans border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs h-10"
                   >
                     <Video className="w-3.5 h-3.5 mr-1.5" />
                     Video
@@ -219,7 +219,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                   <Button
                     variant="outline"
                     onClick={handleAIClick}
-                    className="font-sans border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs h-9"
+                    className="font-sans border-border hover:bg-secondary/50 text-muted-foreground hover:text-foreground text-xs h-10"
                   >
                     <img src={aiTwinIcon} alt="" className="w-3.5 h-3.5 mr-1.5 object-contain" />
                     AI Twin
@@ -238,7 +238,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
                   <Button
                     variant="outline"
                     onClick={handleAIClick}
-                    className="w-full font-sans border-secondary/60 hover:bg-secondary/30 text-muted-foreground hover:text-foreground text-xs h-9"
+                    className="w-full font-sans border-secondary/60 hover:bg-secondary/30 text-muted-foreground hover:text-foreground text-xs h-10"
                   >
                     <img src={aiTwinIcon} alt="" className="w-3.5 h-3.5 mr-1.5 object-contain" />
                     AI Twin — Available 24/7

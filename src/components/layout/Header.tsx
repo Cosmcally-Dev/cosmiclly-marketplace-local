@@ -405,7 +405,7 @@ export const Header = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleAuth("signin")}
-                    className="hidden lg:inline-flex text-xs font-sans"
+                    className="inline-flex text-xs font-sans"
                   >
                     Sign In
                   </Button>
@@ -413,7 +413,7 @@ export const Header = () => {
                     variant="hero"
                     size="sm"
                     onClick={() => handleAuth("signup")}
-                    className="text-xs px-3 h-8 font-sans"
+                    className="text-xs px-3 h-9 sm:h-8 font-sans"
                   >
                     Sign Up
                   </Button>
@@ -424,7 +424,12 @@ export const Header = () => {
         </div>
       </header>
 
-      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        onAuth={handleAuth}
+        isAuthenticated={isAuthenticated}
+      />
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} mode={authMode} />
       <AdvisorApplicationModal isOpen={isApplicationOpen} onClose={() => setIsApplicationOpen(false)} />
     </>
