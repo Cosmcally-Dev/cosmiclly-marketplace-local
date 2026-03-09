@@ -17,3 +17,16 @@ export function getCorsHeaders(req: Request) {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   };
 }
+
+/**
+ * Validate a client-supplied origin against the server-side allowlist.
+ * Returns the origin if allowed, otherwise returns the primary allowed origin.
+ * Used for Stripe redirect URLs to prevent open redirect attacks.
+ */
+export function getValidatedOrigin(clientOrigin?: string): string {
+  if (clientOrigin && isAllowedOrigin(clientOrigin)) {
+    return clientOrigin;
+  }
+  // Fall back to the primary configured origin (never accept untrusted origins)
+  return ALLOWED_ORIGINS[0];
+}

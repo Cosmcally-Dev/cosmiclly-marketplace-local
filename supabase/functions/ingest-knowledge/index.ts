@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import OpenAI from 'npm:openai@4';
 import pdfParse from 'npm:pdf-parse';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 /**
  * Splits text into chunks of approximately `chunkSize` characters
@@ -75,6 +76,15 @@ Deno.serve(async (req) => {
     // Service role client for all DB operations (bypasses RLS)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Rate limit: 10 requests per hour per user
+    const rateCheck = await checkRateLimit(supabaseAdmin, user.id, 'ingest-knowledge', 10, 60);
+    if (!rateCheck.allowed) {
+      return jsonResponse({
+        error: 'Rate limit exceeded. Please try again later.',
+        retry_after_seconds: rateCheck.retryAfterSeconds,
+      }, 429);
+    }
+
     // 3. Parse and validate request body
     let body;
     try {
@@ -127,7 +137,13 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Failed to download file from storage' }, 404);
     }
 
-    // 6. Extract text content based on file extension
+    // 5a. Validate file size (max 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (fileData.size > MAX_FILE_SIZE) {
+      return jsonResponse({ error: `File too large. Maximum size is 10MB, got ${(fileData.size / 1024 / 1024).toFixed(1)}MB` }, 400);
+    }
+
+    // 6. Extract text content based on file extension + magic byte validation
     const lowerFilename = filename.toLowerCase();
     let textContent: string;
 
@@ -137,6 +153,18 @@ Deno.serve(async (req) => {
       try {
         const arrayBuffer = await fileData.arrayBuffer();
         const buffer = new Uint8Array(arrayBuffer);
+
+        // Validate PDF magic bytes: must start with %PDF-
+        if (buffer.length < 5 ||
+            buffer[0] !== 0x25 || // %
+            buffer[1] !== 0x50 || // P
+            buffer[2] !== 0x44 || // D
+            buffer[3] !== 0x46 || // F
+            buffer[4] !== 0x2D    // -
+        ) {
+          return jsonResponse({ error: 'Invalid PDF file: file signature does not match PDF format' }, 400);
+        }
+
         const pdfData = await pdfParse(buffer);
         textContent = pdfData.text;
       } catch (pdfError: any) {
@@ -156,6 +184,14 @@ Deno.serve(async (req) => {
 
     if (chunks.length === 0) {
       return jsonResponse({ error: 'No text chunks could be generated from the file' }, 400);
+    }
+
+    // Cap chunks to prevent unbounded OpenAI embedding costs
+    const MAX_CHUNKS = 500;
+    if (chunks.length > MAX_CHUNKS) {
+      return jsonResponse({
+        error: `File too large: produced ${chunks.length} chunks (max ${MAX_CHUNKS}). Please use a smaller file.`,
+      }, 400);
     }
 
     console.log(`File "${filename}" produced ${chunks.length} chunks`);

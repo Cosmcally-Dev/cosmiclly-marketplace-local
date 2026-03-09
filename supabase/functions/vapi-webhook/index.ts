@@ -1,6 +1,34 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { getCorsHeaders } from '../_shared/cors.ts';
 
+/** Verify Vapi webhook signature using HMAC-SHA256 */
+async function verifyVapiSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+  secret: string
+): Promise<boolean> {
+  if (!signatureHeader) return false;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(rawBody));
+  const expectedHex = Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  // Constant-time comparison to prevent timing attacks
+  if (expectedHex.length !== signatureHeader.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < expectedHex.length; i++) {
+    mismatch |= expectedHex.charCodeAt(i) ^ signatureHeader.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
   const jsonResponse = (body: object, status = 200) =>
@@ -13,10 +41,26 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Read raw body for signature verification
+    const rawBody = await req.text();
+
+    // Verify webhook signature if secret is configured
+    const vapiWebhookSecret = Deno.env.get('VAPI_WEBHOOK_SECRET');
+    if (vapiWebhookSecret) {
+      const signature = req.headers.get('x-vapi-signature');
+      const isValid = await verifyVapiSignature(rawBody, signature, vapiWebhookSecret);
+      if (!isValid) {
+        console.error('Vapi webhook signature verification failed');
+        return jsonResponse({ error: 'Invalid webhook signature' }, 401);
+      }
+    } else {
+      console.warn('VAPI_WEBHOOK_SECRET not configured — skipping signature verification. Set it via: supabase secrets set VAPI_WEBHOOK_SECRET=...');
+    }
+
     // Parse webhook body
     let body;
     try {
-      body = await req.json();
+      body = JSON.parse(rawBody);
     } catch {
       return jsonResponse({ error: 'Invalid JSON in request body' }, 400);
     }

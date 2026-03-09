@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import Stripe from 'npm:stripe@17';
-import { getCorsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders, getValidatedOrigin } from '../_shared/cors.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -48,6 +49,15 @@ Deno.serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limit: 20 checkout requests per hour per user
+    const rateCheck = await checkRateLimit(supabaseAdmin, user.id, 'create-checkout', 20, 60);
+    if (!rateCheck.allowed) {
+      return jsonResponse({
+        error: 'Too many checkout requests. Please try again later.',
+        retry_after_seconds: rateCheck.retryAfterSeconds,
+      }, 429);
+    }
 
     // 3. Parse and validate request body
     let body;
@@ -100,7 +110,8 @@ Deno.serve(async (req) => {
     }
 
     // 5. Create Stripe Checkout Session
-    const siteOrigin = origin || 'http://localhost:5173';
+    // Validate origin against server-side allowlist to prevent open redirect attacks
+    const siteOrigin = getValidatedOrigin(origin);
 
     let checkoutSession;
     try {

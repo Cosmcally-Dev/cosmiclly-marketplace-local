@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import OpenAI from 'npm:openai@4';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 const DEFAULT_SYSTEM_PROMPT =
   'You are a compassionate and insightful spiritual advisor. You provide thoughtful guidance while being supportive and empathetic. Keep responses concise but meaningful.';
@@ -51,6 +52,16 @@ Deno.serve(async (req) => {
 
     // Service role client for all DB operations (bypasses RLS)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limit: 60 requests per hour per user
+    const rateCheck = await checkRateLimit(supabaseAdmin, user.id, 'handle-ai-chat', 60, 60);
+    if (!rateCheck.allowed) {
+      return jsonResponse({
+        error: 'Rate limit exceeded. Please try again later.',
+        code: 'RATE_LIMITED',
+        retry_after_seconds: rateCheck.retryAfterSeconds,
+      }, 429);
+    }
 
     // 3. Parse and validate request body
     let body;

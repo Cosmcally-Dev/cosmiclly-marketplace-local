@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -54,6 +55,15 @@ Deno.serve(async (req) => {
 
     // Service role client for DB operations (bypasses RLS)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Rate limit: 1 request per day (1440 minutes) per user
+    const rateCheck = await checkRateLimit(supabaseAdmin, user.id, 'clone-voice', 1, 1440);
+    if (!rateCheck.allowed) {
+      return jsonResponse({
+        error: 'Voice cloning is limited to once per day. Please try again later.',
+        retry_after_seconds: rateCheck.retryAfterSeconds,
+      }, 429);
+    }
 
     // 3. Parse and validate request body
     let body;

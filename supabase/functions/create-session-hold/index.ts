@@ -46,12 +46,36 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Parse request
-    const { advisorRate, maxMinutes, sessionId } = await req.json();
-
-    if (!advisorRate || !maxMinutes || !sessionId) {
+    // Parse and validate request
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: advisorRate, maxMinutes, sessionId' }),
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { advisorRate, maxMinutes, sessionId } = requestBody;
+
+    if (!sessionId || typeof sessionId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'sessionId is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (typeof advisorRate !== 'number' || advisorRate <= 0 || advisorRate > 1000) {
+      return new Response(
+        JSON.stringify({ error: 'advisorRate must be a positive number (max 1000)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (typeof maxMinutes !== 'number' || maxMinutes <= 0 || maxMinutes > 480) {
+      return new Response(
+        JSON.stringify({ error: 'maxMinutes must be a positive number (max 480)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

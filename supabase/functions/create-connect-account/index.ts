@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import Stripe from 'npm:stripe@17';
-import { getCorsHeaders } from '../_shared/cors.ts';
+import { getCorsHeaders, getValidatedOrigin } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -82,12 +82,13 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: 'Invalid JSON in request body' }, 400);
       }
 
-      const origin = body.origin || 'http://localhost:5173';
+      // Validate origin against server-side allowlist to prevent open redirect attacks
+      const validatedOrigin = getValidatedOrigin(body.origin);
 
       const accountLink = await stripe.accountLinks.create({
         account: existingDetails.stripe_account_id,
-        refresh_url: `${origin}/advisor-portal?stripe=refresh`,
-        return_url: `${origin}/advisor-portal?stripe=success`,
+        refresh_url: `${validatedOrigin}/advisor-portal?stripe=refresh`,
+        return_url: `${validatedOrigin}/advisor-portal?stripe=success`,
         type: 'account_onboarding',
       });
 
@@ -102,8 +103,8 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Invalid JSON in request body' }, 400);
     }
 
-    const { origin } = body;
-    const siteOrigin = origin || 'http://localhost:5173';
+    // Validate origin against server-side allowlist to prevent open redirect attacks
+    const siteOrigin = getValidatedOrigin(body.origin);
 
     // 6. Create Stripe Connect Express account
     let account;
