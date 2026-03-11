@@ -77,7 +77,7 @@ const AdvisorProfile = () => {
     const fetchReviews = async () => {
       const { data, error } = await supabase
         .from('reviews')
-        .select('id, rating, review_text, created_at, client:profiles!client_id(full_name)')
+        .select('id, rating, review_text, created_at, reviewer_display_name, client:profiles!client_id(full_name)')
         .eq('advisor_id', advisorDbId)
         .order('created_at', { ascending: false })
         .limit(20);
@@ -85,9 +85,11 @@ const AdvisorProfile = () => {
       if (!error && data) {
         setReviews(data.map((r: any) => ({
           id: r.id,
-          user: r.client?.full_name
-            ? `${r.client.full_name.split(' ')[0]} ${(r.client.full_name.split(' ')[1] || '')[0] || ''}.`.trim()
-            : 'Anonymous',
+          user: r.reviewer_display_name
+            ? r.reviewer_display_name
+            : r.client?.full_name
+              ? `${r.client.full_name.split(' ')[0]} ${(r.client.full_name.split(' ')[1] || '')[0] || ''}.`.trim()
+              : 'Anonymous',
           date: new Date(r.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: '2-digit' }),
           text: r.review_text || '',
           rating: r.rating,

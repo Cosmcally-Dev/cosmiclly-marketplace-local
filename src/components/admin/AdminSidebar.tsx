@@ -1,7 +1,7 @@
-import { LayoutDashboard, UserCheck, Users, Phone, AlertTriangle, CreditCard, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, UserCheck, Users, Phone, AlertTriangle, CreditCard, Star, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export type AdminSection = 'dashboard' | 'approvals' | 'users' | 'sessions' | 'disputes' | 'transactions';
+export type AdminSection = 'dashboard' | 'approvals' | 'users' | 'sessions' | 'reviews' | 'disputes' | 'transactions';
 
 interface AdminSidebarProps {
   active: AdminSection;
@@ -14,6 +14,7 @@ const navItems: { id: AdminSection; label: string; icon: React.ElementType }[] =
   { id: 'approvals', label: 'Advisor Approvals', icon: UserCheck },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'sessions', label: 'Sessions', icon: Phone },
+  { id: 'reviews', label: 'Reviews', icon: Star },
   { id: 'disputes', label: 'Disputes', icon: AlertTriangle },
   { id: 'transactions', label: 'Transactions', icon: CreditCard },
 ];
