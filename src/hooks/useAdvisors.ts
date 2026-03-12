@@ -38,7 +38,7 @@ function mapDBToAdvisor(row: DBAdvisorRow, stats?: AdvisorPublicStats): Advisor 
     dbId: row.id,
     name: row.profiles?.full_name || row.title || 'Advisor',
     title: row.title || 'Spiritual Advisor',
-    avatar: row.profiles?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop',
+    avatar: row.profiles?.avatar_url || `https://ui-avatars.com/api/?background=1a1a2e&color=06b6d4&bold=true&size=400&name=${encodeURIComponent(row.profiles?.full_name || row.title || 'A')}`,
     rating: stats?.average_rating || 0,
     reviewCount: stats?.review_count || 0,
     readingsCount: stats?.completed_readings || 0,

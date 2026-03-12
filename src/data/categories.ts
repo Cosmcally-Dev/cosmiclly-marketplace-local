@@ -31,7 +31,7 @@ export const categories: Category[] = [
     shortDescription: 'Discover what the stars reveal about your life path.',
     longDescription: 'Unlock the secrets written in the stars with our expert astrologers. Your birth chart is a cosmic blueprint that reveals your personality traits, life purpose, relationship patterns, and timing for major life events. Our astrology advisors provide personalized readings based on planetary alignments, transits, and progressions to help you understand yourself deeply and navigate life\'s challenges with celestial wisdom. From natal charts to compatibility analysis, discover what the universe has in store for you.',
     icon: Sun,
-    color: 'from-amber-500 to-orange-600',
+    color: 'from-cyan-500 to-teal-600',
     specialtyMatch: ['Astrology Insights'],
   },
   {
@@ -112,7 +112,7 @@ export const categories: Category[] = [
     shortDescription: 'Understand and balance your life force.',
     longDescription: 'Everything in the universe is made of energy, including you. Our energy readers can sense, interpret, and help you understand your energetic vibrations and how they affect every area of your life. Discover energetic blockages that may be causing problems in your health, relationships, or finances. Learn about the energy exchanges happening in your relationships and how to protect yourself from negative influences. Our advisors can help you raise your vibration, clear stagnant energy, and align with the abundant, positive energy of the universe.',
     icon: Zap,
-    color: 'from-yellow-500 to-amber-600',
+    color: 'from-violet-500 to-fuchsia-600',
     specialtyMatch: ['Energy Readings'],
   },
   {
@@ -157,7 +157,7 @@ export const categories: Category[] = [
     shortDescription: 'Learn to create the life you desire.',
     longDescription: 'You have the power to create your reality through the law of attraction and conscious manifestation. Our manifestation experts help you understand and harness these universal principles to attract love, abundance, success, and anything else your heart desires. Learn why past manifestation attempts may have failed, identify and clear limiting beliefs blocking your desires, and develop a personalized manifestation practice that works. From vision boards to energy alignment, discover the techniques that will help you transform your dreams into reality.',
     icon: Target,
-    color: 'from-orange-500 to-red-600',
+    color: 'from-rose-500 to-red-600',
     specialtyMatch: ['Manifestation'],
   },
   {
@@ -175,7 +175,7 @@ export const categories: Category[] = [
     shortDescription: 'Achieve your goals and live your best life.',
     longDescription: 'Ready to take your life to the next level? Our life coaches blend practical coaching strategies with intuitive guidance to help you identify your goals, overcome obstacles, and create actionable plans for success. Whether you\'re seeking better work-life balance, improved relationships, personal development, or a complete life transformation, our advisors provide the motivation, accountability, and insights you need. Discover your authentic self, break through limiting patterns, and design a life that truly fulfills you.',
     icon: Lightbulb,
-    color: 'from-amber-400 to-yellow-500',
+    color: 'from-sky-400 to-blue-500',
     specialtyMatch: ['Life Coaching'],
   },
   {

@@ -133,7 +133,7 @@ export const zodiacSigns: ZodiacSign[] = [
 ];
 
 export const elementColors = {
-  Fire: 'from-orange-500 to-red-600',
+  Fire: 'from-rose-500 to-red-600',
   Earth: 'from-emerald-500 to-green-600',
   Air: 'from-sky-500 to-blue-600',
   Water: 'from-blue-500 to-indigo-600',

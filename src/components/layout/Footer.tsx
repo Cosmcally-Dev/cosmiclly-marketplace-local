@@ -67,13 +67,15 @@ export const Footer = () => {
           {/* Services */}
           <div className="md:col-span-5">
             <h4 className="font-semibold text-foreground mb-4 text-xs uppercase tracking-widest">Services</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2.5">
+            <ul className="columns-2 sm:columns-3 gap-x-6 space-y-2.5">
               {footerLinks.services.map((link) => (
-                <Link key={link.label} to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
-                  {link.label}
-                </Link>
+                <li key={link.label} className="break-inside-avoid">
+                  <Link to={link.href} className="text-muted-foreground hover:text-primary text-sm transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           {/* Explore, Support, About */}

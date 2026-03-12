@@ -4,6 +4,30 @@
 
 /* Fonts are loaded via index.html for better performance */
 
+/* Global scrollbar — Northern Lights theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary) / 0.3) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 100px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.55);
+}
+
 /* Hide scrollbar for horizontal scroll */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -290,38 +314,6 @@
     50% { box-shadow: 0 0 40px hsl(260 100% 70% / 0.6); }
   }
 
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Modern styled scrollbar â€” themed to Northern Lights palette */
-  .scrollbar-styled {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(187 94% 43% / 0.35) transparent;
-  }
-
-  .scrollbar-styled::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  .scrollbar-styled::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 100px;
-  }
-
-  .scrollbar-styled::-webkit-scrollbar-thumb {
-    background: hsl(187 94% 43% / 0.35);
-    border-radius: 100px;
-  }
-
-  .scrollbar-styled::-webkit-scrollbar-thumb:hover {
-    background: hsl(187 94% 43% / 0.65);
-  }
 
   /* Date picker dropdown arrow â€” themed for dark background */
   .rdp-dropdown {

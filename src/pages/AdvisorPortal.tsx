@@ -33,6 +33,10 @@ const AdvisorPortal = () => {
 
   const portalState = isLoading ? 'loading' : getPortalState();
 
+  // Keep the dashboard mounted during auth re-validation (e.g., alt-tab token refresh)
+  // to prevent tab state from resetting
+  const showDashboard = portalState === 'approved' || (portalState === 'loading' && hasAdvisorDetails && isProfileComplete);
+
   // Auto-open application modal when navigating from /become-advisor with ?apply=true
   useEffect(() => {
     if (!isLoading && portalState === 'no-application' && searchParams.get('apply') === 'true') {
@@ -44,8 +48,8 @@ const AdvisorPortal = () => {
     <div className="min-h-screen bg-background flex flex-col scrollbar-hide">
       <Header />
 
-      <main className={`flex-1 ${portalState !== 'approved' ? 'pt-14 md:pt-16' : ''}`}>
-        {portalState === 'loading' && (
+      <main className={`flex-1 ${!showDashboard ? 'pt-14 md:pt-16' : ''}`}>
+        {portalState === 'loading' && !hasAdvisorDetails && (
           <div className="flex items-center justify-center py-32">
             <Spinner size="lg" className="text-primary" />
           </div>
@@ -193,7 +197,7 @@ const AdvisorPortal = () => {
           </div>
         )}
 
-        {portalState === 'approved' && (
+        {showDashboard && (
           <AdvisorPrivateProfile />
         )}
       </main>

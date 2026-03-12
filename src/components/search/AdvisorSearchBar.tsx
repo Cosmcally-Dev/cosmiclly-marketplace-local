@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Search, User, Sparkles, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdvisors } from '@/hooks/useAdvisors';
-import { categories } from '@/data/categories';
 
 interface AdvisorSearchBarProps {
   variant?: 'hero' | 'compact';
@@ -15,7 +14,7 @@ interface AdvisorSearchBarProps {
 }
 
 interface SearchResult {
-  type: 'advisor' | 'category' | 'specialty';
+  type: 'advisor';
   id: string;
   name: string;
   subtitle?: string;
@@ -40,29 +39,18 @@ export const AdvisorSearchBar = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Get unique specialties from all advisors
-  const allSpecialties = useMemo(() => {
-    const specialtySet = new Set<string>();
-    advisors.forEach(advisor => {
-      advisor.specialties.forEach(s => specialtySet.add(s));
-    });
-    return Array.from(specialtySet);
-  }, [advisors]);
-
-  // Generate search results based on query
+  // Generate search results based on query — advisors only
   const searchResults = useMemo((): SearchResult[] => {
     if (!query.trim() || query.length < 2) return [];
 
     const lowerQuery = query.toLowerCase();
-    const results: SearchResult[] = [];
 
-    // Search advisors by name
-    const matchingAdvisors = advisors
-      .filter(advisor => 
+    return advisors
+      .filter(advisor =>
         advisor.name.toLowerCase().includes(lowerQuery) ||
         advisor.title.toLowerCase().includes(lowerQuery)
       )
-      .slice(0, 4)
+      .slice(0, 8)
       .map(advisor => ({
         type: 'advisor' as const,
         id: advisor.id,
@@ -71,42 +59,7 @@ export const AdvisorSearchBar = ({
         avatar: advisor.avatar,
         url: `/advisor/${advisor.id}`,
       }));
-
-    results.push(...matchingAdvisors);
-
-    // Search categories
-    const matchingCategories = categories
-      .filter(cat => 
-        cat.label.toLowerCase().includes(lowerQuery) ||
-        cat.shortDescription.toLowerCase().includes(lowerQuery)
-      )
-      .slice(0, 3)
-      .map(cat => ({
-        type: 'category' as const,
-        id: cat.slug,
-        name: cat.label,
-        subtitle: `Browse ${cat.label} advisors`,
-        url: `/advisors?category=${cat.slug}`,
-      }));
-
-    results.push(...matchingCategories);
-
-    // Search specialties
-    const matchingSpecialties = allSpecialties
-      .filter(s => s.toLowerCase().includes(lowerQuery))
-      .slice(0, 3)
-      .map(specialty => ({
-        type: 'specialty' as const,
-        id: specialty,
-        name: specialty,
-        subtitle: `Find advisors specializing in ${specialty}`,
-        url: `/advisors?search=${encodeURIComponent(specialty)}`,
-      }));
-
-    results.push(...matchingSpecialties);
-
-    return results.slice(0, 8);
-  }, [query, advisors, allSpecialties]);
+  }, [query, advisors]);
 
   // Track wrapper position for portal dropdown
   useEffect(() => {
@@ -261,30 +214,17 @@ export const AdvisorSearchBar = ({
                     : 'hover:bg-cyan-500/10 hover:text-cyan-400 text-foreground'
                 }`}
               >
-                {result.type === 'advisor' && result.avatar ? (
-                  <img
-                    src={result.avatar}
-                    alt={result.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : result.type === 'category' ? (
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                    <User className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                )}
+                <img
+                  src={result.avatar}
+                  alt={result.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{result.name}</p>
                   {result.subtitle && (
                     <p className="text-sm text-muted-foreground truncate">{result.subtitle}</p>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground capitalize px-2 py-1 bg-secondary rounded-full">
-                  {result.type}
-                </span>
               </button>
             ))}
           </div>

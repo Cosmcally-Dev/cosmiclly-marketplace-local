@@ -41,7 +41,7 @@ export const articleCategories: ArticleCategory[] = [
     label: 'Finding Happiness',
     description: 'Spiritual growth articles to help you find true peace and happiness in life',
     icon: Smile,
-    color: 'from-amber-500 to-orange-600',
+    color: 'from-emerald-500 to-teal-600',
     image: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=400&h=300&fit=crop',
     articles: [
       { id: '7', title: 'How To Develop Spiritual Gifts', image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&h=280&fit=crop', category: 'finding-happiness', slug: 'develop-spiritual-gifts' },
