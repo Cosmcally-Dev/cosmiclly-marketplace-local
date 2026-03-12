@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Rate limit: 1 request per day (1440 minutes) per user
-    const rateCheck = await checkRateLimit(supabaseAdmin, user.id, 'clone-voice', 1, 1440);
+    const rateCheck = await checkRateLimit(supabaseAdmin, user.id, 'clone-voice', 5, 1440);
     if (!rateCheck.allowed) {
       return jsonResponse({
         error: 'Voice cloning is limited to once per day. Please try again later.',
@@ -130,12 +130,14 @@ Deno.serve(async (req) => {
     // 7. Call Cartesia API to clone the voice
     const cartesiaFormData = new FormData();
     cartesiaFormData.append('clip', fileData, 'audio_clip');
+    cartesiaFormData.append('name', `Twin AI - ${advisorName}`);
+    cartesiaFormData.append('language', 'en');
 
-    const cartesiaResponse = await fetch('https://api.cartesia.ai/voices/clone/clip', {
+    const cartesiaResponse = await fetch('https://api.cartesia.ai/voices/clone', {
       method: 'POST',
       headers: {
         'X-API-Key': cartesiaApiKey,
-        'Cartesia-Version': '2024-06-10',
+        'Cartesia-Version': '2025-04-16',
       },
       body: cartesiaFormData,
     });

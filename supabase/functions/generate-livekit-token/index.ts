@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { AccessToken } from 'npm:livekit-server-sdk@2.9.1';
 import { getCorsHeaders } from '../_shared/cors.ts';
+import { checkRateLimit } from '../_shared/rateLimit.ts';
 
 Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -47,6 +48,16 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token', details: authError }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Rate limit: 20 token requests per hour per user
+    const supabaseAdmin = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const rateCheck = await checkRateLimit(supabaseAdmin, user.id, 'generate-livekit-token', 20, 60);
+    if (!rateCheck.allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Too many token requests. Please try again later.', retry_after_seconds: rateCheck.retryAfterSeconds }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
