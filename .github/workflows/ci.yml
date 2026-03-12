@@ -22,7 +22,7 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint --max-warnings 100
+        run: npx eslint . --max-warnings 100
 
       - name: Type check
         run: npx tsc --noEmit
