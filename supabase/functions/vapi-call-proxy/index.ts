@@ -7,15 +7,6 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  const vapiApiKey = Deno.env.get('VAPI_API_KEY');
-  if (!vapiApiKey) {
-    console.error('VAPI_API_KEY is not set');
-    return new Response(
-      JSON.stringify({ error: 'Vapi not configured' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-
   try {
     // Extract the sub-path after the function name
     // SDK calls paths like /call/web, /call/{id}/stop, etc.
@@ -26,9 +17,10 @@ Deno.serve(async (req) => {
       : '';
     const vapiUrl = `https://api.vapi.ai${subPath || '/call/web'}${url.search}`;
 
-    // Forward request headers, replacing auth with server-side API key
+    // Forward original headers (SDK sends public key auth — keep it as-is)
     const forwardHeaders = new Headers();
-    forwardHeaders.set('Authorization', `Bearer ${vapiApiKey}`);
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) forwardHeaders.set('Authorization', authHeader);
     forwardHeaders.set('Content-Type', req.headers.get('Content-Type') || 'application/json');
 
     const body = req.method !== 'GET' && req.method !== 'HEAD'
