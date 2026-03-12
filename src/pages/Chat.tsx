@@ -273,6 +273,9 @@ const Chat = () => {
             emailType: 'session_receipt',
             templateParams: {
               advisor_name: advisor.name,
+              advisor_image: advisor.avatar,
+              order_no: sessionId?.slice(0, 8).toUpperCase() || 'N/A',
+              order_date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
               session_type: 'Chat',
               duration_minutes: billableMinutes,
               total_cost: cost,
