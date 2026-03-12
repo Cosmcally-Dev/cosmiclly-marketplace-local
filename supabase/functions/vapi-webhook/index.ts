@@ -97,6 +97,19 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Idempotency check: skip if this session is already completed
+    const { data: existingCompleted } = await supabase
+      .from('sessions')
+      .select('id, status')
+      .eq('id', session_id)
+      .eq('status', 'completed')
+      .maybeSingle();
+
+    if (existingCompleted) {
+      console.log(`Session ${session_id} already completed — skipping duplicate webhook`);
+      return jsonResponse({ received: true, already_processed: true });
+    }
+
     // Fetch advisor's twin voice rate
     const { data: advisor, error: advisorError } = await supabase
       .from('advisor_details')
