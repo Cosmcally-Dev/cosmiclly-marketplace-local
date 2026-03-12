@@ -1,5 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+export { AdvisorCardSkeleton } from "@/components/advisors/AdvisorCardSkeleton";
+
 /** Skeleton for the Profile page header section */
 export function ProfileHeaderSkeleton() {
   return (

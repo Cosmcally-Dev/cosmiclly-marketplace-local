@@ -203,7 +203,7 @@ All session types (chat, audio, video) follow the same pattern:
 | `StarRating` | `components/ui/star-rating.tsx` | Filled/half/empty star display |
 | `StatCard` | `components/ui/stat-card.tsx` | Dashboard stat card with trend |
 | `StepIndicator` | `components/ui/step-indicator.tsx` | Horizontal step dots with lines |
-| `Skeletons` | `components/skeletons/index.tsx` | 5 skeleton variants for common layouts |
+| `Skeletons` | `components/skeletons/index.tsx` | 5 skeleton variants: ProfileHeader, SessionPage, ActivityRow, TransactionRow, StatCard |
 | `RouteAnnouncer` | `components/RouteAnnouncer.tsx` | Screen reader route change announcements |
 | `LegalPage` | `components/layout/LegalPage.tsx` | Reusable markdown page wrapper (react-markdown + remark-gfm) |
 
@@ -251,13 +251,9 @@ Applied in order:
 30. `20260317000000_admin_created_reviews.sql` — Admin-created reviews
 31. `20260318000000_training_docs_storage_policies.sql` — Storage RLS policies for `training_docs` bucket (INSERT/UPDATE/SELECT/DELETE scoped to user's own folder)
 
-### To apply pending migrations:
+All 28 migrations are applied. To regenerate types after any new migration:
 ```bash
-npx supabase db push
-```
-
-### To regenerate types after migration:
-```bash
+npx supabase db push                    # Apply new migrations
 npx supabase gen types typescript --linked > src/integrations/supabase/types.gen.ts
 ```
 
@@ -283,18 +279,19 @@ npx supabase gen types typescript --linked > src/integrations/supabase/types.gen
 - **Cookie Consent** — Global banner on all pages, stores preference in localStorage, links to `/cookies`
 
 ### Known Limitations:
-- Advisors must exist in `advisor_details` + `profiles` tables to appear on the site (20 seeded via migration)
-- LiveKit server credentials need to be configured (LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL as Supabase Edge Function secrets)
+- Advisors must exist in `advisor_details` + `profiles` tables to appear on the site
 - Credit deduction is client-side estimated + server-side atomic at session end — no real-time server-side enforcement during session
 - **Stripe Connect** must be enabled on the Stripe account before advisors can set up payouts. Go to Stripe Dashboard > Settings > Connect to activate. Without it, `create-connect-account` edge function returns "signed up for Connect" error.
 
 ### Partially Built:
-- **Dynamic horoscopes** — DB table + `useHoroscope` react-query hook + frontend pages updated with static fallback. **Pending:** n8n workflow to populate DB, apply migration (`supabase db push`), regenerate types.
+- **Dynamic horoscopes** — DB table + `useHoroscope` react-query hook + frontend pages updated with static fallback. **Pending:** n8n workflow to populate DB.
 
 ### Not Yet Built:
 - PWA optimization (manifest.json, service worker, offline support)
 - Push notifications for incoming calls
 - E2E test suite
+- Sentry error tracking
+- GitHub Actions CI/CD pipeline
 
 ## Development Commands
 
@@ -317,7 +314,8 @@ npx tsc --noEmit     # Type-check without emitting
 - **`@tanstack/react-query`:** Installed and configured (`QueryClientProvider` in `App.tsx`). First usage is `useHoroscope` hook. Uses `placeholderData` for instant static content while DB fetches, `maybeSingle()` for graceful empty-table handling, and `staleTime: 1h` to avoid excessive refetches.
 - **Seeding auth.users:** When inserting directly into `auth.users`, all string columns that GoTrue scans (e.g., `email_change`, `phone`, `phone_change`, `email_change_token_new`, `email_change_token_current`, `phone_change_token`, `reauthentication_token`) must be set to `''` not `NULL`. GoTrue's Go code uses `string` (not `*string`), so NULL causes `"Scan error... converting NULL to string is unsupported"`.
 - **Role-guarded pages:** Any page that renders different views based on `user?.isAdvisor` or `user?.isAdmin` must check `isLoading` from `useAuth()` first and show a spinner. Without this, the page briefly renders the wrong view (or blank) during auth state resolution. See `Profile.tsx` and `AdminPanel.tsx` for the correct pattern.
-- **Button `loading` prop:** All `<Button>` components support `loading?: boolean`. When true, it prepends a spinner, disables the button, and adds `opacity-80`. For buttons with icons, hide the icon when loading: `{!isLoading && <Icon />}`. Prefer this over manual `Loader2` + `disabled` patterns.
+- **Button variants:** `<Button>` supports 11 variants: `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, `hero` (purple gradient CTA), `gold` (warm accent), `mystical` (purple-bordered), `success` (emerald), `warning` (amber). Sizes: `default`, `sm`, `lg`, `xl`, `icon`. All support `loading?: boolean` — when true, prepends a spinner, disables the button, adds `opacity-80`. For buttons with icons, hide the icon when loading: `{!isLoading && <Icon />}`.
+- **Toast variants:** `toast()` supports 5 variants: `default`, `destructive`, `success`, `warning`, `info`. Toaster auto-renders contextual icons (CheckCircle, XCircle, AlertTriangle, Info) per variant. Use `toast({ variant: 'success', title: '...' })` instead of plain `toast({ title: '...' })`.
 - **Breadcrumb component:** Use `<Breadcrumb>` from `components/ui/breadcrumb.tsx` instead of inline `<nav>` breadcrumbs. Provides semantic `<nav aria-label>` + `<ol>` structure. See `AdvisorsListing.tsx` for usage example.
 - **Spinner component:** Use `<Spinner>` from `components/ui/spinner.tsx` (sizes: sm/md/lg) instead of raw `<Loader2 className="animate-spin">`. Includes `role="status"` and `aria-label="Loading"` for accessibility.
 - **Accessibility:** Skip-to-content link and `RouteAnnouncer` are in `App.tsx`. All icon-only buttons must have `aria-label`. Use dynamic labels for toggle buttons (e.g., `aria-label={isMuted ? 'Unmute' : 'Mute'}`).

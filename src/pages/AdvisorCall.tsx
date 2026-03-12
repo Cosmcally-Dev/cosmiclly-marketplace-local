@@ -484,7 +484,7 @@ const CallSessionView = ({ sessionId }: { sessionId: string }) => {
                 disabled={sessionEnded}
                 className="flex-1 h-12"
               />
-              <Button size="icon" className="h-12 w-12" onClick={handleSendChat} disabled={!chatInput.trim() || sessionEnded}>
+              <Button size="icon" className="h-12 w-12" onClick={handleSendChat} disabled={!chatInput.trim() || sessionEnded} aria-label="Send message">
                 <Send className="w-5 h-5" />
               </Button>
             </div>

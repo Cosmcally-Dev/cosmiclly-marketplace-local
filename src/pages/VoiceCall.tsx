@@ -467,6 +467,7 @@ const VoiceCall = () => {
             <div className="flex justify-center mb-8">
               <button
                 onClick={handleCancelCall}
+                aria-label="Cancel call"
                 className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
               >
                 <X className="w-7 h-7" />
@@ -485,6 +486,7 @@ const VoiceCall = () => {
                     setIsMuted(!isMuted);
                   }
                 }}
+                aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
                   isMuted
                     ? 'bg-red-500/20 text-red-500'
@@ -496,6 +498,7 @@ const VoiceCall = () => {
 
               <button
                 onClick={handleEndCall}
+                aria-label="End call"
                 className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
               >
                 <PhoneOff className="w-7 h-7" />
@@ -509,6 +512,7 @@ const VoiceCall = () => {
                     remoteAudioRef.current.muted = !newState;
                   }
                 }}
+                aria-label={isSpeakerOn ? 'Mute speaker' : 'Unmute speaker'}
                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
                   !isSpeakerOn
                     ? 'bg-red-500/20 text-red-500'

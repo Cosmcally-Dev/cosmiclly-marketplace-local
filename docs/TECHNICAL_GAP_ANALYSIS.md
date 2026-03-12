@@ -1,6 +1,6 @@
 # Cosmiclly — Technical Gap Analysis
 
-> **Updated:** 2026-03-06
+> **Updated:** 2026-03-12
 > **Source Documents:** PRD v1.0, Project Roadmap v1.0, SDD v1.1, Twin AI Technical Specification v1.1
 > **Codebase Commit:** latest (main)
 
@@ -16,10 +16,28 @@
 ### Quick Stats
 
 - **Edge Functions:** 14 of 14 built (Phase 1: 10 incl. `send-email`, Phase 2: 4 — `ingest-knowledge`, `handle-ai-chat`, `clone-voice`, `vapi-webhook`)
-- **Database Migrations:** 28 (26 applied + 2 pending: `20260314000000`, `20260315000000`)
+- **Database Migrations:** 28 (all applied)
 - **NPM Dependencies:** Core stack + Stripe SDK + LiveKit client + `@vapi-ai/web` installed
-- **Advisors:** 20 defined in static code, all 20 with real DB profiles (auth accounts + advisor_details); `useAdvisors` hook merges DB + static
-- **Environment Variables:** Supabase keys configured; LiveKit + Stripe keys need Supabase secrets; OpenAI, Cartesia, Vapi keys needed for Phase 2 deployment
+- **Advisors:** DB-driven via `useAdvisors` hook (20 dummy accounts deleted/secured)
+- **Environment Variables:** All Supabase secrets set; Vercel env vars configured; Stripe production webhook endpoint configured
+
+### What Changed Since Last Review (dev/ui-ux branch, in progress)
+
+| Area | Before | After |
+|------|--------|-------|
+| Button Component | 6 variants (default, destructive, outline, secondary, ghost, link) | 11 variants (+hero, gold, mystical, success, warning), xl size, loading prop with spinner |
+| Toast/Toaster | Basic default + destructive variants | Icon-enriched variant system (success, warning, info, destructive) with colored borders |
+| Skeletons | Basic skeleton component | 5 reusable variants: ProfileHeader, SessionPage, ActivityRow, TransactionRow, StatCard |
+| AdvisorProfile | Standard card layout | Glass-morphism cards (`backdrop-blur-md`), sticky sidebar, animated stars (`animate-twinkle`), status glow |
+| AdvisorCall | Basic session list | Colorful type badges, pulse animations on incoming, refined chat/call UI with read receipts |
+| Chat Page | Functional messaging | Billing display, read receipt icons, typing dots animation, previous conversations section |
+| TwinChat + TwinVoiceCall | Basic AI chat/call | Purple AI theme, bot badges, credit tracking, AI disclosure banner, thinking animation |
+| VideoCall + VoiceCall | Basic call UI | Fullscreen video with gradient overlays, connection quality indicators, large circular controls (56-64px) |
+| Dummy Advisors | 20 accounts with `Test1234!` password | Deleted/secured before production |
+| Migrations | 26 applied + 2 pending | All 28 applied |
+| Admin User | Not set | Admin user set in production DB |
+| Stripe Webhook | Not configured | Production webhook endpoint configured |
+| delete-account | Old GDPR cleanup | Redeployed with full GDPR anonymization |
 
 ### What Changed Since Last Review (2026-03-12)
 
@@ -451,8 +469,8 @@ All required packages are installed:
 | Table | Purpose | Phase | Status |
 |-------|---------|-------|:------:|
 | `knowledge_base_documents` | pgvector embeddings for advisor knowledge (RAG) | Phase 2 | DONE |
-| `user_favorites` | User-advisor favorite bookmarks with RLS | Phase 1 | DONE (pending migration) |
-| `horoscopes` | Dynamic daily/weekly/monthly/yearly horoscope content | Phase 2 | DONE (pending migration) |
+| `user_favorites` | User-advisor favorite bookmarks with RLS | Phase 1 | DONE |
+| `horoscopes` | Dynamic daily/weekly/monthly/yearly horoscope content | Phase 2 | DONE |
 
 ### Column Additions — Status
 
@@ -467,12 +485,12 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | `advisor_details` | `cartesia_voice_id` | `VARCHAR(255)` | DONE |
 | `advisor_details` | `vapi_agent_id` | `VARCHAR(255)` | DONE |
 | `advisor_details` | `voice_sample_url` | `TEXT` | DONE |
-| `advisor_details` | `advisor_share_percent` | `DECIMAL(5,2) DEFAULT 50.00` | DONE (pending migration) |
-| `advisor_details` | `platform_share_percent` | `DECIMAL(5,2) DEFAULT 50.00` | DONE (pending migration) |
-| `advisor_details` | `admin_fee_percent` | `DECIMAL(5,2) DEFAULT 5.00` | DONE (pending migration) |
-| `advisor_details` | `contract_locked` | `BOOLEAN DEFAULT false` | DONE (pending migration) |
-| `advisor_details` | `contract_locked_at` | `TIMESTAMPTZ` | DONE (pending migration) |
-| `advisor_details` | `contract_locked_by` | `UUID REFERENCES auth.users(id)` | DONE (pending migration) |
+| `advisor_details` | `advisor_share_percent` | `DECIMAL(5,2) DEFAULT 50.00` | DONE |
+| `advisor_details` | `platform_share_percent` | `DECIMAL(5,2) DEFAULT 50.00` | DONE |
+| `advisor_details` | `admin_fee_percent` | `DECIMAL(5,2) DEFAULT 5.00` | DONE |
+| `advisor_details` | `contract_locked` | `BOOLEAN DEFAULT false` | DONE |
+| `advisor_details` | `contract_locked_at` | `TIMESTAMPTZ` | DONE |
+| `advisor_details` | `contract_locked_by` | `UUID REFERENCES auth.users(id)` | DONE |
 | `messages` | `is_ai_generated` | `BOOLEAN DEFAULT false` | DONE |
 
 ### Extensions — Status
@@ -580,7 +598,7 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | 6 | Configure Supabase Auth SMTP to use Brevo relay (`smtp-relay.brevo.com:587`) for password reset emails | Email | Manual step |
 | ~~7~~ | ~~Create `training_docs` storage bucket in Supabase Dashboard (private)~~ | Storage | DONE |
 | 8 | Configure Vapi webhook URL in Vapi dashboard | AI Voice | Manual step |
-| 9 | Set admin user in production database (`profiles.role = 'admin'`) | Auth | Manual step |
+| ~~9~~ | ~~Set admin user in production database (`profiles.role = 'admin'`)~~ | Auth | DONE |
 | 10 | Set custom domain for Supabase (optional) and update CORS origins | Infra | Manual step |
 | ~~11~~ | ~~Render legal pages (About Us, Privacy Policy, Terms of Service, Cookie Policy) from markdown drafts~~ | Content | DONE |
 | 12 | E2E testing: session lifecycle, billing, Stripe checkout, advisor onboarding | QA | Not started |
@@ -590,8 +608,8 @@ All Phase 2 columns have been added via migration `20260303000000_twin_ai_infras
 | 16 | Set `ALLOWED_ORIGIN` Supabase secret for CORS | Infra | Manual step |
 | 17 | Test CSP headers after deployment (check browser console for violations) | Security | Manual step |
 | 18 | Clean `.env` from git history using BFG Repo-Cleaner (optional, low priority) | Security | Manual step |
-| 19 | Delete or secure 20 dummy advisor accounts before production | Security | Manual step |
+| ~~19~~ | ~~Delete or secure 20 dummy advisor accounts before production~~ | Security | DONE |
 | 20 | Set up Sentry error tracking | Monitoring | Not started |
 | 21 | Set up GitHub Actions CI/CD pipeline | Infra | Not started |
-| 22 | Apply pending migrations: `20260314000000` (username fix) + `20260315000000` (GDPR) | DB | Manual step |
-| 23 | Redeploy `delete-account` edge function (updated with full GDPR cleanup) | Infra | Manual step |
+| ~~22~~ | ~~Apply pending migrations: `20260314000000` (username fix) + `20260315000000` (GDPR)~~ | DB | DONE |
+| ~~23~~ | ~~Redeploy `delete-account` edge function (updated with full GDPR cleanup)~~ | Infra | DONE |
