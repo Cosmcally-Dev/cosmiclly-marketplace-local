@@ -184,7 +184,9 @@ Deno.serve(async (req) => {
         model: {
           provider: 'openai',
           model: 'gpt-4o-mini',
-          systemMessage: systemPrompt,
+          messages: [
+            { role: 'system', content: systemPrompt },
+          ],
           temperature: 0.7,
           maxTokens: 500,
         },
