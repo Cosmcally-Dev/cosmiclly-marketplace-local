@@ -109,7 +109,8 @@ const TwinVoiceCall = () => {
         }
 
         const { default: Vapi } = await import('@vapi-ai/web');
-        const vapi = new Vapi(vapiPublicKey);
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const vapi = new Vapi(vapiPublicKey, `${supabaseUrl}/functions/v1/vapi-call-proxy`);
         vapiRef.current = vapi;
 
         // Set up event handlers
