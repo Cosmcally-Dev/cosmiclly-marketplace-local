@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   esbuild: {
-    drop: mode === 'production' ? ['console', 'debugger'] : [],
+    // Temporarily allow console logs for debugging Vapi call issues
+    drop: mode === 'production' ? ['debugger'] : [],
   },
 }));
