@@ -247,6 +247,9 @@ Applied in order:
 26. `20260313000000_advisor_public_stats_rpc.sql` — Batch `get_all_advisor_public_stats()` RPC (readings, rating, review counts per advisor), anon SELECT on reviews
 27. `20260314000000_fix_handle_new_user_username_conflict.sql` — `is_username_available` RPC, fix handle_new_user trigger for username unique_violation
 28. `20260315000000_full_gdpr_anonymization.sql` — Full GDPR `delete_my_account` RPC (messages, knowledge docs, favorites, reviews, disputes, profile), fix `reviewed_by` FK constraint
+29. `20260316000000_rate_limits_table.sql` — Rate limits table for edge functions
+30. `20260317000000_admin_created_reviews.sql` — Admin-created reviews
+31. `20260318000000_training_docs_storage_policies.sql` — Storage RLS policies for `training_docs` bucket (INSERT/UPDATE/SELECT/DELETE scoped to user's own folder)
 
 ### To apply pending migrations:
 ```bash
