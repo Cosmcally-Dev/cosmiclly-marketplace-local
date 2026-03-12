@@ -6,6 +6,8 @@ function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.includes(origin)) return true;
   // Allow all Vercel preview deployment URLs
   if (origin.startsWith('https://') && origin.endsWith('.vercel.app')) return true;
+  // Allow localhost for development
+  if (origin.startsWith('http://localhost:')) return true;
   return false;
 }
 
