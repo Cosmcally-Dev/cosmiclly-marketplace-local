@@ -25,7 +25,7 @@ export const HeroSection = () => {
         {[...Array(12)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-1 h-1 bg-accent rounded-full animate-twinkle"
+            className="absolute w-1 h-1 bg-cyan-400 rounded-full animate-twinkle"
             style={{
               top: `${Math.random() * 100}%`,
               left: `${Math.random() * 100}%`,
@@ -37,8 +37,8 @@ export const HeroSection = () => {
       </div>
 
       {/* Gradient Orbs */}
-      <div className="absolute top-0 -left-32 w-64 h-64 bg-blood-vibrant/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 -right-32 w-64 h-64 bg-blood-dark/10 rounded-full blur-3xl" />
+      <div className="absolute top-0 -left-32 w-64 h-64 bg-cyan-400/15 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 -right-32 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center">

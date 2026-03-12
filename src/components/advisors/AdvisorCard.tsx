@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { StarRating } from '@/components/ui/star-rating';
 import { PriceDisplay } from '@/components/ui/price-display';
 import { AuthModal } from '@/components/modals/AuthModal';
+import { TwinChoiceModal } from '@/components/modals/TwinChoiceModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavorites } from '@/hooks/useFavorites';
 import { addToRecentlyViewed } from '@/components/home/RecentlyViewedSection';
@@ -38,6 +39,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   const { isAuthenticated, openAuthModal } = useAuth();
   const { isFavorite, toggle: toggleFavorite } = useFavorites();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isTwinOpen, setIsTwinOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const advisorDbId = advisor.dbId || advisor.id;
   const favorited = isFavorite(advisorDbId);
@@ -75,7 +77,7 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
   };
 
   const handleAIClick = () => {
-    navigate(`/advisor/${advisor.id}/ai`);
+    setIsTwinOpen(true);
   };
 
   const handleAuthClose = () => {
@@ -253,6 +255,12 @@ export const AdvisorCard = ({ advisor, onChat }: AdvisorCardProps) => {
           isOpen={isAuthOpen}
           onClose={handleAuthClose}
           mode="signin"
+        />
+        <TwinChoiceModal
+          isOpen={isTwinOpen}
+          onClose={() => setIsTwinOpen(false)}
+          advisorId={advisor.id}
+          vapiAgentId={advisor.vapiAgentId}
         />
       </article>
     </TooltipProvider>

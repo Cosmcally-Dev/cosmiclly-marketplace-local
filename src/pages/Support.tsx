@@ -35,7 +35,7 @@ const quickActions = [
     icon: Sparkles,
     title: 'Become an Advisor',
     description: 'Join our community of gifted advisors and share your abilities',
-    color: 'from-amber-500 to-orange-600',
+    color: 'from-violet-500 to-purple-600',
     action: 'Learn More',
     href: '/become-advisor',
   },

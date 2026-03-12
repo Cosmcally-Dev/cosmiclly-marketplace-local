@@ -63,7 +63,7 @@ export const CategoriesStrip = () => {
   };
 
   return (
-    <div className="relative flex items-center gap-[0.3rem]">
+    <div className="relative flex items-center gap-2">
       {/* Desktop Left Chevron - Outside the scroll container */}
       {!isMobile && (
         <Button

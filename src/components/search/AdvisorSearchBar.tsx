@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Search, User, Sparkles, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdvisors } from '@/hooks/useAdvisors';
-import { categories } from '@/data/categories';
 
 interface AdvisorSearchBarProps {
   variant?: 'hero' | 'compact';
@@ -14,7 +14,7 @@ interface AdvisorSearchBarProps {
 }
 
 interface SearchResult {
-  type: 'advisor' | 'category' | 'specialty';
+  type: 'advisor';
   id: string;
   name: string;
   subtitle?: string;
@@ -34,32 +34,23 @@ export const AdvisorSearchBar = ({
   const [query, setQuery] = useState(initialQuery);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Get unique specialties from all advisors
-  const allSpecialties = useMemo(() => {
-    const specialtySet = new Set<string>();
-    advisors.forEach(advisor => {
-      advisor.specialties.forEach(s => specialtySet.add(s));
-    });
-    return Array.from(specialtySet);
-  }, [advisors]);
-
-  // Generate search results based on query
+  // Generate search results based on query — advisors only
   const searchResults = useMemo((): SearchResult[] => {
     if (!query.trim() || query.length < 2) return [];
 
     const lowerQuery = query.toLowerCase();
-    const results: SearchResult[] = [];
 
-    // Search advisors by name
-    const matchingAdvisors = advisors
-      .filter(advisor => 
+    return advisors
+      .filter(advisor =>
         advisor.name.toLowerCase().includes(lowerQuery) ||
         advisor.title.toLowerCase().includes(lowerQuery)
       )
-      .slice(0, 4)
+      .slice(0, 8)
       .map(advisor => ({
         type: 'advisor' as const,
         id: advisor.id,
@@ -68,42 +59,25 @@ export const AdvisorSearchBar = ({
         avatar: advisor.avatar,
         url: `/advisor/${advisor.id}`,
       }));
+  }, [query, advisors]);
 
-    results.push(...matchingAdvisors);
-
-    // Search categories
-    const matchingCategories = categories
-      .filter(cat => 
-        cat.label.toLowerCase().includes(lowerQuery) ||
-        cat.shortDescription.toLowerCase().includes(lowerQuery)
-      )
-      .slice(0, 3)
-      .map(cat => ({
-        type: 'category' as const,
-        id: cat.slug,
-        name: cat.label,
-        subtitle: `Browse ${cat.label} advisors`,
-        url: `/advisors?category=${cat.slug}`,
-      }));
-
-    results.push(...matchingCategories);
-
-    // Search specialties
-    const matchingSpecialties = allSpecialties
-      .filter(s => s.toLowerCase().includes(lowerQuery))
-      .slice(0, 3)
-      .map(specialty => ({
-        type: 'specialty' as const,
-        id: specialty,
-        name: specialty,
-        subtitle: `Find advisors specializing in ${specialty}`,
-        url: `/advisors?search=${encodeURIComponent(specialty)}`,
-      }));
-
-    results.push(...matchingSpecialties);
-
-    return results.slice(0, 8);
-  }, [query, advisors, allSpecialties]);
+  // Track wrapper position for portal dropdown
+  useEffect(() => {
+    const updateRect = () => {
+      if (wrapperRef.current) {
+        setDropdownRect(wrapperRef.current.getBoundingClientRect());
+      }
+    };
+    if (isOpen) {
+      updateRect();
+      window.addEventListener('scroll', updateRect, true);
+      window.addEventListener('resize', updateRect);
+    }
+    return () => {
+      window.removeEventListener('scroll', updateRect, true);
+      window.removeEventListener('resize', updateRect);
+    };
+  }, [isOpen]);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -179,7 +153,7 @@ export const AdvisorSearchBar = ({
   const isHero = variant === 'hero';
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={wrapperRef} className={`relative ${className}`}>
       <div className="relative">
         <Search className={`absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground ${isHero ? 'w-5 h-5' : 'w-4 h-4'}`} />
         <input
@@ -216,11 +190,18 @@ export const AdvisorSearchBar = ({
         </Button>
       </div>
 
-      {/* Autocomplete Dropdown */}
-      {isOpen && searchResults.length > 0 && (
-        <div 
+      {/* Autocomplete Dropdown — rendered via portal to escape stacking contexts */}
+      {isOpen && searchResults.length > 0 && dropdownRect && createPortal(
+        <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+          style={{
+            position: 'fixed',
+            top: dropdownRect.bottom + 8,
+            left: dropdownRect.left,
+            width: dropdownRect.width,
+            zIndex: 9999,
+          }}
+          className="bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
         >
           <div className="p-2">
             {searchResults.map((result, index) => (
@@ -228,39 +209,26 @@ export const AdvisorSearchBar = ({
                 key={`${result.type}-${result.id}`}
                 onClick={() => handleResultClick(result)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                  selectedIndex === index 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'hover:bg-secondary text-foreground'
+                  selectedIndex === index
+                    ? 'bg-cyan-500/10 text-cyan-400'
+                    : 'hover:bg-cyan-500/10 hover:text-cyan-400 text-foreground'
                 }`}
               >
-                {result.type === 'advisor' && result.avatar ? (
-                  <img 
-                    src={result.avatar} 
-                    alt={result.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : result.type === 'category' ? (
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                    <User className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                )}
+                <img
+                  src={result.avatar}
+                  alt={result.name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{result.name}</p>
                   {result.subtitle && (
                     <p className="text-sm text-muted-foreground truncate">{result.subtitle}</p>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground capitalize px-2 py-1 bg-secondary rounded-full">
-                  {result.type}
-                </span>
               </button>
             ))}
           </div>
-          
+
           {/* Search all results footer */}
           <div className="border-t border-border p-2">
             <button
@@ -271,7 +239,8 @@ export const AdvisorSearchBar = ({
               Search all for "{query}"
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

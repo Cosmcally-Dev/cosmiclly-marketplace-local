@@ -3,7 +3,7 @@ import { testimonials } from '@/data/testimonials';
 
 export const TestimonialsSection = () => {
   return (
-    <section className="py-16 md:py-24 bg-hero-gradient relative overflow-hidden">
+    <section className="py-16 md:py-24 bg-testimonials-gradient relative overflow-hidden">
       {/* Stars Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(15)].map((_, i) => (
@@ -35,7 +35,7 @@ export const TestimonialsSection = () => {
           {testimonials.map((testimonial, index) => (
             <div
               key={testimonial.name}
-              className="relative bg-card/80 backdrop-blur-sm rounded-xl border border-border p-6 animate-fade-in"
+              className="relative bg-card/80 backdrop-blur-sm rounded-xl border border-border p-6 animate-fade-in flex flex-col"
               style={{ animationDelay: `${index * 0.15}s` }}
             >
               {/* Quote Icon */}
@@ -49,7 +49,7 @@ export const TestimonialsSection = () => {
               </div>
 
               {/* Text */}
-              <p className="text-foreground/90 mb-6 leading-relaxed">
+              <p className="text-foreground/90 mb-6 leading-relaxed flex-1">
                 "{testimonial.text}"
               </p>
 

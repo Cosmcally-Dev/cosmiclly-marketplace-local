@@ -79,7 +79,7 @@ const oracleFeatures = [
     title: 'Yearly Love Forecast',
     description: 'Discover what the stars have in store for your love life throughout the coming year.',
     image: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=600&h=400&fit=crop',
-    color: 'from-amber-600 to-orange-700',
+    color: 'from-indigo-600 to-violet-700',
     icon: Calendar,
     isNew: true,
   },

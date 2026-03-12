@@ -12,16 +12,7 @@ import {
   BookOpen,
   Heart,
   Star,
-  Compass,
-  Users,
-  Flame,
-  ScrollText,
   Zap,
-  Moon,
-  DollarSign,
-  Layers,
-  Feather,
-  Waves,
   LayoutGrid,
   Wallet,
   Activity,
@@ -30,6 +21,7 @@ import {
   Bell,
   Receipt,
   BarChart3,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationBadge } from "@/components/ui/notification-badge";
@@ -46,26 +38,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
+import { categories } from "@/data/categories";
 
-// Explore Advisors menu items with icons
-const exploreMenuItems = [
-  { label: "Psychic Readings", icon: Sparkles, slug: "psychic-readings" },
-  { label: "Love & Relationships", icon: Heart, slug: "love-relationships" },
-  { label: "Life Path & Advice", icon: Compass, slug: "life-path" },
-  { label: "Psychic Mediums", icon: Users, slug: "psychic-mediums" },
-  { label: "Spiritual Readings", icon: Flame, slug: "spiritual-readings" },
-  { label: "Tarot Card Readings", icon: ScrollText, slug: "tarot-readings" },
-  { label: "Astrology Readings", icon: Star, slug: "astrology" },
-  { label: "Dream Interpretation", icon: Moon, slug: "dream-interpretation" },
-  { label: "Financial Guidance", icon: DollarSign, slug: "financial-guidance" },
-  { label: "Cartomancy Readings", icon: Layers, slug: "cartomancy" },
-  { label: "Angel Readings", icon: Feather, slug: "angel-readings" },
-  { label: "Aura Cleansing", icon: Waves, slug: "aura-cleansing" },
-];
 
 export const Header = () => {
   const navigate = useNavigate();
@@ -172,74 +147,65 @@ export const Header = () => {
                   Explore Advisors
                   <ChevronDown className="w-4 h-4" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56 bg-popover border-border z-50 shadow-2xl rounded-xl">
-                  <DropdownMenuItem
-                    onClick={() => navigate("/advisors?filter=featured")}
-                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[highlighted]:bg-primary group"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
-                      <Star className="w-4 h-4 text-muted-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
-                    </div>
-                    <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
-                      Featured Advisors
-                    </span>
-                  </DropdownMenuItem>
+                <DropdownMenuContent align="start" className="w-[520px] p-0 bg-card/95 backdrop-blur-xl border-border/50 z-50 shadow-2xl rounded-xl overflow-hidden">
+                  {/* Quick Links Row */}
+                  <div className="grid grid-cols-3 gap-px bg-border/30">
+                    <DropdownMenuItem
+                      onClick={() => navigate("/advisors?filter=featured")}
+                      className="flex items-center justify-center gap-2 px-4 py-3 cursor-pointer rounded-none bg-card/95 hover:bg-primary/10 data-[highlighted]:bg-primary/10 transition-colors"
+                    >
+                      <Star className="w-4 h-4 text-primary" />
+                      <span className="font-sans text-sm font-medium text-foreground">Featured</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => navigate("/advisors?filter=new")}
+                      className="flex items-center justify-center gap-2 px-4 py-3 cursor-pointer rounded-none bg-card/95 hover:bg-primary/10 data-[highlighted]:bg-primary/10 transition-colors"
+                    >
+                      <Zap className="w-4 h-4 text-primary" />
+                      <span className="font-sans text-sm font-medium text-foreground">New Advisors</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => navigate("/advisors")}
+                      className="flex items-center justify-center gap-2 px-4 py-3 cursor-pointer rounded-none bg-card/95 hover:bg-primary/10 data-[highlighted]:bg-primary/10 transition-colors"
+                    >
+                      <LayoutGrid className="w-4 h-4 text-primary" />
+                      <span className="font-sans text-sm font-medium text-foreground">All Advisors</span>
+                    </DropdownMenuItem>
+                  </div>
 
-                  <DropdownMenuItem
-                    onClick={() => navigate("/advisors?filter=new")}
-                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[highlighted]:bg-primary group"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
-                      <Zap className="w-4 h-4 text-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
-                    </div>
-                    <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
-                      NEW Advisors
-                    </span>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={() => navigate("/advisors")}
-                    className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[highlighted]:bg-primary group"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
-                      <LayoutGrid className="w-4 h-4 text-muted-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
-                    </div>
-                    <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
-                      All Advisors
-                    </span>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[state=open]:bg-primary data-[highlighted]:bg-primary group">
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[state=open]:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
-                        <Compass className="w-4 h-4 text-muted-foreground group-hover:text-primary-foreground group-data-[state=open]:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
-                      </div>
-                      <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary-foreground group-data-[state=open]:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
-                        Specialties
-                      </span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="w-64 max-h-[60vh] overflow-y-auto bg-popover border-border shadow-2xl rounded-xl">
-                      {exploreMenuItems.map((item) => {
-                        const IconComponent = item.icon;
+                  {/* Specialties Section */}
+                  <div className="p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-2 mb-2">
+                      Browse by Specialty
+                    </p>
+                    <div className="grid grid-cols-3 gap-0.5">
+                      {categories.map((cat) => {
+                        const CatIcon = cat.icon;
                         return (
                           <DropdownMenuItem
-                            key={item.slug}
-                            onClick={() => navigate(`/advisors?category=${item.slug}`)}
-                            className="flex items-center gap-3 p-3 cursor-pointer transition-colors hover:bg-primary data-[highlighted]:bg-primary group"
+                            key={cat.slug}
+                            onClick={() => navigate(`/advisors?category=${cat.slug}`)}
+                            className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer rounded-lg hover:bg-primary/10 data-[highlighted]:bg-primary/10 transition-colors group"
                           >
-                            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary/20 group-data-[highlighted]:bg-primary/20 transition-colors">
-                              <IconComponent className="w-4 h-4 text-muted-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors" />
-                            </div>
-                            <span className="font-sans text-sm font-medium text-foreground group-hover:text-primary-foreground group-data-[highlighted]:text-primary-foreground transition-colors">
-                              {item.label}
+                            <CatIcon className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-primary group-data-[highlighted]:text-primary transition-colors" />
+                            <span className="font-sans text-[13px] text-foreground/80 group-hover:text-foreground group-data-[highlighted]:text-foreground transition-colors truncate">
+                              {cat.label}
                             </span>
                           </DropdownMenuItem>
                         );
                       })}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <DropdownMenuSeparator className="m-0" />
+                  <DropdownMenuItem
+                    onClick={() => navigate("/advisors")}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 cursor-pointer rounded-none hover:bg-primary/10 data-[highlighted]:bg-primary/10 transition-colors"
+                  >
+                    <span className="font-sans text-sm font-medium text-primary">View All Services</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-primary" />
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -251,7 +217,7 @@ export const Header = () => {
                 Horoscope
               </Link>
               <span
-                className="font-sans text-sm font-medium text-muted-foreground flex items-center gap-1.5 cursor-not-allowed"
+                className="font-sans text-sm font-medium text-muted-foreground flex items-center gap-1.5 cursor-default"
                 title="Coming Soon"
               >
                 <BookOpen className="w-4 h-4" />
@@ -288,7 +254,7 @@ export const Header = () => {
                     <button className="flex items-center gap-2 p-1 min-h-11 rounded-full hover:bg-secondary/50 transition-colors outline-none">
                       <Avatar className="w-9 h-9 border-2 border-primary/30">
                         <AvatarImage src={undefined} alt={getDisplayName()} />
-                        <AvatarFallback className="bg-accent/20 text-accent font-medium text-sm">
+                        <AvatarFallback className="bg-primary/20 text-primary font-medium text-sm">
                           {getUserInitials()}
                         </AvatarFallback>
                       </Avatar>

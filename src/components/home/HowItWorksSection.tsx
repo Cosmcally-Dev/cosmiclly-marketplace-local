@@ -29,10 +29,10 @@ const steps = [
 
 export const HowItWorksSection = () => {
   return (
-    <section className="py-16 md:py-24 bg-background relative overflow-hidden">
+    <section className="py-16 md:py-24 bg-gradient-to-b from-secondary/20 to-background relative overflow-hidden">
       {/* Background Decoration */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" style={{ top: '60px' }} />
+      <div className="absolute right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl pointer-events-none" style={{ bottom: '60px' }} />
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}

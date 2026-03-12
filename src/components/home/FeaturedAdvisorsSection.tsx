@@ -81,7 +81,7 @@ export const FeaturedAdvisorsSection = () => {
           <div
             ref={scrollRef}
             onScroll={updateScrollState}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:none] lg:grid-flow-col lg:auto-cols-[320px] gap-4 lg:gap-6 lg:overflow-x-auto py-2 lg:scrollbar-hide lg:snap-x lg:snap-mandatory"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:none] lg:grid-flow-col lg:auto-cols-[calc(25%-1.125rem)] gap-4 lg:gap-6 lg:overflow-x-auto py-2 scrollbar-hide lg:snap-x lg:snap-mandatory"
           >
             {featuredAdvisors.map((advisor, index) => (
               <div

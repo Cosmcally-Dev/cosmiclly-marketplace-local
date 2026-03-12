@@ -126,8 +126,12 @@ const AdvisorProfile = () => {
     }
   };
 
-  const handleTwinClick = () => {
+  const handleTwinChatClick = () => {
     navigate(`/advisor/${advisor.id}/ai`);
+  };
+
+  const handleTwinCallClick = () => {
+    navigate(`/advisor/${advisor.id}/ai-voice`);
   };
 
   const handleAuthClose = () => {
@@ -321,12 +325,22 @@ const AdvisorProfile = () => {
                       <span className="text-sm font-medium text-foreground">Video Call</span>
                     </button>
 
-                    {/* Twin Call */}
+                    {/* Twin Chat */}
                     <button
-                      onClick={handleTwinClick}
+                      onClick={handleTwinChatClick}
                       className="h-20 flex flex-col items-center justify-center gap-2 rounded-xl border border-border/50 bg-background/20 hover:bg-secondary/20 hover:border-secondary/50 transition-all"
                     >
                       <img src={aiTwinIcon} alt="AI Twin" className="w-6 h-6 object-contain" />
+                      <span className="text-sm font-medium text-foreground">Twin Chat</span>
+                    </button>
+
+                    {/* Twin Call */}
+                    <button
+                      onClick={handleTwinCallClick}
+                      disabled={!advisor.vapiAgentId}
+                      className="h-20 flex flex-col items-center justify-center gap-2 rounded-xl border border-border/50 bg-background/20 hover:bg-secondary/20 hover:border-secondary/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-background/20 disabled:hover:border-border/50"
+                    >
+                      <Phone className="w-6 h-6 text-secondary" />
                       <span className="text-sm font-medium text-foreground">Twin Call</span>
                     </button>
                   </div>
@@ -533,9 +547,20 @@ const AdvisorProfile = () => {
                       variant="outline"
                       size="lg"
                       className="w-full"
-                      onClick={handleTwinClick}
+                      onClick={handleTwinChatClick}
                     >
                       <img src={aiTwinIcon} alt="AI Twin" className="w-5 h-5 mr-2 object-contain" />
+                      Twin Chat
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full"
+                      disabled={!advisor.vapiAgentId}
+                      onClick={handleTwinCallClick}
+                    >
+                      <Phone className="w-5 h-5 mr-2" />
                       Twin Call
                     </Button>
                   </div>
