@@ -144,6 +144,7 @@ const TwinVoiceCall = () => {
 
         // Start the Vapi call with metadata for the webhook
         await vapi.start(details.vapi_agent_id, {
+          firstMessage: `Hello! I'm ${advisor?.name}'s AI Twin. How can I help you today?`,
           metadata: {
             session_id: newSessionId,
             client_id: user.id,

@@ -181,11 +181,17 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         name: `Twin AI - ${advisorName}`,
+        firstMessage: `Hello! I'm ${advisorName}'s AI Twin. How can I help you today?`,
         model: {
           provider: 'openai',
           model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: systemPrompt },
+            {
+              role: 'system',
+              content: systemPrompt ||
+                `You are the AI Twin of ${advisorName}, a spiritual advisor on Cosmiclly. ` +
+                `Be warm, empathetic, and helpful. Provide spiritual guidance and readings.`,
+            },
           ],
           temperature: 0.7,
           maxTokens: 500,
