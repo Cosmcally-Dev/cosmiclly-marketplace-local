@@ -422,6 +422,7 @@ const VideoCall = () => {
                       setIsMuted(!isMuted);
                     }
                   }}
+                  aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
                   className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
                     isMuted
                       ? 'bg-red-500 text-white'
@@ -438,6 +439,7 @@ const VideoCall = () => {
                       await toggleVideo();
                     }
                   }}
+                  aria-label={isCameraOff ? 'Turn on camera' : 'Turn off camera'}
                   className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
                     isCameraOff
                       ? 'bg-red-500 text-white'
@@ -450,6 +452,7 @@ const VideoCall = () => {
                 {/* End call */}
                 <button
                   onClick={handleEndCall}
+                  aria-label="End call"
                   className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                 >
                   <PhoneOff className="w-7 h-7" />
@@ -510,6 +513,7 @@ const VideoCall = () => {
               {callStatus === 'ringing' && (
                 <button
                   onClick={handleCancelCall}
+                  aria-label="Cancel call"
                   className="w-16 h-16 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors mx-auto"
                 >
                   <X className="w-7 h-7" />

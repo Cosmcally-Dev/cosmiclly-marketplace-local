@@ -625,6 +625,7 @@ const Chat = () => {
                 className="h-12 w-12"
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isSessionEnded || chatStatus !== 'connected'}
+                aria-label="Send message"
               >
                 <Send className="w-5 h-5" />
               </Button>

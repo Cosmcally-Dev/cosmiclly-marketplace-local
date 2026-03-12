@@ -254,6 +254,7 @@ const AdvisorProfile = () => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setIsFavorite(!isFavorite)}
+                    aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                     className={`p-2 rounded-full border transition-all ${
                       isFavorite
                         ? "bg-pink-500/20 border-pink-500 text-pink-500"
@@ -262,7 +263,7 @@ const AdvisorProfile = () => {
                   >
                     <Heart className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`} />
                   </button>
-                  <button className="p-2 rounded-full border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all">
+                  <button aria-label="Share profile" className="p-2 rounded-full border border-border text-muted-foreground hover:border-primary hover:text-primary transition-all">
                     <Share2 className="w-5 h-5" />
                   </button>
                 </div>

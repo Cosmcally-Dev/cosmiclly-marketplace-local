@@ -415,6 +415,7 @@ const TwinChat = () => {
                 disabled={
                   !inputValue.trim() || !sessionActive || isSending || isEnding
                 }
+                aria-label="Send message"
               >
                 <Send className="w-5 h-5" />
               </Button>

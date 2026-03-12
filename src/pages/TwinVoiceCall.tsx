@@ -407,6 +407,7 @@ const TwinVoiceCall = () => {
             <div className="flex items-center gap-6">
               <button
                 onClick={handleToggleMute}
+                aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
                 className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
                   isMuted
                     ? 'bg-red-500/20 text-red-500 border-2 border-red-500/30'
@@ -422,6 +423,7 @@ const TwinVoiceCall = () => {
 
               <button
                 onClick={handleEndCall}
+                aria-label="End call"
                 className="w-20 h-20 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all shadow-lg shadow-red-500/30"
               >
                 <PhoneOff className="w-8 h-8" />
