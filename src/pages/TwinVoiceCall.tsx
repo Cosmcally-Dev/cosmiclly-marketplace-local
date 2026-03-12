@@ -115,7 +115,6 @@ const TwinVoiceCall = () => {
 
         // Set up event handlers
         vapi.on('call-start', () => {
-          console.log('[TwinVoiceCall] call-start fired');
           setCallStatus('active');
           timerRef.current = setInterval(() => {
             setCallDuration((prev) => prev + 1);
@@ -127,7 +126,6 @@ const TwinVoiceCall = () => {
         });
 
         vapi.on('call-end', () => {
-          console.log('[TwinVoiceCall] call-end fired');
           if (timerRef.current) clearInterval(timerRef.current);
           setCallStatus('ended');
           setShowReview(true);
@@ -142,15 +140,6 @@ const TwinVoiceCall = () => {
             title: 'Call Error',
             description: 'The voice call encountered an error.',
           });
-        });
-
-        // Debug: log every stage of call setup
-        vapi.on('call-start-progress' as any, (progress: any) => {
-          console.log('[TwinVoiceCall] Progress:', progress?.stage, progress?.status, progress?.metadata);
-        });
-
-        vapi.on('camera-error' as any, (error: any) => {
-          console.error('[TwinVoiceCall] Camera/mic error:', error);
         });
 
         // Start the Vapi call with metadata for the webhook
