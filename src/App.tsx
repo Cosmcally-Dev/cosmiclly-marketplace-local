@@ -44,6 +44,7 @@ const AboutUs = React.lazy(() => import("./pages/AboutUs"));
 const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = React.lazy(() => import("./pages/TermsOfService"));
 const CookiePolicy = React.lazy(() => import("./pages/CookiePolicy"));
+const SessionTranscript = React.lazy(() => import("./pages/SessionTranscript"));
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => (
               <Route path="/advisor-call" element={<AdvisorCall />} />
               <Route path="/advisor-call/:sessionId" element={<AdvisorCall />} />
               <Route path="/activity" element={<Activity />} />
+              <Route path="/transcript/:sessionId" element={<SessionTranscript />} />
               <Route path="/advisor-activity" element={<AdvisorActivity />} />
               <Route path="/test-guide" element={<TestGuide />} />
               <Route path="/admin" element={<AdminPanel />} />

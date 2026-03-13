@@ -276,6 +276,7 @@ const Chat = () => {
               advisor_image: advisor.avatar,
               order_no: sessionId?.slice(0, 8).toUpperCase() || 'N/A',
               order_date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+              transcript_url: `https://cosmiclly.com/transcript/${sessionId}`,
               session_type: 'Chat',
               duration_minutes: billableMinutes,
               total_cost: cost,

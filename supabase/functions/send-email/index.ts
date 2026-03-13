@@ -15,12 +15,12 @@ type EmailType =
 // These should be set up in Brevo dashboard and IDs updated here
 const TEMPLATE_IDS: Record<EmailType, number> = {
   welcome_client: 13,
-  welcome_advisor: 13,
-  session_receipt: 3,
-  low_credit_warning: 4,
-  application_approved: 5,
-  application_rejected: 6,
-  contact_form: 7,
+  welcome_advisor: 15,
+  session_receipt: 18,
+  low_credit_warning: 19,
+  application_approved: 20,
+  application_rejected: 21,
+  contact_form: 7, // Not yet created in Brevo — update ID when template is ready
 };
 
 interface SendEmailRequest {
